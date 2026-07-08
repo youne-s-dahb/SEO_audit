@@ -1,3 +1,5 @@
+# liste les bibliothèques Python nécessaires au projet.
+
 psycopg2-binary>=2.9.0 #hada driver li ykhli python ydkhel l PostgreSQL
 redis>=5.0.0 # 
 beautifulsoup4>=4.12.0 #hadoo les machines  dyal seo audit 

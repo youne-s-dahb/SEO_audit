@@ -1,0 +1,1 @@
+#extrait depuis le HTML les informations utiles comme le title, les balises meta, les titres, les images et les liens.
