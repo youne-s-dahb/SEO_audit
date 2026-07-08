@@ -50,6 +50,8 @@ services:
       dockerfile: Dockerfile
     container_name: seo_python_analyzer
     restart: always
+    ports:
+      - "8001:8000"
     volumes:
       - ./analyzer-python:/app
     environment:
