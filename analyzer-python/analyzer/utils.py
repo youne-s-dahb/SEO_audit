@@ -1,0 +1,1 @@
+#regroupe les fonctions utilitaires partagées par les autres fichiers.

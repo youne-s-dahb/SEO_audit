@@ -2,14 +2,20 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# تثبيت الأدوات الأساسية لنظام التشغيل وقاعدة البيانات
+# Dépendances système
 RUN apt-get update && apt-get install -y \
     libpq-dev gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# نسخ ملف المكتبات وتثبيتها
+# Dépendances Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# سكريبت وهمي باش الكونتينر ما يطفاش دابا
-CMD ["python", "-c", "import time; print('Python Worker Active...'); time.sleep(3600)"]
+# Copier le code du projet
+COPY . .
+
+# Exposer le port du service Python
+EXPOSE 8000
+
+# Lancer l'API Python
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

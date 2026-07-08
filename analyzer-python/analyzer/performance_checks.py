@@ -1,0 +1,1 @@
+#effectue les vérifications techniques et de performance de base, comme le temps de réponse ou le code HTTP.
