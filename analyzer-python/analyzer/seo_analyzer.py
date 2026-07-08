@@ -1,0 +1,1 @@
+#contient la logique principale de l’audit SEO et calcule les résultats globaux.
