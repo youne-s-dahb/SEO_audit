@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\AuditReportRepository;
+use ApiPlatform\Metadata\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditReportRepository::class)]
