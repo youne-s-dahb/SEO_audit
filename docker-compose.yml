@@ -4,7 +4,7 @@ services:
   db:
     image: postgres:16-alpine
     container_name: seo_postgres
-    restart: always
+    restart: always 
     environment:
       POSTGRES_DB: seo_audit
       POSTGRES_USER: younes
@@ -82,4 +82,5 @@ networks:
 
 volumes:
   pgdata:
+
 
