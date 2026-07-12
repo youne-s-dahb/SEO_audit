@@ -25,10 +25,17 @@ class CollectionConfigurator
 
     private $parent;
     private $parentConfigurator;
+<<<<<<< HEAD
+    private ?array $parentPrefixes;
+    private string|array|null $host = null;
+
+    public function __construct(RouteCollection $parent, string $name, self $parentConfigurator = null, array $parentPrefixes = null)
+=======
     private $parentPrefixes;
     private $host;
 
     public function __construct(RouteCollection $parent, string $name, ?self $parentConfigurator = null, ?array $parentPrefixes = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->parent = $parent;
         $this->name = $name;
@@ -38,10 +45,14 @@ class CollectionConfigurator
         $this->parentPrefixes = $parentPrefixes;
     }
 
+<<<<<<< HEAD
+    public function __sleep(): array
+=======
     /**
      * @return array
      */
     public function __sleep()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         throw new \BadMethodCallException('Cannot serialize '.__CLASS__);
     }
@@ -78,7 +89,11 @@ class CollectionConfigurator
      *
      * @return $this
      */
+<<<<<<< HEAD
+    final public function prefix(string|array $prefix): static
+=======
     final public function prefix($prefix): self
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (\is_array($prefix)) {
             if (null === $this->parentPrefixes) {
@@ -111,7 +126,11 @@ class CollectionConfigurator
      *
      * @return $this
      */
+<<<<<<< HEAD
+    final public function host(string|array $host): static
+=======
     final public function host($host): self
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->host = $host;
 

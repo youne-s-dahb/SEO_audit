@@ -23,6 +23,8 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class CachePoolPrunerPass implements CompilerPassInterface
 {
+<<<<<<< HEAD
+=======
     private $cacheCommandServiceId;
     private $cachePoolTag;
 
@@ -36,18 +38,27 @@ class CachePoolPrunerPass implements CompilerPassInterface
         $this->cachePoolTag = $cachePoolTag;
     }
 
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     /**
      * {@inheritdoc}
      */
     public function process(ContainerBuilder $container)
     {
+<<<<<<< HEAD
+        if (!$container->hasDefinition('console.command.cache_pool_prune')) {
+=======
         if (!$container->hasDefinition($this->cacheCommandServiceId)) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             return;
         }
 
         $services = [];
 
+<<<<<<< HEAD
+        foreach ($container->findTaggedServiceIds('cache.pool') as $id => $tags) {
+=======
         foreach ($container->findTaggedServiceIds($this->cachePoolTag) as $id => $tags) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             $class = $container->getParameterBag()->resolveValue($container->getDefinition($id)->getClass());
 
             if (!$reflection = $container->getReflectionClass($class)) {
@@ -59,6 +70,10 @@ class CachePoolPrunerPass implements CompilerPassInterface
             }
         }
 
+<<<<<<< HEAD
+        $container->getDefinition('console.command.cache_pool_prune')->replaceArgument(0, new IteratorArgument($services));
+=======
         $container->getDefinition($this->cacheCommandServiceId)->replaceArgument(0, new IteratorArgument($services));
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     }
 }

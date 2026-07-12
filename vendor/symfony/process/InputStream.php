@@ -30,7 +30,11 @@ class InputStream implements \IteratorAggregate
     /**
      * Sets a callback that is called when the write buffer becomes empty.
      */
+<<<<<<< HEAD
+    public function onEmpty(callable $onEmpty = null)
+=======
     public function onEmpty(?callable $onEmpty = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->onEmpty = $onEmpty;
     }
@@ -41,7 +45,11 @@ class InputStream implements \IteratorAggregate
      * @param resource|string|int|float|bool|\Traversable|null $input The input to append as scalar,
      *                                                                stream resource or \Traversable
      */
+<<<<<<< HEAD
+    public function write(mixed $input)
+=======
     public function write($input)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (null === $input) {
             return;
@@ -68,11 +76,15 @@ class InputStream implements \IteratorAggregate
         return !$this->open;
     }
 
+<<<<<<< HEAD
+    public function getIterator(): \Traversable
+=======
     /**
      * @return \Traversable<int, string>
      */
     #[\ReturnTypeWillChange]
     public function getIterator()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->open = true;
 

@@ -32,7 +32,11 @@ interface CacheItemInterface
      * @return string
      *   The key string for this cache item.
      */
+<<<<<<< HEAD
+    public function getKey(): string;
+=======
     public function getKey();
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Retrieves the value of the item from the cache associated with this object's key.
@@ -46,7 +50,11 @@ interface CacheItemInterface
      * @return mixed
      *   The value corresponding to this cache item's key, or null if not found.
      */
+<<<<<<< HEAD
+    public function get(): mixed;
+=======
     public function get();
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Confirms if the cache item lookup resulted in a cache hit.
@@ -57,7 +65,11 @@ interface CacheItemInterface
      * @return bool
      *   True if the request resulted in a cache hit. False otherwise.
      */
+<<<<<<< HEAD
+    public function isHit(): bool;
+=======
     public function isHit();
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Sets the value represented by this cache item.
@@ -72,7 +84,11 @@ interface CacheItemInterface
      * @return static
      *   The invoked object.
      */
+<<<<<<< HEAD
+    public function set(mixed $value): static;
+=======
     public function set(mixed $value);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Sets the expiration time for this cache item.
@@ -86,7 +102,11 @@ interface CacheItemInterface
      * @return static
      *   The called object.
      */
+<<<<<<< HEAD
+    public function expiresAt(?\DateTimeInterface $expiration): static;
+=======
     public function expiresAt(?\DateTimeInterface $expiration);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Sets the expiration time for this cache item.
@@ -101,5 +121,9 @@ interface CacheItemInterface
      * @return static
      *   The called object.
      */
+<<<<<<< HEAD
+    public function expiresAfter(int|\DateInterval|null $time): static;
+=======
     public function expiresAfter(int|\DateInterval|null $time);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 }

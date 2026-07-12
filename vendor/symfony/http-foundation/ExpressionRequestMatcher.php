@@ -11,6 +11,10 @@
 
 namespace Symfony\Component\HttpFoundation;
 
+<<<<<<< HEAD
+use Symfony\Component\ExpressionLanguage\Expression;
+=======
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 
 /**
@@ -23,15 +27,25 @@ class ExpressionRequestMatcher extends RequestMatcher
     private $language;
     private $expression;
 
+<<<<<<< HEAD
+    public function setExpression(ExpressionLanguage $language, Expression|string $expression)
+=======
     public function setExpression(ExpressionLanguage $language, $expression)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->language = $language;
         $this->expression = $expression;
     }
 
+<<<<<<< HEAD
+    public function matches(Request $request): bool
+    {
+        if (!isset($this->language)) {
+=======
     public function matches(Request $request)
     {
         if (!$this->language) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             throw new \LogicException('Unable to match the request as the expression language is not available.');
         }
 

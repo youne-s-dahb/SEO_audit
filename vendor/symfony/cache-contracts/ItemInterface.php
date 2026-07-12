@@ -54,7 +54,11 @@ interface ItemInterface extends CacheItemInterface
      * @throws InvalidArgumentException When $tag is not valid
      * @throws CacheException           When the item comes from a pool that is not tag-aware
      */
+<<<<<<< HEAD
+    public function tag(string|iterable $tags): static;
+=======
     public function tag($tags): self;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Returns a list of metadata info that were saved alongside with the cached value.

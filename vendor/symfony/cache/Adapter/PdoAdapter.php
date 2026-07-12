@@ -12,9 +12,12 @@
 namespace Symfony\Component\Cache\Adapter;
 
 use Doctrine\DBAL\Connection;
+<<<<<<< HEAD
+=======
 use Doctrine\DBAL\Schema\Schema;
 use Psr\Cache\CacheItemInterface;
 use Psr\Log\LoggerInterface;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 use Symfony\Component\Cache\Exception\InvalidArgumentException;
 use Symfony\Component\Cache\Marshaller\DefaultMarshaller;
 use Symfony\Component\Cache\Marshaller\MarshallerInterface;
@@ -26,6 +29,20 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
 
     private $marshaller;
     private $conn;
+<<<<<<< HEAD
+    private string $dsn;
+    private string $driver;
+    private string $serverVersion;
+    private mixed $table = 'cache_items';
+    private mixed $idCol = 'item_id';
+    private mixed $dataCol = 'item_data';
+    private mixed $lifetimeCol = 'item_lifetime';
+    private mixed $timeCol = 'item_time';
+    private mixed $username = '';
+    private mixed $password = '';
+    private mixed $connectionOptions = [];
+    private string $namespace;
+=======
     private $dsn;
     private $driver;
     private $serverVersion;
@@ -40,6 +57,7 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
     private $namespace;
 
     private $dbalAdapter;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * You can either pass an existing database connection as PDO instance or
@@ -56,12 +74,21 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
      *  * db_password: The password when lazy-connect [default: '']
      *  * db_connection_options: An array of driver-specific connection options [default: []]
      *
+<<<<<<< HEAD
+=======
      * @param \PDO|string $connOrDsn
      *
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
      * @throws InvalidArgumentException When first argument is not PDO nor Connection nor string
      * @throws InvalidArgumentException When PDO error mode is not PDO::ERRMODE_EXCEPTION
      * @throws InvalidArgumentException When namespace contains invalid characters
      */
+<<<<<<< HEAD
+    public function __construct(\PDO|string $connOrDsn, string $namespace = '', int $defaultLifetime = 0, array $options = [], MarshallerInterface $marshaller = null)
+    {
+        if (\is_string($connOrDsn) && str_contains($connOrDsn, '://')) {
+            throw new InvalidArgumentException(sprintf('Usage of Doctrine DBAL URL with "%s" is not supported. Use a PDO DSN or "%s" instead. Got "%s".', __CLASS__, DoctrineDbalAdapter::class, $connOrDsn));
+=======
     public function __construct($connOrDsn, string $namespace = '', int $defaultLifetime = 0, array $options = [], ?MarshallerInterface $marshaller = null)
     {
         if ($connOrDsn instanceof Connection || (\is_string($connOrDsn) && str_contains($connOrDsn, '://'))) {
@@ -69,6 +96,7 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
             $this->dbalAdapter = new DoctrineDbalAdapter($connOrDsn, $namespace, $defaultLifetime, $options, $marshaller);
 
             return;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         }
 
         if (isset($namespace[0]) && preg_match('#[^-+.A-Za-z0-9]#', $namespace, $match)) {
@@ -81,10 +109,15 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
             }
 
             $this->conn = $connOrDsn;
+<<<<<<< HEAD
+        } else {
+            $this->dsn = $connOrDsn;
+=======
         } elseif (\is_string($connOrDsn)) {
             $this->dsn = $connOrDsn;
         } else {
             throw new InvalidArgumentException(sprintf('"%s" requires PDO or Doctrine\DBAL\Connection instance or DSN string as first argument, "%s" given.', __CLASS__, get_debug_type($connOrDsn)));
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         }
 
         $this->table = $options['db_table'] ?? $this->table;
@@ -102,6 +135,8 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
     }
 
     /**
+<<<<<<< HEAD
+=======
      * {@inheritDoc}
      */
     public function getItem($key)
@@ -262,6 +297,7 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
     }
 
     /**
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
      * Creates the table to store cache items which can be called once for setup.
      *
      * Cache ID are saved in a column of maximum length 255. Cache data is
@@ -272,12 +308,15 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
      */
     public function createTable()
     {
+<<<<<<< HEAD
+=======
         if (isset($this->dbalAdapter)) {
             $this->dbalAdapter->createTable();
 
             return;
         }
 
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         // connect if we are not yet
         $conn = $this->getConnection();
 
@@ -310,6 +349,12 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
     }
 
     /**
+<<<<<<< HEAD
+     * {@inheritdoc}
+     */
+    public function prune(): bool
+    {
+=======
      * Adds the Table to the Schema if the adapter uses this Connection.
      *
      * @deprecated since symfony/cache 5.4 use DoctrineDbalAdapter instead
@@ -330,6 +375,7 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
             return $this->dbalAdapter->prune();
         }
 
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         $deleteSql = "DELETE FROM $this->table WHERE $this->lifetimeCol + $this->timeCol <= :time";
 
         if ('' !== $this->namespace) {
@@ -358,7 +404,11 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doFetch(array $ids): iterable
+=======
     protected function doFetch(array $ids)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $connection = $this->getConnection();
 
@@ -404,7 +454,11 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doHave(string $id): bool
+=======
     protected function doHave(string $id)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $connection = $this->getConnection();
 
@@ -421,7 +475,11 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doClear(string $namespace): bool
+=======
     protected function doClear(string $namespace)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $conn = $this->getConnection();
 
@@ -432,8 +490,12 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
                 $sql = "TRUNCATE TABLE $this->table";
             }
         } else {
+<<<<<<< HEAD
+            $sql = "DELETE FROM $this->table WHERE $this->idCol LIKE '$namespace%'";
+=======
             $namespace = str_replace('_', '!_', $namespace);
             $sql = "DELETE FROM $this->table WHERE $this->idCol LIKE '$namespace%' ESCAPE '!'";
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         }
 
         try {
@@ -447,7 +509,11 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doDelete(array $ids): bool
+=======
     protected function doDelete(array $ids)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $sql = str_pad('', (\count($ids) << 1) - 1, '?,');
         $sql = "DELETE FROM $this->table WHERE $this->idCol IN ($sql)";
@@ -463,7 +529,11 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doSave(array $values, int $lifetime): array|bool
+=======
     protected function doSave(array $values, int $lifetime)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$values = $this->marshaller->marshall($values, $failed)) {
             return $failed;
@@ -508,7 +578,11 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
         try {
             $stmt = $conn->prepare($sql);
         } catch (\PDOException $e) {
+<<<<<<< HEAD
+            if (!$conn->inTransaction() || \in_array($this->driver, ['pgsql', 'sqlite', 'sqlsrv'], true)) {
+=======
             if ($this->isTableMissing($e) && (!$conn->inTransaction() || \in_array($this->driver, ['pgsql', 'sqlite', 'sqlsrv'], true))) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
                 $this->createTable();
             }
             $stmt = $conn->prepare($sql);
@@ -543,7 +617,11 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
             try {
                 $stmt->execute();
             } catch (\PDOException $e) {
+<<<<<<< HEAD
+                if (!$conn->inTransaction() || \in_array($this->driver, ['pgsql', 'sqlite', 'sqlsrv'], true)) {
+=======
                 if ($this->isTableMissing($e) && (!$conn->inTransaction() || \in_array($this->driver, ['pgsql', 'sqlite', 'sqlsrv'], true))) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
                     $this->createTable();
                 }
                 $stmt->execute();
@@ -560,6 +638,15 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
         return $failed;
     }
 
+<<<<<<< HEAD
+    private function getConnection(): \PDO
+    {
+        if (!isset($this->conn)) {
+            $this->conn = new \PDO($this->dsn, $this->username, $this->password, $this->connectionOptions);
+            $this->conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        }
+        $this->driver ??= $this->conn->getAttribute(\PDO::ATTR_DRIVER_NAME);
+=======
     /**
      * @internal
      */
@@ -585,12 +672,16 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
         if (null === $this->driver) {
             $this->driver = $this->conn->getAttribute(\PDO::ATTR_DRIVER_NAME);
         }
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
         return $this->conn;
     }
 
     private function getServerVersion(): string
     {
+<<<<<<< HEAD
+        return $this->serverVersion ??= $this->conn->getAttribute(\PDO::ATTR_SERVER_VERSION);
+=======
         if (null === $this->serverVersion) {
             $this->serverVersion = $this->conn->getAttribute(\PDO::ATTR_SERVER_VERSION);
         }
@@ -613,5 +704,6 @@ class PdoAdapter extends AbstractAdapter implements PruneableInterface
             default:
                 return false;
         }
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     }
 }

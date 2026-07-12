@@ -20,7 +20,11 @@ class TagAwareMarshaller implements MarshallerInterface
 {
     private $marshaller;
 
+<<<<<<< HEAD
+    public function __construct(MarshallerInterface $marshaller = null)
+=======
     public function __construct(?MarshallerInterface $marshaller = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->marshaller = $marshaller ?? new DefaultMarshaller();
     }
@@ -67,7 +71,11 @@ class TagAwareMarshaller implements MarshallerInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function unmarshall(string $value): mixed
+=======
     public function unmarshall(string $value)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         // detect the compact format used in marshall() using magic numbers in the form 9D-..-..-..-..-00-..-..-..-5F
         if (13 >= \strlen($value) || "\x9D" !== $value[0] || "\0" !== $value[5] || "\x5F" !== $value[9]) {

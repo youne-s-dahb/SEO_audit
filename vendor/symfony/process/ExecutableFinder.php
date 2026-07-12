@@ -19,6 +19,9 @@ namespace Symfony\Component\Process;
  */
 class ExecutableFinder
 {
+<<<<<<< HEAD
+    private $suffixes = ['.exe', '.bat', '.cmd', '.com'];
+=======
     private const CMD_BUILTINS = [
         'assoc', 'break', 'call', 'cd', 'chdir', 'cls', 'color', 'copy', 'date',
         'del', 'dir', 'echo', 'endlocal', 'erase', 'exit', 'for', 'ftype', 'goto',
@@ -28,6 +31,7 @@ class ExecutableFinder
     ];
 
     private $suffixes = [];
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Replaces default suffixes of executable.
@@ -51,6 +55,44 @@ class ExecutableFinder
      * @param string      $name      The executable name (without the extension)
      * @param string|null $default   The default to return if no executable is found
      * @param array       $extraDirs Additional dirs to check into
+<<<<<<< HEAD
+     */
+    public function find(string $name, string $default = null, array $extraDirs = []): ?string
+    {
+        if (\ini_get('open_basedir')) {
+            $searchPath = array_merge(explode(\PATH_SEPARATOR, \ini_get('open_basedir')), $extraDirs);
+            $dirs = [];
+            foreach ($searchPath as $path) {
+                // Silencing against https://bugs.php.net/69240
+                if (@is_dir($path)) {
+                    $dirs[] = $path;
+                } else {
+                    if (basename($path) == $name && @is_executable($path)) {
+                        return $path;
+                    }
+                }
+            }
+        } else {
+            $dirs = array_merge(
+                explode(\PATH_SEPARATOR, getenv('PATH') ?: getenv('Path')),
+                $extraDirs
+            );
+        }
+
+        $suffixes = [''];
+        if ('\\' === \DIRECTORY_SEPARATOR) {
+            $pathExt = getenv('PATHEXT');
+            $suffixes = array_merge($pathExt ? explode(\PATH_SEPARATOR, $pathExt) : $this->suffixes, $suffixes);
+        }
+        foreach ($suffixes as $suffix) {
+            foreach ($dirs as $dir) {
+                if (@is_file($file = $dir.\DIRECTORY_SEPARATOR.$name.$suffix) && ('\\' === \DIRECTORY_SEPARATOR || @is_executable($file))) {
+                    return $file;
+                }
+            }
+        }
+
+=======
      *
      * @return string|null
      */
@@ -98,6 +140,7 @@ class ExecutableFinder
             return $executablePath;
         }
 
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         return $default;
     }
 }

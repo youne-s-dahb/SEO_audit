@@ -29,6 +29,15 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
         doDelete as private doCommonDelete;
     }
 
+<<<<<<< HEAD
+    private \Closure $includeHandler;
+    private bool $appendOnly;
+    private array $values = [];
+    private array $files = [];
+
+    private static int $startTime;
+    private static array $valuesCache = [];
+=======
     private $includeHandler;
     private $appendOnly;
     private $values = [];
@@ -36,6 +45,7 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
 
     private static $startTime;
     private static $valuesCache = [];
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @param $appendOnly Set to `true` to gain extra performance when the items stored in this pool never expire.
@@ -43,7 +53,11 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
      *
      * @throws CacheException if OPcache is not enabled
      */
+<<<<<<< HEAD
+    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $directory = null, bool $appendOnly = false)
+=======
     public function __construct(string $namespace = '', int $defaultLifetime = 0, ?string $directory = null, bool $appendOnly = false)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->appendOnly = $appendOnly;
         self::$startTime = self::$startTime ?? $_SERVER['REQUEST_TIME'] ?? time();
@@ -61,10 +75,14 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
         return \function_exists('opcache_invalidate') && filter_var(\ini_get('opcache.enable'), \FILTER_VALIDATE_BOOLEAN) && (!\in_array(\PHP_SAPI, ['cli', 'phpdbg'], true) || filter_var(\ini_get('opcache.enable_cli'), \FILTER_VALIDATE_BOOLEAN));
     }
 
+<<<<<<< HEAD
+    public function prune(): bool
+=======
     /**
      * @return bool
      */
     public function prune()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $time = time();
         $pruned = true;
@@ -82,7 +100,11 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
                 }
 
                 if ($time >= $expiresAt) {
+<<<<<<< HEAD
+                    $pruned = $this->doUnlink($file) && !file_exists($file) && $pruned;
+=======
                     $pruned = ($this->doUnlink($file) || !file_exists($file)) && $pruned;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
                 }
             }
         } finally {
@@ -95,7 +117,11 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doFetch(array $ids): iterable
+=======
     protected function doFetch(array $ids)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ($this->appendOnly) {
             $now = 0;
@@ -171,7 +197,11 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doHave(string $id): bool
+=======
     protected function doHave(string $id)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ($this->appendOnly && isset($this->values[$id])) {
             return true;
@@ -211,7 +241,11 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doSave(array $values, int $lifetime): array|bool
+=======
     protected function doSave(array $values, int $lifetime)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $ok = true;
         $expiry = $lifetime ? time() + $lifetime : 'PHP_INT_MAX';
@@ -273,7 +307,11 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doClear(string $namespace): bool
+=======
     protected function doClear(string $namespace)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->values = [];
 
@@ -283,7 +321,11 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doDelete(array $ids): bool
+=======
     protected function doDelete(array $ids)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         foreach ($ids as $id) {
             unset($this->values[$id]);
@@ -321,7 +363,11 @@ class PhpFilesAdapter extends AbstractAdapter implements PruneableInterface
  */
 class LazyValue
 {
+<<<<<<< HEAD
+    public string $file;
+=======
     public $file;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     public function __construct(string $file)
     {

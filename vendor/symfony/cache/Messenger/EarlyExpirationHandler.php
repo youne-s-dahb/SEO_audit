@@ -21,7 +21,11 @@ use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 class EarlyExpirationHandler implements MessageHandlerInterface
 {
     private $reverseContainer;
+<<<<<<< HEAD
+    private array $processedNonces = [];
+=======
     private $processedNonces = [];
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     public function __construct(ReverseContainer $reverseContainer)
     {
@@ -73,8 +77,12 @@ class EarlyExpirationHandler implements MessageHandlerInterface
         $startTime = microtime(true);
         $pool = $message->findPool($this->reverseContainer);
         $callback = $message->findCallback($this->reverseContainer);
+<<<<<<< HEAD
+        $value = $callback($item);
+=======
         $save = true;
         $value = $callback($item, $save);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         $setMetadata($item, $startTime);
         $pool->save($item->set($value));
     }

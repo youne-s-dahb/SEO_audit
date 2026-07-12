@@ -16,8 +16,13 @@
         }
     ],
     "require": {
+<<<<<<< HEAD
+        "php": ">=8.0.2",
+        "psr/cache": "^3.0"
+=======
         "php": ">=7.2.5",
         "psr/cache": "^1.0|^2.0|^3.0"
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     },
     "suggest": {
         "symfony/cache-implementation": ""
@@ -28,7 +33,11 @@
     "minimum-stability": "dev",
     "extra": {
         "branch-alias": {
+<<<<<<< HEAD
+            "dev-main": "3.0-dev"
+=======
             "dev-main": "2.5-dev"
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         },
         "thanks": {
             "name": "symfony/contracts",

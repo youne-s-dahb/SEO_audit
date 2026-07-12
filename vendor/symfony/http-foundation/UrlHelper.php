@@ -12,7 +12,10 @@
 namespace Symfony\Component\HttpFoundation;
 
 use Symfony\Component\Routing\RequestContext;
+<<<<<<< HEAD
+=======
 use Symfony\Component\Routing\RequestContextAwareInterface;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
 /**
  * A helper service for manipulating URLs within and outside the request scope.
@@ -24,6 +27,10 @@ final class UrlHelper
     private $requestStack;
     private $requestContext;
 
+<<<<<<< HEAD
+    public function __construct(RequestStack $requestStack, RequestContext $requestContext = null)
+    {
+=======
     /**
      * @param RequestContextAwareInterface|RequestContext|null $requestContext
      */
@@ -33,6 +40,7 @@ final class UrlHelper
             throw new \TypeError(__METHOD__.': Argument #2 ($requestContext) must of type Symfony\Component\Routing\RequestContextAwareInterface|Symfony\Component\Routing\RequestContext|null, '.get_debug_type($requestContext).' given.');
         }
 
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         $this->requestStack = $requestStack;
         $this->requestContext = $requestContext;
     }
@@ -81,6 +89,30 @@ final class UrlHelper
 
     private function getAbsoluteUrlFromContext(string $path): string
     {
+<<<<<<< HEAD
+        if (null === $this->requestContext || '' === $host = $this->requestContext->getHost()) {
+            return $path;
+        }
+
+        $scheme = $this->requestContext->getScheme();
+        $port = '';
+
+        if ('http' === $scheme && 80 !== $this->requestContext->getHttpPort()) {
+            $port = ':'.$this->requestContext->getHttpPort();
+        } elseif ('https' === $scheme && 443 !== $this->requestContext->getHttpsPort()) {
+            $port = ':'.$this->requestContext->getHttpsPort();
+        }
+
+        if ('#' === $path[0]) {
+            $queryString = $this->requestContext->getQueryString();
+            $path = $this->requestContext->getPathInfo().($queryString ? '?'.$queryString : '').$path;
+        } elseif ('?' === $path[0]) {
+            $path = $this->requestContext->getPathInfo().$path;
+        }
+
+        if ('/' !== $path[0]) {
+            $path = rtrim($this->requestContext->getBaseUrl(), '/').'/'.$path;
+=======
         if (null === $context = $this->requestContext) {
             return $path;
         }
@@ -111,6 +143,7 @@ final class UrlHelper
 
         if ('/' !== $path[0]) {
             $path = rtrim($context->getBaseUrl(), '/').'/'.$path;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         }
 
         return $scheme.'://'.$host.$port.$path;

@@ -38,20 +38,32 @@ interface CacheInterface
      *                                              See https://en.wikipedia.org/wiki/Cache_stampede#Probabilistic_early_expiration
      * @param array                      &$metadata The metadata of the cached item {@see ItemInterface::getMetadata()}
      *
+<<<<<<< HEAD
+     * @throws InvalidArgumentException When $key is not valid or when $beta is negative
+     */
+    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null): mixed;
+=======
      * @return mixed
      *
      * @throws InvalidArgumentException When $key is not valid or when $beta is negative
      */
     public function get(string $key, callable $callback, ?float $beta = null, ?array &$metadata = null);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Removes an item from the pool.
      *
      * @param string $key The key to delete
      *
+<<<<<<< HEAD
+     * @throws InvalidArgumentException When $key is not valid
+     *
+     * @return bool True if the item was successfully removed, false if there was any error
+=======
      * @return bool True if the item was successfully removed, false if there was any error
      *
      * @throws InvalidArgumentException When $key is not valid
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
      */
     public function delete(string $key): bool;
 }

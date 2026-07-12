@@ -28,6 +28,15 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
     use ContractsTrait;
     use ProxyTrait;
 
+<<<<<<< HEAD
+    private string $namespace = '';
+    private int $namespaceLen;
+    private string $poolHash;
+    private int $defaultLifetime;
+
+    private static \Closure $createCacheItem;
+    private static \Closure $setInnerItem;
+=======
     private $namespace = '';
     private $namespaceLen;
     private $poolHash;
@@ -35,11 +44,16 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
 
     private static $createCacheItem;
     private static $setInnerItem;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     public function __construct(CacheItemPoolInterface $pool, string $namespace = '', int $defaultLifetime = 0)
     {
         $this->pool = $pool;
+<<<<<<< HEAD
+        $this->poolHash = spl_object_hash($pool);
+=======
         $this->poolHash = $poolHash = spl_object_hash($pool);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         if ('' !== $namespace) {
             \assert('' !== CacheItem::validateKey($namespace));
             $this->namespace = $namespace;
@@ -102,7 +116,11 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function get(string $key, callable $callback, float $beta = null, array &$metadata = null): mixed
+=======
     public function get(string $key, callable $callback, ?float $beta = null, ?array &$metadata = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$this->pool instanceof CacheInterface) {
             return $this->doGet($this, $key, $callback, $beta, $metadata);
@@ -120,7 +138,11 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function getItem(mixed $key): CacheItem
+=======
     public function getItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $item = $this->pool->getItem($this->getId($key));
 
@@ -130,7 +152,11 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function getItems(array $keys = []): iterable
+=======
     public function getItems(array $keys = [])
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ($this->namespaceLen) {
             foreach ($keys as $i => $key) {
@@ -143,20 +169,30 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
+     */
+    public function hasItem(mixed $key): bool
+=======
      *
      * @return bool
      */
     public function hasItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->pool->hasItem($this->getId($key));
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
+     */
+    public function clear(string $prefix = ''): bool
+=======
      *
      * @return bool
      */
     public function clear(string $prefix = '')
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ($this->pool instanceof AdapterInterface) {
             return $this->pool->clear($this->namespace.$prefix);
@@ -167,20 +203,30 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
+     */
+    public function deleteItem(mixed $key): bool
+=======
      *
      * @return bool
      */
     public function deleteItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->pool->deleteItem($this->getId($key));
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
+     */
+    public function deleteItems(array $keys): bool
+=======
      *
      * @return bool
      */
     public function deleteItems(array $keys)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ($this->namespaceLen) {
             foreach ($keys as $i => $key) {
@@ -193,35 +239,54 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
+     */
+    public function save(CacheItemInterface $item): bool
+=======
      *
      * @return bool
      */
     public function save(CacheItemInterface $item)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->doSave($item, __FUNCTION__);
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
+     */
+    public function saveDeferred(CacheItemInterface $item): bool
+=======
      *
      * @return bool
      */
     public function saveDeferred(CacheItemInterface $item)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->doSave($item, __FUNCTION__);
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
+     */
+    public function commit(): bool
+=======
      *
      * @return bool
      */
     public function commit()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->pool->commit();
     }
 
+<<<<<<< HEAD
+    private function doSave(CacheItemInterface $item, string $method): bool
+=======
     private function doSave(CacheItemInterface $item, string $method)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$item instanceof CacheItem) {
             return false;
@@ -259,7 +324,11 @@ class ProxyAdapter implements AdapterInterface, CacheInterface, PruneableInterfa
         }
     }
 
+<<<<<<< HEAD
+    private function getId(mixed $key): string
+=======
     private function getId($key): string
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         \assert('' !== CacheItem::validateKey($key));
 

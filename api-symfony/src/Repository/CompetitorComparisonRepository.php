@@ -17,7 +17,7 @@ class CompetitorComparisonRepository extends ServiceEntityRepository
     }
 
     //    /**
-    //     * @return CompetitorComparison[] Returns an array of CompetitorComparison objects
+    //     * @return CompetitoComparaison[] Returns an array of CompetitoComparaison objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class CompetitorComparisonRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?CompetitorComparison
+    //    public function findOneBySomeField($value): ?CompetitoComparaison
     //    {
     //        return $this->createQueryBuilder('c')
     //            ->andWhere('c.exampleField = :val')

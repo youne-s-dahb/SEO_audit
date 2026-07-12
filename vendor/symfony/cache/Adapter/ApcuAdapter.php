@@ -25,7 +25,11 @@ class ApcuAdapter extends AbstractAdapter
     /**
      * @throws CacheException if APCu is not enabled
      */
+<<<<<<< HEAD
+    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $version = null, MarshallerInterface $marshaller = null)
+=======
     public function __construct(string $namespace = '', int $defaultLifetime = 0, ?string $version = null, ?MarshallerInterface $marshaller = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!static::isSupported()) {
             throw new CacheException('APCu is not enabled.');
@@ -55,11 +59,18 @@ class ApcuAdapter extends AbstractAdapter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doFetch(array $ids): iterable
+=======
     protected function doFetch(array $ids)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $unserializeCallbackHandler = ini_set('unserialize_callback_func', __CLASS__.'::handleUnserializeCallback');
         try {
             $values = [];
+<<<<<<< HEAD
+            foreach (apcu_fetch($ids, $ok) ?: [] as $k => $v) {
+=======
             $ids = array_flip($ids);
             foreach (apcu_fetch(array_keys($ids), $ok) ?: [] as $k => $v) {
                 if (!isset($ids[$k])) {
@@ -68,6 +79,7 @@ class ApcuAdapter extends AbstractAdapter
                 }
                 unset($ids[$k]);
 
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
                 if (null !== $v || $ok) {
                     $values[$k] = null !== $this->marshaller ? $this->marshaller->unmarshall($v) : $v;
                 }
@@ -84,7 +96,11 @@ class ApcuAdapter extends AbstractAdapter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doHave(string $id): bool
+=======
     protected function doHave(string $id)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return apcu_exists($id);
     }
@@ -92,7 +108,11 @@ class ApcuAdapter extends AbstractAdapter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doClear(string $namespace): bool
+=======
     protected function doClear(string $namespace)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return isset($namespace[0]) && class_exists(\APCUIterator::class, false) && ('cli' !== \PHP_SAPI || filter_var(\ini_get('apc.enable_cli'), \FILTER_VALIDATE_BOOLEAN))
             ? apcu_delete(new \APCUIterator(sprintf('/^%s/', preg_quote($namespace, '/')), \APC_ITER_KEY))
@@ -102,7 +122,11 @@ class ApcuAdapter extends AbstractAdapter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doDelete(array $ids): bool
+=======
     protected function doDelete(array $ids)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         foreach ($ids as $id) {
             apcu_delete($id);
@@ -114,7 +138,11 @@ class ApcuAdapter extends AbstractAdapter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doSave(array $values, int $lifetime): array|bool
+=======
     protected function doSave(array $values, int $lifetime)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (null !== $this->marshaller && (!$values = $this->marshaller->marshall($values, $failed))) {
             return $failed;

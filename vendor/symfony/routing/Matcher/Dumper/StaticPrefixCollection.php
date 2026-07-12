@@ -23,22 +23,38 @@ use Symfony\Component\Routing\RouteCollection;
  */
 class StaticPrefixCollection
 {
+<<<<<<< HEAD
+    private string $prefix;
+=======
     private $prefix;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @var string[]
      */
+<<<<<<< HEAD
+    private array $staticPrefixes = [];
+=======
     private $staticPrefixes = [];
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @var string[]
      */
+<<<<<<< HEAD
+    private array $prefixes = [];
+=======
     private $prefixes = [];
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @var array[]|self[]
      */
+<<<<<<< HEAD
+    private array $items = [];
+=======
     private $items = [];
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     public function __construct(string $prefix = '/')
     {
@@ -60,10 +76,15 @@ class StaticPrefixCollection
 
     /**
      * Adds a route to a group.
+<<<<<<< HEAD
+     */
+    public function addRoute(string $prefix, array|StaticPrefixCollection $route)
+=======
      *
      * @param array|self $route
      */
     public function addRoute(string $prefix, $route)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         [$prefix, $staticPrefix] = $this->getCommonPrefix($prefix, $prefix);
 
@@ -200,7 +221,11 @@ class StaticPrefixCollection
 
     public static function handleError(int $type, string $msg)
     {
+<<<<<<< HEAD
+        return str_contains($msg, 'Compilation failed: lookbehind assertion is not fixed length');
+=======
         return str_contains($msg, 'Compilation failed: lookbehind assertion is not fixed length')
             || str_contains($msg, 'Compilation failed: length of lookbehind assertion is not limited');
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     }
 }

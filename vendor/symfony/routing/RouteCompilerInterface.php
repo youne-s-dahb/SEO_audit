@@ -21,10 +21,17 @@ interface RouteCompilerInterface
     /**
      * Compiles the current route instance.
      *
+<<<<<<< HEAD
+     * @throws \LogicException If the Route cannot be compiled because the
+     *                         path or host pattern is invalid
+     */
+    public static function compile(Route $route): CompiledRoute;
+=======
      * @return CompiledRoute
      *
      * @throws \LogicException If the Route cannot be compiled because the
      *                         path or host pattern is invalid
      */
     public static function compile(Route $route);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 }

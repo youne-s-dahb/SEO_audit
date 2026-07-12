@@ -24,6 +24,21 @@ interface SessionStorageInterface
     /**
      * Starts the session.
      *
+<<<<<<< HEAD
+     * @throws \RuntimeException if something goes wrong starting the session
+     */
+    public function start(): bool;
+
+    /**
+     * Checks if the session is started.
+     */
+    public function isStarted(): bool;
+
+    /**
+     * Returns the session ID.
+     */
+    public function getId(): string;
+=======
      * @return bool
      *
      * @throws \RuntimeException if something goes wrong starting the session
@@ -43,6 +58,7 @@ interface SessionStorageInterface
      * @return string
      */
     public function getId();
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Sets the session ID.
@@ -51,10 +67,15 @@ interface SessionStorageInterface
 
     /**
      * Returns the session name.
+<<<<<<< HEAD
+     */
+    public function getName(): string;
+=======
      *
      * @return string
      */
     public function getName();
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Sets the session name.
@@ -80,6 +101,17 @@ interface SessionStorageInterface
      * Otherwise session data could get lost again for concurrent requests with the
      * new ID. One result could be that you get logged out after just logging in.
      *
+<<<<<<< HEAD
+     * @param bool $destroy  Destroy session when regenerating?
+     * @param int  $lifetime Sets the cookie lifetime for the session cookie. A null value
+     *                       will leave the system settings unchanged, 0 sets the cookie
+     *                       to expire with browser session. Time is in seconds, and is
+     *                       not a Unix timestamp.
+     *
+     * @throws \RuntimeException If an error occurs while regenerating this storage
+     */
+    public function regenerate(bool $destroy = false, int $lifetime = null): bool;
+=======
      * @param bool     $destroy  Destroy session when regenerating?
      * @param int|null $lifetime Sets the cookie lifetime for the session cookie. A null value
      *                           will leave the system settings unchanged, 0 sets the cookie
@@ -91,6 +123,7 @@ interface SessionStorageInterface
      * @throws \RuntimeException If an error occurs while regenerating this storage
      */
     public function regenerate(bool $destroy = false, ?int $lifetime = null);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Force the session to be saved and closed.
@@ -113,19 +146,29 @@ interface SessionStorageInterface
     /**
      * Gets a SessionBagInterface by name.
      *
+<<<<<<< HEAD
+     * @throws \InvalidArgumentException If the bag does not exist
+     */
+    public function getBag(string $name): SessionBagInterface;
+=======
      * @return SessionBagInterface
      *
      * @throws \InvalidArgumentException If the bag does not exist
      */
     public function getBag(string $name);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Registers a SessionBagInterface for use.
      */
     public function registerBag(SessionBagInterface $bag);
 
+<<<<<<< HEAD
+    public function getMetadataBag(): MetadataBag;
+=======
     /**
      * @return MetadataBag
      */
     public function getMetadataBag();
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 }

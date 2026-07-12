@@ -32,7 +32,11 @@ class PhpProcess extends Process
      * @param int         $timeout The timeout in seconds
      * @param array|null  $php     Path to the PHP binary to use with any additional arguments
      */
+<<<<<<< HEAD
+    public function __construct(string $script, string $cwd = null, array $env = null, int $timeout = 60, array $php = null)
+=======
     public function __construct(string $script, ?string $cwd = null, ?array $env = null, int $timeout = 60, ?array $php = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (null === $php) {
             $executableFinder = new PhpExecutableFinder();
@@ -53,7 +57,11 @@ class PhpProcess extends Process
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public static function fromShellCommandline(string $command, string $cwd = null, array $env = null, mixed $input = null, ?float $timeout = 60): static
+=======
     public static function fromShellCommandline(string $command, ?string $cwd = null, ?array $env = null, $input = null, ?float $timeout = 60)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         throw new LogicException(sprintf('The "%s()" method cannot be called when using "%s".', __METHOD__, self::class));
     }
@@ -61,7 +69,11 @@ class PhpProcess extends Process
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function start(callable $callback = null, array $env = [])
+=======
     public function start(?callable $callback = null, array $env = [])
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (null === $this->getCommandLine()) {
             throw new RuntimeException('Unable to find the PHP executable.');

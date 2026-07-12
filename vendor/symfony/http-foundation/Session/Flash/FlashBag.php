@@ -18,9 +18,15 @@ namespace Symfony\Component\HttpFoundation\Session\Flash;
  */
 class FlashBag implements FlashBagInterface
 {
+<<<<<<< HEAD
+    private string $name = 'flashes';
+    private array $flashes = [];
+    private string $storageKey;
+=======
     private $name = 'flashes';
     private $flashes = [];
     private $storageKey;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @param string $storageKey The key used to store flashes in the session
@@ -33,7 +39,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function getName(): string
+=======
     public function getName()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->name;
     }
@@ -54,7 +64,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function add(string $type, mixed $message)
+=======
     public function add(string $type, $message)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->flashes[$type][] = $message;
     }
@@ -62,7 +76,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function peek(string $type, array $default = []): array
+=======
     public function peek(string $type, array $default = [])
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->has($type) ? $this->flashes[$type] : $default;
     }
@@ -70,7 +88,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function peekAll(): array
+=======
     public function peekAll()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->flashes;
     }
@@ -78,7 +100,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function get(string $type, array $default = []): array
+=======
     public function get(string $type, array $default = [])
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$this->has($type)) {
             return $default;
@@ -94,7 +120,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function all(): array
+=======
     public function all()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $return = $this->peekAll();
         $this->flashes = [];
@@ -105,7 +135,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function set(string $type, string|array $messages)
+=======
     public function set(string $type, $messages)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->flashes[$type] = (array) $messages;
     }
@@ -121,7 +155,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function has(string $type): bool
+=======
     public function has(string $type)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return \array_key_exists($type, $this->flashes) && $this->flashes[$type];
     }
@@ -129,7 +167,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function keys(): array
+=======
     public function keys()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return array_keys($this->flashes);
     }
@@ -137,7 +179,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function getStorageKey(): string
+=======
     public function getStorageKey()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->storageKey;
     }
@@ -145,7 +191,11 @@ class FlashBag implements FlashBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function clear(): mixed
+=======
     public function clear()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->all();
     }

@@ -17,12 +17,21 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class ResponseCookieValueSame extends Constraint
 {
+<<<<<<< HEAD
+    private string $name;
+    private string $value;
+    private string $path;
+    private ?string $domain;
+
+    public function __construct(string $name, string $value, string $path = '/', string $domain = null)
+=======
     private $name;
     private $value;
     private $path;
     private $domain;
 
     public function __construct(string $name, string $value, string $path = '/', ?string $domain = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->name = $name;
         $this->value = $value;

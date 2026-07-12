@@ -48,6 +48,11 @@ class RedirectResponse extends Response
     }
 
     /**
+<<<<<<< HEAD
+     * Returns the target URL.
+     */
+    public function getTargetUrl(): string
+=======
      * Factory method for chainability.
      *
      * @param string $url The URL to redirect to
@@ -69,6 +74,7 @@ class RedirectResponse extends Response
      * @return string
      */
     public function getTargetUrl()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->targetUrl;
     }
@@ -80,7 +86,11 @@ class RedirectResponse extends Response
      *
      * @throws \InvalidArgumentException
      */
+<<<<<<< HEAD
+    public function setTargetUrl(string $url): static
+=======
     public function setTargetUrl(string $url)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ('' === $url) {
             throw new \InvalidArgumentException('Cannot redirect to an empty URL.');
@@ -103,7 +113,10 @@ class RedirectResponse extends Response
 </html>', htmlspecialchars($url, \ENT_QUOTES, 'UTF-8')));
 
         $this->headers->set('Location', $url);
+<<<<<<< HEAD
+=======
         $this->headers->set('Content-Type', 'text/html; charset=utf-8');
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
         return $this;
     }

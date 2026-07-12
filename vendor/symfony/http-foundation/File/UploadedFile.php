@@ -31,10 +31,17 @@ use Symfony\Component\Mime\MimeTypes;
  */
 class UploadedFile extends File
 {
+<<<<<<< HEAD
+    private bool $test;
+    private string $originalName;
+    private string $mimeType;
+    private int $error;
+=======
     private $test;
     private $originalName;
     private $mimeType;
     private $error;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Accepts the information of the uploaded file as provided by the PHP global $_FILES.
@@ -60,7 +67,11 @@ class UploadedFile extends File
      * @throws FileException         If file_uploads is disabled
      * @throws FileNotFoundException If the file does not exist
      */
+<<<<<<< HEAD
+    public function __construct(string $path, string $originalName, string $mimeType = null, int $error = null, bool $test = false)
+=======
     public function __construct(string $path, string $originalName, ?string $mimeType = null, ?int $error = null, bool $test = false)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->originalName = $this->getName($originalName);
         $this->mimeType = $mimeType ?: 'application/octet-stream';
@@ -74,11 +85,17 @@ class UploadedFile extends File
      * Returns the original file name.
      *
      * It is extracted from the request from which the file has been uploaded.
+<<<<<<< HEAD
+     * Then it should not be considered as a safe value.
+     */
+    public function getClientOriginalName(): string
+=======
      * This should not be considered as a safe value to use for a file name on your servers.
      *
      * @return string
      */
     public function getClientOriginalName()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->originalName;
     }
@@ -87,11 +104,17 @@ class UploadedFile extends File
      * Returns the original file extension.
      *
      * It is extracted from the original file name that was uploaded.
+<<<<<<< HEAD
+     * Then it should not be considered as a safe value.
+     */
+    public function getClientOriginalExtension(): string
+=======
      * This should not be considered as a safe value to use for a file name on your servers.
      *
      * @return string
      */
     public function getClientOriginalExtension()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return pathinfo($this->originalName, \PATHINFO_EXTENSION);
     }
@@ -105,11 +128,17 @@ class UploadedFile extends File
      * For a trusted mime type, use getMimeType() instead (which guesses the mime
      * type based on the file content).
      *
+<<<<<<< HEAD
+     * @see getMimeType()
+     */
+    public function getClientMimeType(): string
+=======
      * @return string
      *
      * @see getMimeType()
      */
     public function getClientMimeType()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->mimeType;
     }
@@ -126,12 +155,19 @@ class UploadedFile extends File
      * For a trusted extension, use guessExtension() instead (which guesses
      * the extension based on the guessed mime type for the file).
      *
+<<<<<<< HEAD
+     * @see guessExtension()
+     * @see getClientMimeType()
+     */
+    public function guessClientExtension(): ?string
+=======
      * @return string|null
      *
      * @see guessExtension()
      * @see getClientMimeType()
      */
     public function guessClientExtension()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!class_exists(MimeTypes::class)) {
             throw new \LogicException('You cannot guess the extension as the Mime component is not installed. Try running "composer require symfony/mime".');
@@ -145,20 +181,30 @@ class UploadedFile extends File
      *
      * If the upload was successful, the constant UPLOAD_ERR_OK is returned.
      * Otherwise one of the other UPLOAD_ERR_XXX constants is returned.
+<<<<<<< HEAD
+     */
+    public function getError(): int
+=======
      *
      * @return int
      */
     public function getError()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->error;
     }
 
     /**
      * Returns whether the file has been uploaded with HTTP and no error occurred.
+<<<<<<< HEAD
+     */
+    public function isValid(): bool
+=======
      *
      * @return bool
      */
     public function isValid()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $isOk = \UPLOAD_ERR_OK === $this->error;
 
@@ -168,11 +214,17 @@ class UploadedFile extends File
     /**
      * Moves the file to a new location.
      *
+<<<<<<< HEAD
+     * @throws FileException if, for any reason, the file could not have been moved
+     */
+    public function move(string $directory, string $name = null): File
+=======
      * @return File
      *
      * @throws FileException if, for any reason, the file could not have been moved
      */
     public function move(string $directory, ?string $name = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ($this->isValid()) {
             if ($this->test) {
@@ -221,7 +273,11 @@ class UploadedFile extends File
      *
      * @return int|float The maximum size of an uploaded file in bytes (returns float if size > PHP_INT_MAX)
      */
+<<<<<<< HEAD
+    public static function getMaxFilesize(): int|float
+=======
     public static function getMaxFilesize()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $sizePostMax = self::parseFilesize(\ini_get('post_max_size'));
         $sizeUploadMax = self::parseFilesize(\ini_get('upload_max_filesize'));
@@ -229,12 +285,16 @@ class UploadedFile extends File
         return min($sizePostMax ?: \PHP_INT_MAX, $sizeUploadMax ?: \PHP_INT_MAX);
     }
 
+<<<<<<< HEAD
+    private static function parseFilesize(string $size): int|float
+=======
     /**
      * Returns the given size from an ini value in bytes.
      *
      * @return int|float Returns float if size > PHP_INT_MAX
      */
     private static function parseFilesize(string $size)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ('' === $size) {
             return 0;
@@ -266,10 +326,15 @@ class UploadedFile extends File
 
     /**
      * Returns an informative upload error message.
+<<<<<<< HEAD
+     */
+    public function getErrorMessage(): string
+=======
      *
      * @return string
      */
     public function getErrorMessage()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         static $errors = [
             \UPLOAD_ERR_INI_SIZE => 'The file "%s" exceeds your upload_max_filesize ini directive (limit is %d KiB).',

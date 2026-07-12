@@ -23,6 +23,17 @@ final class CacheItem implements ItemInterface
 {
     private const METADATA_EXPIRY_OFFSET = 1527506807;
 
+<<<<<<< HEAD
+    protected string $key;
+    protected mixed $value = null;
+    protected bool $isHit = false;
+    protected float|int|null $expiry = null;
+    protected array $metadata = [];
+    protected array $newMetadata = [];
+    protected $innerItem = null;
+    protected ?string $poolHash = null;
+    protected bool $isTaggable = false;
+=======
     protected $key;
     protected $value;
     protected $isHit = false;
@@ -32,6 +43,7 @@ final class CacheItem implements ItemInterface
     protected $innerItem;
     protected $poolHash;
     protected $isTaggable = false;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * {@inheritdoc}
@@ -43,10 +55,15 @@ final class CacheItem implements ItemInterface
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
+     */
+    public function get(): mixed
+=======
      *
      * @return mixed
      */
     public function get()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->value;
     }
@@ -64,7 +81,11 @@ final class CacheItem implements ItemInterface
      *
      * @return $this
      */
+<<<<<<< HEAD
+    public function set($value): static
+=======
     public function set($value): self
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->value = $value;
 
@@ -76,6 +97,11 @@ final class CacheItem implements ItemInterface
      *
      * @return $this
      */
+<<<<<<< HEAD
+    public function expiresAt(?\DateTimeInterface $expiration): static
+    {
+        $this->expiry = null !== $expiration ? (float) $expiration->format('U.u') : null;
+=======
     public function expiresAt($expiration): self
     {
         if (null === $expiration) {
@@ -85,6 +111,7 @@ final class CacheItem implements ItemInterface
         } else {
             throw new InvalidArgumentException(sprintf('Expiration date must implement DateTimeInterface or be null, "%s" given.', get_debug_type($expiration)));
         }
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
         return $this;
     }
@@ -94,7 +121,11 @@ final class CacheItem implements ItemInterface
      *
      * @return $this
      */
+<<<<<<< HEAD
+    public function expiresAfter(mixed $time): static
+=======
     public function expiresAfter($time): self
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (null === $time) {
             $this->expiry = null;
@@ -112,7 +143,11 @@ final class CacheItem implements ItemInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function tag(mixed $tags): static
+=======
     public function tag($tags): ItemInterface
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$this->isTaggable) {
             throw new LogicException(sprintf('Cache item "%s" comes from a non tag-aware pool: you cannot tag it.', $this->key));
@@ -121,8 +156,13 @@ final class CacheItem implements ItemInterface
             $tags = [$tags];
         }
         foreach ($tags as $tag) {
+<<<<<<< HEAD
+            if (!\is_string($tag) && !$tag instanceof \Stringable) {
+                throw new InvalidArgumentException(sprintf('Cache tag must be string or object that implements __toString(), "%s" given.', get_debug_type($tag)));
+=======
             if (!\is_string($tag) && !(\is_object($tag) && method_exists($tag, '__toString'))) {
                 throw new InvalidArgumentException(sprintf('Cache tag must be string or object that implements __toString(), "%s" given.', \is_object($tag) ? \get_class($tag) : \gettype($tag)));
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             }
             $tag = (string) $tag;
             if (isset($this->newMetadata[self::METADATA_TAGS][$tag])) {

@@ -18,8 +18,13 @@ namespace Symfony\Component\HttpFoundation\Session\Attribute;
  */
 class AttributeBag implements AttributeBagInterface, \IteratorAggregate, \Countable
 {
+<<<<<<< HEAD
+    private string $name = 'attributes';
+    private string $storageKey;
+=======
     private $name = 'attributes';
     private $storageKey;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     protected $attributes = [];
 
@@ -34,7 +39,11 @@ class AttributeBag implements AttributeBagInterface, \IteratorAggregate, \Counta
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function getName(): string
+=======
     public function getName()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->name;
     }
@@ -55,7 +64,11 @@ class AttributeBag implements AttributeBagInterface, \IteratorAggregate, \Counta
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function getStorageKey(): string
+=======
     public function getStorageKey()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->storageKey;
     }
@@ -63,7 +76,11 @@ class AttributeBag implements AttributeBagInterface, \IteratorAggregate, \Counta
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function has(string $name): bool
+=======
     public function has(string $name)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return \array_key_exists($name, $this->attributes);
     }
@@ -71,7 +88,11 @@ class AttributeBag implements AttributeBagInterface, \IteratorAggregate, \Counta
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function get(string $name, mixed $default = null): mixed
+=======
     public function get(string $name, $default = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return \array_key_exists($name, $this->attributes) ? $this->attributes[$name] : $default;
     }
@@ -79,7 +100,11 @@ class AttributeBag implements AttributeBagInterface, \IteratorAggregate, \Counta
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function set(string $name, mixed $value)
+=======
     public function set(string $name, $value)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->attributes[$name] = $value;
     }
@@ -87,7 +112,11 @@ class AttributeBag implements AttributeBagInterface, \IteratorAggregate, \Counta
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function all(): array
+=======
     public function all()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->attributes;
     }
@@ -106,7 +135,11 @@ class AttributeBag implements AttributeBagInterface, \IteratorAggregate, \Counta
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function remove(string $name): mixed
+=======
     public function remove(string $name)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $retval = null;
         if (\array_key_exists($name, $this->attributes)) {
@@ -120,7 +153,11 @@ class AttributeBag implements AttributeBagInterface, \IteratorAggregate, \Counta
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function clear(): mixed
+=======
     public function clear()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $return = $this->attributes;
         $this->attributes = [];
@@ -133,19 +170,28 @@ class AttributeBag implements AttributeBagInterface, \IteratorAggregate, \Counta
      *
      * @return \ArrayIterator<string, mixed>
      */
+<<<<<<< HEAD
+    public function getIterator(): \ArrayIterator
+=======
     #[\ReturnTypeWillChange]
     public function getIterator()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return new \ArrayIterator($this->attributes);
     }
 
     /**
      * Returns the number of attributes.
+<<<<<<< HEAD
+     */
+    public function count(): int
+=======
      *
      * @return int
      */
     #[\ReturnTypeWillChange]
     public function count()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return \count($this->attributes);
     }

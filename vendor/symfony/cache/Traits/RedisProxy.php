@@ -19,8 +19,13 @@ namespace Symfony\Component\Cache\Traits;
 class RedisProxy
 {
     private $redis;
+<<<<<<< HEAD
+    private \Closure $initializer;
+    private bool $ready = false;
+=======
     private $initializer;
     private $ready = false;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     public function __construct(\Redis $redis, \Closure $initializer)
     {

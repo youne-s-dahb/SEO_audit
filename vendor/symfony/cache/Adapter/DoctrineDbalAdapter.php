@@ -11,18 +11,25 @@
 
 namespace Symfony\Component\Cache\Adapter;
 
+<<<<<<< HEAD
+=======
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Configuration;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\ServerInfoAwareConnection;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Exception as DBALException;
 use Doctrine\DBAL\Exception\TableNotFoundException;
 use Doctrine\DBAL\ParameterType;
+<<<<<<< HEAD
+use Doctrine\DBAL\Schema\Schema;
+=======
 use Doctrine\DBAL\Schema\DefaultSchemaManagerFactory;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\ServerVersionProvider;
 use Doctrine\DBAL\Tools\DsnParser;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 use Symfony\Component\Cache\Exception\InvalidArgumentException;
 use Symfony\Component\Cache\Marshaller\DefaultMarshaller;
 use Symfony\Component\Cache\Marshaller\MarshallerInterface;
@@ -34,6 +41,16 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
 
     private $marshaller;
     private $conn;
+<<<<<<< HEAD
+    private string $platformName;
+    private string $serverVersion;
+    private string $table = 'cache_items';
+    private string $idCol = 'item_id';
+    private string $dataCol = 'item_data';
+    private string $lifetimeCol = 'item_lifetime';
+    private string $timeCol = 'item_time';
+    private string $namespace;
+=======
     private $platformName;
     private $serverVersion;
     private $table = 'cache_items';
@@ -42,6 +59,7 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
     private $lifetimeCol = 'item_lifetime';
     private $timeCol = 'item_time';
     private $namespace;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * You can either pass an existing database Doctrine DBAL Connection or
@@ -57,11 +75,17 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
      *  * db_lifetime_col: The column where to store the lifetime [default: item_lifetime]
      *  * db_time_col: The column where to store the timestamp [default: item_time]
      *
+<<<<<<< HEAD
+     * @throws InvalidArgumentException When namespace contains invalid characters
+     */
+    public function __construct(Connection|string $connOrDsn, string $namespace = '', int $defaultLifetime = 0, array $options = [], MarshallerInterface $marshaller = null)
+=======
      * @param Connection|string $connOrDsn
      *
      * @throws InvalidArgumentException When namespace contains invalid characters
      */
     public function __construct($connOrDsn, string $namespace = '', int $defaultLifetime = 0, array $options = [], ?MarshallerInterface $marshaller = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (isset($namespace[0]) && preg_match('#[^-+.A-Za-z0-9]#', $namespace, $match)) {
             throw new InvalidArgumentException(sprintf('Namespace contains "%s" but only characters in [-+.A-Za-z0-9] are allowed.', $match[0]));
@@ -69,6 +93,13 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
 
         if ($connOrDsn instanceof Connection) {
             $this->conn = $connOrDsn;
+<<<<<<< HEAD
+        } else {
+            if (!class_exists(DriverManager::class)) {
+                throw new InvalidArgumentException(sprintf('Failed to parse the DSN "%s". Try running "composer require doctrine/dbal".', $connOrDsn));
+            }
+            $this->conn = DriverManager::getConnection(['url' => $connOrDsn]);
+=======
         } elseif (\is_string($connOrDsn)) {
             if (!class_exists(DriverManager::class)) {
                 throw new InvalidArgumentException('Failed to parse DSN. Try running "composer require doctrine/dbal".');
@@ -97,6 +128,7 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
             $this->conn = DriverManager::getConnection($params, $config);
         } else {
             throw new \TypeError(sprintf('Argument 1 passed to "%s()" must be "%s" or string, "%s" given.', __METHOD__, Connection::class, get_debug_type($connOrDsn)));
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         }
 
         $this->table = $options['db_table'] ?? $this->table;
@@ -118,7 +150,11 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
      *
      * @throws DBALException When the table already exists
      */
+<<<<<<< HEAD
+    public function createTable(): void
+=======
     public function createTable()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $schema = new Schema();
         $this->addTableToSchema($schema);
@@ -182,7 +218,11 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
             $ids,
         ], [
             ParameterType::INTEGER,
+<<<<<<< HEAD
+            Connection::PARAM_STR_ARRAY,
+=======
             class_exists(ArrayParameterType::class) ? ArrayParameterType::STRING : Connection::PARAM_STR_ARRAY,
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         ])->iterateNumeric();
 
         foreach ($result as $row) {
@@ -200,7 +240,11 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
                 $expired,
             ], [
                 ParameterType::INTEGER,
+<<<<<<< HEAD
+                Connection::PARAM_STR_ARRAY,
+=======
                 class_exists(ArrayParameterType::class) ? ArrayParameterType::STRING : Connection::PARAM_STR_ARRAY,
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             ]);
         }
     }
@@ -234,8 +278,12 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
                 $sql = "TRUNCATE TABLE $this->table";
             }
         } else {
+<<<<<<< HEAD
+            $sql = "DELETE FROM $this->table WHERE $this->idCol LIKE '$namespace%'";
+=======
             $namespace = str_replace('_', '!_', $namespace);
             $sql = "DELETE FROM $this->table WHERE $this->idCol LIKE '$namespace%' ESCAPE '!'";
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         }
 
         try {
@@ -253,7 +301,11 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
     {
         $sql = "DELETE FROM $this->table WHERE $this->idCol IN (?)";
         try {
+<<<<<<< HEAD
+            $this->conn->executeStatement($sql, [array_values($ids)], [Connection::PARAM_STR_ARRAY]);
+=======
             $this->conn->executeStatement($sql, [array_values($ids)], [class_exists(ArrayParameterType::class) ? ArrayParameterType::STRING : Connection::PARAM_STR_ARRAY]);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         } catch (TableNotFoundException $e) {
         }
 
@@ -263,7 +315,11 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    protected function doSave(array $values, int $lifetime): array|bool
+=======
     protected function doSave(array $values, int $lifetime)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$values = $this->marshaller->marshall($values, $failed)) {
             return $failed;
@@ -312,6 +368,37 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
             $stmt = $this->conn->prepare($sql);
         }
 
+<<<<<<< HEAD
+        // $id and $data are defined later in the loop. Binding is done by reference, values are read on execution.
+        if ('sqlsrv' === $platformName || 'oci' === $platformName) {
+            $stmt->bindParam(1, $id);
+            $stmt->bindParam(2, $id);
+            $stmt->bindParam(3, $data, ParameterType::LARGE_OBJECT);
+            $stmt->bindValue(4, $lifetime, ParameterType::INTEGER);
+            $stmt->bindValue(5, $now, ParameterType::INTEGER);
+            $stmt->bindParam(6, $data, ParameterType::LARGE_OBJECT);
+            $stmt->bindValue(7, $lifetime, ParameterType::INTEGER);
+            $stmt->bindValue(8, $now, ParameterType::INTEGER);
+        } elseif (null !== $platformName) {
+            $stmt->bindParam(1, $id);
+            $stmt->bindParam(2, $data, ParameterType::LARGE_OBJECT);
+            $stmt->bindValue(3, $lifetime, ParameterType::INTEGER);
+            $stmt->bindValue(4, $now, ParameterType::INTEGER);
+        } else {
+            $stmt->bindParam(1, $data, ParameterType::LARGE_OBJECT);
+            $stmt->bindValue(2, $lifetime, ParameterType::INTEGER);
+            $stmt->bindValue(3, $now, ParameterType::INTEGER);
+            $stmt->bindParam(4, $id);
+
+            $insertStmt = $this->conn->prepare($insertSql);
+            $insertStmt->bindParam(1, $id);
+            $insertStmt->bindParam(2, $data, ParameterType::LARGE_OBJECT);
+            $insertStmt->bindValue(3, $lifetime, ParameterType::INTEGER);
+            $insertStmt->bindValue(4, $now, ParameterType::INTEGER);
+        }
+
+        foreach ($values as $id => $data) {
+=======
         if ('sqlsrv' === $platformName || 'oci' === $platformName) {
             $bind = static function ($id, $data) use ($stmt) {
                 $stmt->bindValue(1, $id);
@@ -348,6 +435,7 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
 
         foreach ($values as $id => $data) {
             $bind($id, $data);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             try {
                 $rowCount = $stmt->executeStatement();
             } catch (TableNotFoundException $e) {
@@ -368,6 +456,8 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
         return $failed;
     }
 
+<<<<<<< HEAD
+=======
     /**
      * @internal
      */
@@ -384,6 +474,7 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
         return parent::getId($key);
     }
 
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     private function getPlatformName(): string
     {
         if (isset($this->platformName)) {
@@ -422,6 +513,14 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
             return $this->serverVersion;
         }
 
+<<<<<<< HEAD
+        $conn = $this->conn->getWrappedConnection();
+        if ($conn instanceof ServerInfoAwareConnection) {
+            return $this->serverVersion = $conn->getServerVersion();
+        }
+
+        return $this->serverVersion = '0';
+=======
         if ($this->conn instanceof ServerVersionProvider || $this->conn instanceof ServerInfoAwareConnection) {
             return $this->serverVersion = $this->conn->getServerVersion();
         }
@@ -430,6 +529,7 @@ class DoctrineDbalAdapter extends AbstractAdapter implements PruneableInterface
         $conn = method_exists($this->conn, 'getNativeConnection') ? $this->conn->getNativeConnection() : $this->conn->getWrappedConnection();
 
         return $this->serverVersion = $conn->getAttribute(\PDO::ATTR_SERVER_VERSION);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     }
 
     private function addTableToSchema(Schema $schema): void

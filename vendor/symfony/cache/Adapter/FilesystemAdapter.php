@@ -20,7 +20,11 @@ class FilesystemAdapter extends AbstractAdapter implements PruneableInterface
 {
     use FilesystemTrait;
 
+<<<<<<< HEAD
+    public function __construct(string $namespace = '', int $defaultLifetime = 0, string $directory = null, MarshallerInterface $marshaller = null)
+=======
     public function __construct(string $namespace = '', int $defaultLifetime = 0, ?string $directory = null, ?MarshallerInterface $marshaller = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->marshaller = $marshaller ?? new DefaultMarshaller();
         parent::__construct('', $defaultLifetime);

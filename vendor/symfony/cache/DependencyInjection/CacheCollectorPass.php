@@ -26,6 +26,8 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class CacheCollectorPass implements CompilerPassInterface
 {
+<<<<<<< HEAD
+=======
     private $dataCollectorCacheId;
     private $cachePoolTag;
     private $cachePoolRecorderInnerSuffix;
@@ -41,16 +43,25 @@ class CacheCollectorPass implements CompilerPassInterface
         $this->cachePoolRecorderInnerSuffix = $cachePoolRecorderInnerSuffix;
     }
 
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     /**
      * {@inheritdoc}
      */
     public function process(ContainerBuilder $container)
     {
+<<<<<<< HEAD
+        if (!$container->hasDefinition('data_collector.cache')) {
+            return;
+        }
+
+        foreach ($container->findTaggedServiceIds('cache.pool') as $id => $attributes) {
+=======
         if (!$container->hasDefinition($this->dataCollectorCacheId)) {
             return;
         }
 
         foreach ($container->findTaggedServiceIds($this->cachePoolTag) as $id => $attributes) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             $poolName = $attributes[0]['name'] ?? $id;
 
             $this->addToCollector($id, $poolName, $container);
@@ -64,13 +75,21 @@ class CacheCollectorPass implements CompilerPassInterface
             return;
         }
 
+<<<<<<< HEAD
+        $collectorDefinition = $container->getDefinition('data_collector.cache');
+=======
         $collectorDefinition = $container->getDefinition($this->dataCollectorCacheId);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         $recorder = new Definition(is_subclass_of($definition->getClass(), TagAwareAdapterInterface::class) ? TraceableTagAwareAdapter::class : TraceableAdapter::class);
         $recorder->setTags($definition->getTags());
         if (!$definition->isPublic() || !$definition->isPrivate()) {
             $recorder->setPublic($definition->isPublic());
         }
+<<<<<<< HEAD
+        $recorder->setArguments([new Reference($innerId = $id.'.recorder_inner')]);
+=======
         $recorder->setArguments([new Reference($innerId = $id.$this->cachePoolRecorderInnerSuffix)]);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
         foreach ($definition->getMethodCalls() as [$method, $args]) {
             if ('setCallbackWrapper' !== $method || !$args[0] instanceof Definition || !($args[0]->getArguments()[2] ?? null) instanceof Definition) {

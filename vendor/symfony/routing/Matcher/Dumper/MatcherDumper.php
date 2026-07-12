@@ -30,7 +30,11 @@ abstract class MatcherDumper implements MatcherDumperInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
+    public function getRoutes(): RouteCollection
+=======
     public function getRoutes()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->routes;
     }

@@ -33,21 +33,32 @@ class HeaderUtils
      *
      * Example:
      *
+<<<<<<< HEAD
+     *     HeaderUtils::split("da, en-gb;q=0.8", ",;")
+     *     // => ['da'], ['en-gb', 'q=0.8']]
+     *
+     * @param string $separators List of characters to split on, ordered by
+     *                           precedence, e.g. ",", ";=", or ",;="
+=======
      *     HeaderUtils::split('da, en-gb;q=0.8', ',;')
      *     // => ['da'], ['en-gb', 'q=0.8']]
      *
      * @param string $separators List of characters to split on, ordered by
      *                           precedence, e.g. ',', ';=', or ',;='
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
      *
      * @return array Nested array with as many levels as there are characters in
      *               $separators
      */
     public static function split(string $header, string $separators): array
     {
+<<<<<<< HEAD
+=======
         if ('' === $separators) {
             throw new \InvalidArgumentException('At least one separator must be specified.');
         }
 
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         $quotedSeparators = preg_quote($separators, '/');
 
         preg_match_all('
@@ -81,8 +92,13 @@ class HeaderUtils
      *
      * Example:
      *
+<<<<<<< HEAD
+     *     HeaderUtils::combine([["foo", "abc"], ["bar"]])
+     *     // => ["foo" => "abc", "bar" => true]
+=======
      *     HeaderUtils::combine([['foo', 'abc'], ['bar']])
      *     // => ['foo' => 'abc', 'bar' => true]
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
      */
     public static function combine(array $parts): array
     {
@@ -99,13 +115,21 @@ class HeaderUtils
     /**
      * Joins an associative array into a string for use in an HTTP header.
      *
+<<<<<<< HEAD
+     * The key and value of each entry are joined with "=", and all entries
+=======
      * The key and value of each entry are joined with '=', and all entries
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
      * are joined with the specified separator and an additional space (for
      * readability). Values are quoted if necessary.
      *
      * Example:
      *
+<<<<<<< HEAD
+     *     HeaderUtils::toString(["foo" => "abc", "bar" => true, "baz" => "a b c"], ",")
+=======
      *     HeaderUtils::toString(['foo' => 'abc', 'bar' => true, 'baz' => 'a b c'], ',')
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
      *     // => 'foo=abc, bar, baz="a b c"'
      */
     public static function toString(array $assoc, string $separator): string
@@ -142,7 +166,11 @@ class HeaderUtils
      * Decodes a quoted string.
      *
      * If passed an unquoted string that matches the "token" construct (as
+<<<<<<< HEAD
+     * defined in the HTTP specification), it is passed through verbatimly.
+=======
      * defined in the HTTP specification), it is passed through verbatim.
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
      */
     public static function unquote(string $s): string
     {
@@ -256,6 +284,22 @@ class HeaderUtils
     private static function groupParts(array $matches, string $separators, bool $first = true): array
     {
         $separator = $separators[0];
+<<<<<<< HEAD
+        $partSeparators = substr($separators, 1);
+
+        $i = 0;
+        $partMatches = [];
+        $previousMatchWasSeparator = false;
+        foreach ($matches as $match) {
+            if (!$first && $previousMatchWasSeparator && isset($match['separator']) && $match['separator'] === $separator) {
+                $previousMatchWasSeparator = true;
+                $partMatches[$i][] = $match;
+            } elseif (isset($match['separator']) && $match['separator'] === $separator) {
+                $previousMatchWasSeparator = true;
+                ++$i;
+            } else {
+                $previousMatchWasSeparator = false;
+=======
         $separators = substr($separators, 1) ?: '';
         $i = 0;
 
@@ -281,15 +325,34 @@ class HeaderUtils
             if (($match['separator'] ?? null) === $separator) {
                 ++$i;
             } else {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
                 $partMatches[$i][] = $match;
             }
         }
 
+<<<<<<< HEAD
+        $parts = [];
+        if ($partSeparators) {
+            foreach ($partMatches as $matches) {
+                $parts[] = self::groupParts($matches, $partSeparators, false);
+            }
+        } else {
+            foreach ($partMatches as $matches) {
+                $parts[] = self::unquote($matches[0][0]);
+            }
+
+            if (!$first && 2 < \count($parts)) {
+                $parts = [
+                    $parts[0],
+                    implode($separator, \array_slice($parts, 1)),
+                ];
+=======
         foreach ($partMatches as $matches) {
             if ('' === $separators && '' !== $unquoted = self::unquote($matches[0][0])) {
                 $parts[] = $unquoted;
             } elseif ($groupedParts = self::groupParts($matches, $separators, false)) {
                 $parts[] = $groupedParts;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             }
         }
 

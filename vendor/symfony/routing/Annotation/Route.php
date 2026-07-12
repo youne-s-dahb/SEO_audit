@@ -24,6 +24,57 @@ namespace Symfony\Component\Routing\Annotation;
 #[\Attribute(\Attribute::IS_REPEATABLE | \Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD)]
 class Route
 {
+<<<<<<< HEAD
+    private ?string $path = null;
+    private array $localizedPaths = [];
+    private array $methods;
+    private array $schemes;
+
+    /**
+     * @param string[]        $requirements
+     * @param string[]|string $methods
+     * @param string[]|string $schemes
+     */
+    public function __construct(
+        string|array $path = null,
+        private ?string $name = null,
+        private array $requirements = [],
+        private array $options = [],
+        private array $defaults = [],
+        private ?string $host = null,
+        array|string $methods = [],
+        array|string $schemes = [],
+        private ?string $condition = null,
+        private ?int $priority = null,
+        string $locale = null,
+        string $format = null,
+        bool $utf8 = null,
+        bool $stateless = null,
+        private ?string $env = null
+    ) {
+        if (\is_array($path)) {
+            $this->localizedPaths = $path;
+        } else {
+            $this->path = $path;
+        }
+        $this->setMethods($methods);
+        $this->setSchemes($schemes);
+
+        if (null !== $locale) {
+            $this->defaults['_locale'] = $locale;
+        }
+
+        if (null !== $format) {
+            $this->defaults['_format'] = $format;
+        }
+
+        if (null !== $utf8) {
+            $this->options['utf8'] = $utf8;
+        }
+
+        if (null !== $stateless) {
+            $this->defaults['_stateless'] = $stateless;
+=======
     private $path;
     private $localizedPaths = [];
     private $name;
@@ -147,6 +198,7 @@ class Route
                 throw new \BadMethodCallException(sprintf('Unknown property "%s" on annotation "%s".', $key, static::class));
             }
             $this->$method($value);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         }
     }
 
@@ -220,9 +272,15 @@ class Route
         return $this->defaults;
     }
 
+<<<<<<< HEAD
+    public function setSchemes(array|string $schemes)
+    {
+        $this->schemes = (array) $schemes;
+=======
     public function setSchemes($schemes)
     {
         $this->schemes = \is_array($schemes) ? $schemes : [$schemes];
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     }
 
     public function getSchemes()
@@ -230,9 +288,15 @@ class Route
         return $this->schemes;
     }
 
+<<<<<<< HEAD
+    public function setMethods(array|string $methods)
+    {
+        $this->methods = (array) $methods;
+=======
     public function setMethods($methods)
     {
         $this->methods = \is_array($methods) ? $methods : [$methods];
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     }
 
     public function getMethods()
