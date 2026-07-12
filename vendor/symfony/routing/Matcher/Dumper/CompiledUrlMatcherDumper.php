@@ -27,17 +27,29 @@ use Symfony\Component\Routing\RouteCollection;
 class CompiledUrlMatcherDumper extends MatcherDumper
 {
     private $expressionLanguage;
+<<<<<<< HEAD
     private ?\Exception $signalingException = null;
+=======
+    private $signalingException;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @var ExpressionFunctionProviderInterface[]
      */
+<<<<<<< HEAD
     private array $expressionLanguageProviders = [];
+=======
+    private $expressionLanguageProviders = [];
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function dump(array $options = []): string
+=======
+    public function dump(array $options = [])
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return <<<EOF
 <?php
@@ -139,7 +151,11 @@ EOF;
         foreach ($staticRoutes as $path => $routes) {
             $code .= sprintf("    %s => [\n", self::export($path));
             foreach ($routes as $route) {
+<<<<<<< HEAD
                 $code .= sprintf("        [%s, %s, %s, %s, %s, %s, %s],\n", ...array_map([__CLASS__, 'export'], $route));
+=======
+                $code .= vsprintf("        [%s, %s, %s, %s, %s, %s, %s],\n", array_map([__CLASS__, 'export'], $route));
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             }
             $code .= "    ],\n";
         }
@@ -151,7 +167,11 @@ EOF;
         foreach ($dynamicRoutes as $path => $routes) {
             $code .= sprintf("    %s => [\n", self::export($path));
             foreach ($routes as $route) {
+<<<<<<< HEAD
                 $code .= sprintf("        [%s, %s, %s, %s, %s, %s, %s],\n", ...array_map([__CLASS__, 'export'], $route));
+=======
+                $code .= vsprintf("        [%s, %s, %s, %s, %s, %s, %s],\n", array_map([__CLASS__, 'export'], $route));
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             }
             $code .= "    ],\n";
         }
@@ -416,7 +436,11 @@ EOF;
     /**
      * Compiles a single Route to PHP code used to match it against the path info.
      */
+<<<<<<< HEAD
     private function compileRoute(Route $route, string $name, string|array|null $vars, bool $hasTrailingSlash, bool $hasTrailingVar, array &$conditions): array
+=======
+    private function compileRoute(Route $route, string $name, $vars, bool $hasTrailingSlash, bool $hasTrailingVar, array &$conditions): array
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $defaults = $route->getDefaults();
 
@@ -445,7 +469,11 @@ EOF;
 
     private function getExpressionLanguage(): ExpressionLanguage
     {
+<<<<<<< HEAD
         if (!isset($this->expressionLanguage)) {
+=======
+        if (null === $this->expressionLanguage) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             if (!class_exists(ExpressionLanguage::class)) {
                 throw new \LogicException('Unable to use expressions as the Symfony ExpressionLanguage component is not installed.');
             }
@@ -463,7 +491,11 @@ EOF;
     /**
      * @internal
      */
+<<<<<<< HEAD
     public static function export(mixed $value): string
+=======
+    public static function export($value): string
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (null === $value) {
             return 'null';

@@ -16,8 +16,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class ResponseHeaderSame extends Constraint
 {
+<<<<<<< HEAD
     private string $headerName;
     private string $expectedValue;
+=======
+    private $headerName;
+    private $expectedValue;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     public function __construct(string $headerName, string $expectedValue)
     {

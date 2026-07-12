@@ -26,6 +26,7 @@ trait AbstractAdapterTrait
     use LoggerAwareTrait;
 
     /**
+<<<<<<< HEAD
      * needs to be set by class, signature is function(string <key>, mixed <value>, bool <isHit>).
      */
     private static \Closure $createCacheItem;
@@ -41,6 +42,23 @@ trait AbstractAdapterTrait
     private bool $versioningIsEnabled = false;
     private array $deferred = [];
     private array $ids = [];
+=======
+     * @var \Closure needs to be set by class, signature is function(string <key>, mixed <value>, bool <isHit>)
+     */
+    private static $createCacheItem;
+
+    /**
+     * @var \Closure needs to be set by class, signature is function(array <deferred>, string <namespace>, array <&expiredIds>)
+     */
+    private static $mergeByLifetime;
+
+    private $namespace = '';
+    private $defaultLifetime;
+    private $namespaceVersion = '';
+    private $versioningIsEnabled = false;
+    private $deferred = [];
+    private $ids = [];
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @var int|null The maximum length to enforce for identifiers or null when no limit applies
@@ -54,28 +72,53 @@ trait AbstractAdapterTrait
      *
      * @return array|\Traversable
      */
+<<<<<<< HEAD
     abstract protected function doFetch(array $ids): iterable;
+=======
+    abstract protected function doFetch(array $ids);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Confirms if the cache contains specified cache item.
      *
      * @param string $id The identifier for which to check existence
+<<<<<<< HEAD
      */
     abstract protected function doHave(string $id): bool;
+=======
+     *
+     * @return bool
+     */
+    abstract protected function doHave(string $id);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Deletes all items in the pool.
      *
      * @param string $namespace The prefix used for all identifiers managed by this pool
+<<<<<<< HEAD
      */
     abstract protected function doClear(string $namespace): bool;
+=======
+     *
+     * @return bool
+     */
+    abstract protected function doClear(string $namespace);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Removes multiple items from the pool.
      *
      * @param array $ids An array of identifiers that should be removed from the pool
+<<<<<<< HEAD
      */
     abstract protected function doDelete(array $ids): bool;
+=======
+     *
+     * @return bool
+     */
+    abstract protected function doDelete(array $ids);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Persists several cache items immediately.
@@ -85,12 +128,23 @@ trait AbstractAdapterTrait
      *
      * @return array|bool The identifiers that failed to be cached or a boolean stating if caching succeeded or not
      */
+<<<<<<< HEAD
     abstract protected function doSave(array $values, int $lifetime): array|bool;
 
     /**
      * {@inheritdoc}
      */
     public function hasItem(mixed $key): bool
+=======
+    abstract protected function doSave(array $values, int $lifetime);
+
+    /**
+     * {@inheritdoc}
+     *
+     * @return bool
+     */
+    public function hasItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $id = $this->getId($key);
 
@@ -109,8 +163,15 @@ trait AbstractAdapterTrait
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function clear(string $prefix = ''): bool
+=======
+     *
+     * @return bool
+     */
+    public function clear(string $prefix = '')
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->deferred = [];
         if ($cleared = $this->versioningIsEnabled) {
@@ -133,6 +194,13 @@ trait AbstractAdapterTrait
                 $this->namespaceVersion = $namespaceVersion;
                 $this->ids = [];
             }
+<<<<<<< HEAD
+=======
+        } elseif (preg_match('#[^-+.:_A-Za-z0-9]#', $prefix)) {
+            CacheItem::log($this->logger, 'Failed to clear the cache: Namespace-prefix contains invalid characters.', ['cache-adapter' => get_debug_type($this)]);
+
+            return false;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         } else {
             $namespaceToClear = $this->namespace.$prefix;
         }
@@ -148,16 +216,30 @@ trait AbstractAdapterTrait
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function deleteItem(mixed $key): bool
+=======
+     *
+     * @return bool
+     */
+    public function deleteItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->deleteItems([$key]);
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function deleteItems(array $keys): bool
+=======
+     *
+     * @return bool
+     */
+    public function deleteItems(array $keys)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $ids = [];
 
@@ -195,7 +277,11 @@ trait AbstractAdapterTrait
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function getItem(mixed $key): CacheItem
+=======
+    public function getItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $id = $this->getId($key);
 
@@ -222,7 +308,11 @@ trait AbstractAdapterTrait
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function getItems(array $keys = []): iterable
+=======
+    public function getItems(array $keys = [])
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $ids = [];
         $commit = false;
@@ -249,8 +339,15 @@ trait AbstractAdapterTrait
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function save(CacheItemInterface $item): bool
+=======
+     *
+     * @return bool
+     */
+    public function save(CacheItemInterface $item)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$item instanceof CacheItem) {
             return false;
@@ -262,8 +359,15 @@ trait AbstractAdapterTrait
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function saveDeferred(CacheItemInterface $item): bool
+=======
+     *
+     * @return bool
+     */
+    public function saveDeferred(CacheItemInterface $item)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$item instanceof CacheItem) {
             return false;
@@ -279,11 +383,19 @@ trait AbstractAdapterTrait
      * When versioning is enabled, clearing the cache is atomic and doesn't require listing existing keys to proceed,
      * but old keys may need garbage collection and extra round-trips to the back-end are required.
      *
+<<<<<<< HEAD
      * Calling this method also clears the memoized namespace version and thus forces a resynchonization of it.
      *
      * @return bool the previous state of versioning
      */
     public function enableVersioning(bool $enable = true): bool
+=======
+     * Calling this method also clears the memoized namespace version and thus forces a resynchronization of it.
+     *
+     * @return bool the previous state of versioning
+     */
+    public function enableVersioning(bool $enable = true)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $wasEnabled = $this->versioningIsEnabled;
         $this->versioningIsEnabled = $enable;
@@ -305,7 +417,14 @@ trait AbstractAdapterTrait
         $this->ids = [];
     }
 
+<<<<<<< HEAD
     public function __sleep(): array
+=======
+    /**
+     * @return array
+     */
+    public function __sleep()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         throw new \BadMethodCallException('Cannot serialize '.__CLASS__);
     }
@@ -344,7 +463,14 @@ trait AbstractAdapterTrait
         }
     }
 
+<<<<<<< HEAD
     private function getId(mixed $key)
+=======
+    /**
+     * @internal
+     */
+    protected function getId($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ($this->versioningIsEnabled && '' === $this->namespaceVersion) {
             $this->ids = [];

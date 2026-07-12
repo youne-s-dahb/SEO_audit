@@ -20,8 +20,13 @@ use Symfony\Component\Cache\Exception\InvalidArgumentException;
  */
 trait FilesystemCommonTrait
 {
+<<<<<<< HEAD
     private string $directory;
     private string $tmp;
+=======
+    private $directory;
+    private $tmp;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     private function init(string $namespace, ?string $directory)
     {
@@ -53,7 +58,11 @@ trait FilesystemCommonTrait
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doClear(string $namespace): bool
+=======
+    protected function doClear(string $namespace)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $ok = true;
 
@@ -71,7 +80,11 @@ trait FilesystemCommonTrait
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doDelete(array $ids): bool
+=======
+    protected function doDelete(array $ids)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $ok = true;
 
@@ -88,11 +101,20 @@ trait FilesystemCommonTrait
         return @unlink($file);
     }
 
+<<<<<<< HEAD
     private function write(string $file, string $data, int $expiresAt = null)
     {
         set_error_handler(__CLASS__.'::throwError');
         try {
             if (!isset($this->tmp)) {
+=======
+    private function write(string $file, string $data, ?int $expiresAt = null)
+    {
+        $unlink = false;
+        set_error_handler(__CLASS__.'::throwError');
+        try {
+            if (null === $this->tmp) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
                 $this->tmp = $this->directory.bin2hex(random_bytes(6));
             }
             try {
@@ -107,11 +129,16 @@ trait FilesystemCommonTrait
             }
             fwrite($h, $data);
             fclose($h);
+<<<<<<< HEAD
+=======
+            $unlink = true;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
             if (null !== $expiresAt) {
                 touch($this->tmp, $expiresAt ?: time() + 31556952); // 1 year in seconds
             }
 
+<<<<<<< HEAD
             return rename($this->tmp, $file);
         } finally {
             restore_error_handler();
@@ -119,6 +146,27 @@ trait FilesystemCommonTrait
     }
 
     private function getFile(string $id, bool $mkdir = false, string $directory = null)
+=======
+            if ('\\' === \DIRECTORY_SEPARATOR) {
+                $success = copy($this->tmp, $file);
+                $unlink = true;
+            } else {
+                $success = rename($this->tmp, $file);
+                $unlink = !$success;
+            }
+
+            return $success;
+        } finally {
+            restore_error_handler();
+
+            if ($unlink) {
+                @unlink($this->tmp);
+            }
+        }
+    }
+
+    private function getFile(string $id, bool $mkdir = false, ?string $directory = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         // Use MD5 to favor speed over security, which is not an issue here
         $hash = str_replace('/', '-', base64_encode(hash('md5', static::class.$id, true)));
@@ -171,7 +219,14 @@ trait FilesystemCommonTrait
         throw new \ErrorException($message, 0, $type, $file, $line);
     }
 
+<<<<<<< HEAD
     public function __sleep(): array
+=======
+    /**
+     * @return array
+     */
+    public function __sleep()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         throw new \BadMethodCallException('Cannot serialize '.__CLASS__);
     }
@@ -186,7 +241,11 @@ trait FilesystemCommonTrait
         if (method_exists(parent::class, '__destruct')) {
             parent::__destruct();
         }
+<<<<<<< HEAD
         if (isset($this->tmp) && is_file($this->tmp)) {
+=======
+        if (null !== $this->tmp && is_file($this->tmp)) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             unlink($this->tmp);
         }
     }

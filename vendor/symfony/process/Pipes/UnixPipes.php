@@ -26,7 +26,11 @@ class UnixPipes extends AbstractPipes
     private $ptyMode;
     private $haveReadSupport;
 
+<<<<<<< HEAD
     public function __construct(?bool $ttyMode, bool $ptyMode, mixed $input, bool $haveReadSupport)
+=======
+    public function __construct(?bool $ttyMode, bool $ptyMode, $input, bool $haveReadSupport)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->ttyMode = $ttyMode;
         $this->ptyMode = $ptyMode;

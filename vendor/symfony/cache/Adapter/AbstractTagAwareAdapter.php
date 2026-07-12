@@ -135,8 +135,15 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
      * Removes multiple items from the pool and their corresponding tags.
      *
      * @param array $ids An array of identifiers that should be removed from the pool
+<<<<<<< HEAD
      */
     abstract protected function doDelete(array $ids): bool;
+=======
+     *
+     * @return bool
+     */
+    abstract protected function doDelete(array $ids);
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Removes relations between tags and deleted items.
@@ -283,7 +290,11 @@ abstract class AbstractTagAwareAdapter implements TagAwareAdapterInterface, TagA
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function invalidateTags(array $tags): bool
+=======
+    public function invalidateTags(array $tags)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (empty($tags)) {
             return false;

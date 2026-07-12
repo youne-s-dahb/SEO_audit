@@ -25,7 +25,14 @@ trait FilesystemTrait
 
     private $marshaller;
 
+<<<<<<< HEAD
     public function prune(): bool
+=======
+    /**
+     * @return bool
+     */
+    public function prune()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $time = time();
         $pruned = true;
@@ -37,7 +44,11 @@ trait FilesystemTrait
 
             if (($expiresAt = (int) fgets($h)) && $time >= $expiresAt) {
                 fclose($h);
+<<<<<<< HEAD
                 $pruned = @unlink($file) && !file_exists($file) && $pruned;
+=======
+                $pruned = (@unlink($file) || !file_exists($file)) && $pruned;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             } else {
                 fclose($h);
             }
@@ -49,7 +60,11 @@ trait FilesystemTrait
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doFetch(array $ids): iterable
+=======
+    protected function doFetch(array $ids)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $values = [];
         $now = time();
@@ -78,7 +93,11 @@ trait FilesystemTrait
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doHave(string $id): bool
+=======
+    protected function doHave(string $id)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $file = $this->getFile($id);
 
@@ -88,7 +107,11 @@ trait FilesystemTrait
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doSave(array $values, int $lifetime): array|bool
+=======
+    protected function doSave(array $values, int $lifetime)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $expiresAt = $lifetime ? (time() + $lifetime) : 0;
         $values = $this->marshaller->marshall($values, $failed);

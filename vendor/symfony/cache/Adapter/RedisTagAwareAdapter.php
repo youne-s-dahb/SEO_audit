@@ -56,12 +56,26 @@ class RedisTagAwareAdapter extends AbstractTagAwareAdapter
     private const DEFAULT_CACHE_TTL = 8640000;
 
     /**
+<<<<<<< HEAD
      * detected eviction policy used on Redis server.
      */
     private string $redisEvictionPolicy;
     private string $namespace;
 
     public function __construct(\Redis|\RedisArray|\RedisCluster|\Predis\ClientInterface|RedisProxy|RedisClusterProxy $redis, string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
+=======
+     * @var string|null detected eviction policy used on Redis server
+     */
+    private $redisEvictionPolicy;
+    private $namespace;
+
+    /**
+     * @param \Redis|\RedisArray|\RedisCluster|\Predis\ClientInterface|RedisProxy|RedisClusterProxy $redis           The redis client
+     * @param string                                                                                $namespace       The default namespace
+     * @param int                                                                                   $defaultLifetime The default lifetime
+     */
+    public function __construct($redis, string $namespace = '', int $defaultLifetime = 0, ?MarshallerInterface $marshaller = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ($redis instanceof \Predis\ClientInterface && $redis->getConnection() instanceof ClusterInterface && !$redis->getConnection() instanceof PredisCluster) {
             throw new InvalidArgumentException(sprintf('Unsupported Predis cluster connection: only "%s" is, "%s" given.', PredisCluster::class, get_debug_type($redis->getConnection())));
@@ -292,7 +306,11 @@ EOLUA;
 
     private function getRedisEvictionPolicy(): string
     {
+<<<<<<< HEAD
         if (isset($this->redisEvictionPolicy)) {
+=======
+        if (null !== $this->redisEvictionPolicy) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             return $this->redisEvictionPolicy;
         }
 

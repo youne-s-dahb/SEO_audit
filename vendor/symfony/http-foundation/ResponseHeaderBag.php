@@ -44,8 +44,15 @@ class ResponseHeaderBag extends HeaderBag
 
     /**
      * Returns the headers, with original capitalizations.
+<<<<<<< HEAD
      */
     public function allPreserveCase(): array
+=======
+     *
+     * @return array
+     */
+    public function allPreserveCase()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $headers = [];
         foreach ($this->all() as $name => $value) {
@@ -86,7 +93,11 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function all(string $key = null): array
+=======
+    public function all(?string $key = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $headers = parent::all();
 
@@ -106,7 +117,11 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function set(string $key, string|array|null $values, bool $replace = true)
+=======
+    public function set(string $key, $values, bool $replace = true)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $uniqueKey = strtr($key, self::UPPER, self::LOWER);
 
@@ -162,7 +177,11 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function hasCacheControlDirective(string $key): bool
+=======
+    public function hasCacheControlDirective(string $key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return \array_key_exists($key, $this->computedCacheControl);
     }
@@ -170,7 +189,11 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function getCacheControlDirective(string $key): bool|string|null
+=======
+    public function getCacheControlDirective(string $key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->computedCacheControl[$key] ?? null;
     }
@@ -184,7 +207,11 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * Removes a cookie from the array, but does not unset it in the browser.
      */
+<<<<<<< HEAD
     public function removeCookie(string $name, ?string $path = '/', string $domain = null)
+=======
+    public function removeCookie(string $name, ?string $path = '/', ?string $domain = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (null === $path) {
             $path = '/';
@@ -212,7 +239,11 @@ class ResponseHeaderBag extends HeaderBag
      *
      * @throws \InvalidArgumentException When the $format is invalid
      */
+<<<<<<< HEAD
     public function getCookies(string $format = self::COOKIES_FLAT): array
+=======
+    public function getCookies(string $format = self::COOKIES_FLAT)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!\in_array($format, [self::COOKIES_FLAT, self::COOKIES_ARRAY])) {
             throw new \InvalidArgumentException(sprintf('Format "%s" invalid (%s).', $format, implode(', ', [self::COOKIES_FLAT, self::COOKIES_ARRAY])));
@@ -237,7 +268,11 @@ class ResponseHeaderBag extends HeaderBag
     /**
      * Clears a cookie in the browser.
      */
+<<<<<<< HEAD
     public function clearCookie(string $name, ?string $path = '/', string $domain = null, bool $secure = false, bool $httpOnly = true, string $sameSite = null)
+=======
+    public function clearCookie(string $name, ?string $path = '/', ?string $domain = null, bool $secure = false, bool $httpOnly = true, ?string $sameSite = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->setCookie(new Cookie($name, null, 1, $path, $domain, $secure, $httpOnly, false, $sameSite));
     }
@@ -255,8 +290,15 @@ class ResponseHeaderBag extends HeaderBag
      *
      * This considers several other headers and calculates or modifies the
      * cache-control header to a sensible, conservative value.
+<<<<<<< HEAD
      */
     protected function computeCacheControlValue(): string
+=======
+     *
+     * @return string
+     */
+    protected function computeCacheControlValue()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$this->cacheControl) {
             if ($this->has('Last-Modified') || $this->has('Expires')) {

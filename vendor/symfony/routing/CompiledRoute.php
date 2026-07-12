@@ -18,6 +18,7 @@ namespace Symfony\Component\Routing;
  */
 class CompiledRoute implements \Serializable
 {
+<<<<<<< HEAD
     private array $variables;
     private array $tokens;
     private string $staticPrefix;
@@ -26,6 +27,16 @@ class CompiledRoute implements \Serializable
     private array $hostVariables;
     private ?string $hostRegex;
     private array $hostTokens;
+=======
+    private $variables;
+    private $tokens;
+    private $staticPrefix;
+    private $regex;
+    private $pathVariables;
+    private $hostVariables;
+    private $hostRegex;
+    private $hostTokens;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @param string      $staticPrefix  The static prefix of the compiled route
@@ -37,7 +48,11 @@ class CompiledRoute implements \Serializable
      * @param array       $hostVariables An array of host variables
      * @param array       $variables     An array of variables (variables defined in the path and in the host patterns)
      */
+<<<<<<< HEAD
     public function __construct(string $staticPrefix, string $regex, array $tokens, array $pathVariables, string $hostRegex = null, array $hostTokens = [], array $hostVariables = [], array $variables = [])
+=======
+    public function __construct(string $staticPrefix, string $regex, array $tokens, array $pathVariables, ?string $hostRegex = null, array $hostTokens = [], array $hostVariables = [], array $variables = [])
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->staticPrefix = $staticPrefix;
         $this->regex = $regex;
@@ -68,7 +83,11 @@ class CompiledRoute implements \Serializable
      */
     final public function serialize(): string
     {
+<<<<<<< HEAD
         throw new \BadMethodCallException('Cannot serialize '.__CLASS__);
+=======
+        return serialize($this->__serialize());
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     }
 
     public function __unserialize(array $data): void
@@ -86,71 +105,131 @@ class CompiledRoute implements \Serializable
     /**
      * @internal
      */
+<<<<<<< HEAD
     final public function unserialize(string $serialized)
+=======
+    final public function unserialize($serialized)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->__unserialize(unserialize($serialized, ['allowed_classes' => false]));
     }
 
     /**
      * Returns the static prefix.
+<<<<<<< HEAD
      */
     public function getStaticPrefix(): string
+=======
+     *
+     * @return string
+     */
+    public function getStaticPrefix()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->staticPrefix;
     }
 
     /**
      * Returns the regex.
+<<<<<<< HEAD
      */
     public function getRegex(): string
+=======
+     *
+     * @return string
+     */
+    public function getRegex()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->regex;
     }
 
     /**
      * Returns the host regex.
+<<<<<<< HEAD
      */
     public function getHostRegex(): ?string
+=======
+     *
+     * @return string|null
+     */
+    public function getHostRegex()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->hostRegex;
     }
 
     /**
      * Returns the tokens.
+<<<<<<< HEAD
      */
     public function getTokens(): array
+=======
+     *
+     * @return array
+     */
+    public function getTokens()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->tokens;
     }
 
     /**
      * Returns the host tokens.
+<<<<<<< HEAD
      */
     public function getHostTokens(): array
+=======
+     *
+     * @return array
+     */
+    public function getHostTokens()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->hostTokens;
     }
 
     /**
      * Returns the variables.
+<<<<<<< HEAD
      */
     public function getVariables(): array
+=======
+     *
+     * @return array
+     */
+    public function getVariables()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->variables;
     }
 
     /**
      * Returns the path variables.
+<<<<<<< HEAD
      */
     public function getPathVariables(): array
+=======
+     *
+     * @return array
+     */
+    public function getPathVariables()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->pathVariables;
     }
 
     /**
      * Returns the host variables.
+<<<<<<< HEAD
      */
     public function getHostVariables(): array
+=======
+     *
+     * @return array
+     */
+    public function getHostVariables()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->hostVariables;
     }

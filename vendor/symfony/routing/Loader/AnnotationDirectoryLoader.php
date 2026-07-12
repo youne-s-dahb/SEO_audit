@@ -23,9 +23,22 @@ use Symfony\Component\Routing\RouteCollection;
 class AnnotationDirectoryLoader extends AnnotationFileLoader
 {
     /**
+<<<<<<< HEAD
      * @throws \InvalidArgumentException When the directory does not exist or its routes cannot be parsed
      */
     public function load(mixed $path, string $type = null): ?RouteCollection
+=======
+     * Loads from annotations from a directory.
+     *
+     * @param string      $path A directory path
+     * @param string|null $type The resource type
+     *
+     * @return RouteCollection
+     *
+     * @throws \InvalidArgumentException When the directory does not exist or its routes cannot be parsed
+     */
+    public function load($path, ?string $type = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!is_dir($dir = $this->locator->locate($path))) {
             return parent::supports($path, $type) ? parent::load($path, $type) : new RouteCollection();
@@ -67,7 +80,11 @@ class AnnotationDirectoryLoader extends AnnotationFileLoader
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function supports(mixed $resource, string $type = null): bool
+=======
+    public function supports($resource, ?string $type = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ('annotation' === $type) {
             return true;

@@ -50,7 +50,11 @@ class TraceableUrlMatcher extends UrlMatcher
         return $traces;
     }
 
+<<<<<<< HEAD
     protected function matchCollection(string $pathinfo, RouteCollection $routes): array
+=======
+    protected function matchCollection(string $pathinfo, RouteCollection $routes)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         // HEAD and GET are equivalent as per RFC
         if ('HEAD' === $method = $this->context->getMethod()) {
@@ -152,7 +156,11 @@ class TraceableUrlMatcher extends UrlMatcher
         return [];
     }
 
+<<<<<<< HEAD
     private function addTrace(string $log, int $level = self::ROUTE_DOES_NOT_MATCH, string $name = null, Route $route = null)
+=======
+    private function addTrace(string $log, int $level = self::ROUTE_DOES_NOT_MATCH, ?string $name = null, ?Route $route = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->traces[] = [
             'log' => $log,

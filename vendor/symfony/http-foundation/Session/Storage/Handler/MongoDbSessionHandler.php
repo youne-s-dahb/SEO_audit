@@ -27,8 +27,21 @@ use MongoDB\Collection;
 class MongoDbSessionHandler extends AbstractSessionHandler
 {
     private $mongo;
+<<<<<<< HEAD
     private $collection;
     private array $options;
+=======
+
+    /**
+     * @var Collection
+     */
+    private $collection;
+
+    /**
+     * @var array
+     */
+    private $options;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Constructor.
@@ -76,7 +89,15 @@ class MongoDbSessionHandler extends AbstractSessionHandler
         ], $options);
     }
 
+<<<<<<< HEAD
     public function close(): bool
+=======
+    /**
+     * @return bool
+     */
+    #[\ReturnTypeWillChange]
+    public function close()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return true;
     }
@@ -84,7 +105,11 @@ class MongoDbSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doDestroy(string $sessionId): bool
+=======
+    protected function doDestroy(string $sessionId)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->getCollection()->deleteOne([
             $this->options['id_field'] => $sessionId,
@@ -93,7 +118,15 @@ class MongoDbSessionHandler extends AbstractSessionHandler
         return true;
     }
 
+<<<<<<< HEAD
     public function gc(int $maxlifetime): int|false
+=======
+    /**
+     * @return int|false
+     */
+    #[\ReturnTypeWillChange]
+    public function gc($maxlifetime)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->getCollection()->deleteMany([
             $this->options['expiry_field'] => ['$lt' => new UTCDateTime()],
@@ -103,7 +136,11 @@ class MongoDbSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doWrite(string $sessionId, string $data): bool
+=======
+    protected function doWrite(string $sessionId, string $data)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $expiry = new UTCDateTime((time() + (int) \ini_get('session.gc_maxlifetime')) * 1000);
 
@@ -122,7 +159,15 @@ class MongoDbSessionHandler extends AbstractSessionHandler
         return true;
     }
 
+<<<<<<< HEAD
     public function updateTimestamp(string $sessionId, string $data): bool
+=======
+    /**
+     * @return bool
+     */
+    #[\ReturnTypeWillChange]
+    public function updateTimestamp($sessionId, $data)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $expiry = new UTCDateTime((time() + (int) \ini_get('session.gc_maxlifetime')) * 1000);
 
@@ -140,7 +185,11 @@ class MongoDbSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doRead(string $sessionId): string
+=======
+    protected function doRead(string $sessionId)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $dbData = $this->getCollection()->findOne([
             $this->options['id_field'] => $sessionId,
@@ -156,10 +205,24 @@ class MongoDbSessionHandler extends AbstractSessionHandler
 
     private function getCollection(): Collection
     {
+<<<<<<< HEAD
         return $this->collection ??= $this->mongo->selectCollection($this->options['database'], $this->options['collection']);
     }
 
     protected function getMongo(): Client
+=======
+        if (null === $this->collection) {
+            $this->collection = $this->mongo->selectCollection($this->options['database'], $this->options['collection']);
+        }
+
+        return $this->collection;
+    }
+
+    /**
+     * @return Client
+     */
+    protected function getMongo()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->mongo;
     }

@@ -2,22 +2,22 @@
 
 namespace App\Repository;
 
-use App\Entity\ApiQuota;
+use App\Entity\ApiQuotas;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<ApiQuota>
+ * @extends ServiceEntityRepository<ApiQuotas>
  */
-class ApiQuotaRepository extends ServiceEntityRepository
+class ApiQuotasRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, ApiQuota::class);
+        parent::__construct($registry, ApiQuotas::class);
     }
 
     //    /**
-    //     * @return ApiQuota[] Returns an array of ApiQuota objects
+    //     * @return ApiQuotas[] Returns an array of ApiQuotas objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class ApiQuotaRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?ApiQuota
+    //    public function findOneBySomeField($value): ?ApiQuotas
     //    {
     //        return $this->createQueryBuilder('a')
     //            ->andWhere('a.exampleField = :val')

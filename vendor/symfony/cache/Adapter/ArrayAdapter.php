@@ -30,6 +30,7 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
 {
     use LoggerAwareTrait;
 
+<<<<<<< HEAD
     private bool $storeSerialized;
     private array $values = [];
     private array $expiries = [];
@@ -38,6 +39,16 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
     private int $maxItems;
 
     private static \Closure $createCacheItem;
+=======
+    private $storeSerialized;
+    private $values = [];
+    private $expiries = [];
+    private $defaultLifetime;
+    private $maxLifetime;
+    private $maxItems;
+
+    private static $createCacheItem;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @param bool $storeSerialized Disabling serialization can lead to cache corruptions when storing mutable values but increases performance otherwise
@@ -73,7 +84,11 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function get(string $key, callable $callback, float $beta = null, array &$metadata = null): mixed
+=======
+    public function get(string $key, callable $callback, ?float $beta = null, ?array &$metadata = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $item = $this->getItem($key);
         $metadata = $item->getMetadata();
@@ -100,8 +115,15 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function hasItem(mixed $key): bool
+=======
+     *
+     * @return bool
+     */
+    public function hasItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (\is_string($key) && isset($this->expiries[$key]) && $this->expiries[$key] > microtime(true)) {
             if ($this->maxItems) {
@@ -121,7 +143,11 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function getItem(mixed $key): CacheItem
+=======
+    public function getItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$isHit = $this->hasItem($key)) {
             $value = null;
@@ -140,7 +166,11 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function getItems(array $keys = []): iterable
+=======
+    public function getItems(array $keys = [])
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         \assert(self::validateKeys($keys));
 
@@ -149,8 +179,15 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function deleteItem(mixed $key): bool
+=======
+     *
+     * @return bool
+     */
+    public function deleteItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         \assert('' !== CacheItem::validateKey($key));
         unset($this->values[$key], $this->expiries[$key]);
@@ -160,8 +197,15 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function deleteItems(array $keys): bool
+=======
+     *
+     * @return bool
+     */
+    public function deleteItems(array $keys)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         foreach ($keys as $key) {
             $this->deleteItem($key);
@@ -172,8 +216,15 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function save(CacheItemInterface $item): bool
+=======
+     *
+     * @return bool
+     */
+    public function save(CacheItemInterface $item)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$item instanceof CacheItem) {
             return false;
@@ -225,24 +276,45 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function saveDeferred(CacheItemInterface $item): bool
+=======
+     *
+     * @return bool
+     */
+    public function saveDeferred(CacheItemInterface $item)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->save($item);
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function commit(): bool
+=======
+     *
+     * @return bool
+     */
+    public function commit()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return true;
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function clear(string $prefix = ''): bool
+=======
+     *
+     * @return bool
+     */
+    public function clear(string $prefix = '')
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ('' !== $prefix) {
             $now = microtime(true);
@@ -265,8 +337,15 @@ class ArrayAdapter implements AdapterInterface, CacheInterface, LoggerAwareInter
 
     /**
      * Returns all cached values, with cache miss as null.
+<<<<<<< HEAD
      */
     public function getValues(): array
+=======
+     *
+     * @return array
+     */
+    public function getValues()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$this->storeSerialized) {
             return $this->values;

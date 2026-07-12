@@ -24,6 +24,7 @@ class MemcachedSessionHandler extends AbstractSessionHandler
     private $memcached;
 
     /**
+<<<<<<< HEAD
      * Time to live in seconds.
      */
     private ?int $ttl;
@@ -32,6 +33,16 @@ class MemcachedSessionHandler extends AbstractSessionHandler
      * Key prefix for shared environments.
      */
     private string $prefix;
+=======
+     * @var int Time to live in seconds
+     */
+    private $ttl;
+
+    /**
+     * @var string Key prefix for shared environments
+     */
+    private $prefix;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * Constructor.
@@ -54,7 +65,15 @@ class MemcachedSessionHandler extends AbstractSessionHandler
         $this->prefix = $options['prefix'] ?? 'sf2s';
     }
 
+<<<<<<< HEAD
     public function close(): bool
+=======
+    /**
+     * @return bool
+     */
+    #[\ReturnTypeWillChange]
+    public function close()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->memcached->quit();
     }
@@ -62,12 +81,24 @@ class MemcachedSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doRead(string $sessionId): string
+=======
+    protected function doRead(string $sessionId)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->memcached->get($this->prefix.$sessionId) ?: '';
     }
 
+<<<<<<< HEAD
     public function updateTimestamp(string $sessionId, string $data): bool
+=======
+    /**
+     * @return bool
+     */
+    #[\ReturnTypeWillChange]
+    public function updateTimestamp($sessionId, $data)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->memcached->touch($this->prefix.$sessionId, $this->getCompatibleTtl());
 
@@ -77,7 +108,11 @@ class MemcachedSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doWrite(string $sessionId, string $data): bool
+=======
+    protected function doWrite(string $sessionId, string $data)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->memcached->set($this->prefix.$sessionId, $data, $this->getCompatibleTtl());
     }
@@ -98,14 +133,26 @@ class MemcachedSessionHandler extends AbstractSessionHandler
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doDestroy(string $sessionId): bool
+=======
+    protected function doDestroy(string $sessionId)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $result = $this->memcached->delete($this->prefix.$sessionId);
 
         return $result || \Memcached::RES_NOTFOUND == $this->memcached->getResultCode();
     }
 
+<<<<<<< HEAD
     public function gc(int $maxlifetime): int|false
+=======
+    /**
+     * @return int|false
+     */
+    #[\ReturnTypeWillChange]
+    public function gc($maxlifetime)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         // not required here because memcached will auto expire the records anyhow.
         return 0;
@@ -113,8 +160,15 @@ class MemcachedSessionHandler extends AbstractSessionHandler
 
     /**
      * Return a Memcached instance.
+<<<<<<< HEAD
      */
     protected function getMemcached(): \Memcached
+=======
+     *
+     * @return \Memcached
+     */
+    protected function getMemcached()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->memcached;
     }

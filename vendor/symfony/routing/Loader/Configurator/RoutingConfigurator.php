@@ -22,11 +22,19 @@ class RoutingConfigurator
     use Traits\AddTrait;
 
     private $loader;
+<<<<<<< HEAD
     private string $path;
     private string $file;
     private ?string $env;
 
     public function __construct(RouteCollection $collection, PhpFileLoader $loader, string $path, string $file, string $env = null)
+=======
+    private $path;
+    private $file;
+    private $env;
+
+    public function __construct(RouteCollection $collection, PhpFileLoader $loader, string $path, string $file, ?string $env = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->collection = $collection;
         $this->loader = $loader;
@@ -38,7 +46,11 @@ class RoutingConfigurator
     /**
      * @param string|string[]|null $exclude Glob patterns to exclude from the import
      */
+<<<<<<< HEAD
     final public function import(string|array $resource, string $type = null, bool $ignoreErrors = false, string|array $exclude = null): ImportConfigurator
+=======
+    final public function import($resource, ?string $type = null, bool $ignoreErrors = false, $exclude = null): ImportConfigurator
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->loader->setCurrentDir(\dirname($this->path));
 
@@ -68,7 +80,14 @@ class RoutingConfigurator
         return $this->env;
     }
 
+<<<<<<< HEAD
     final public function withPath(string $path): static
+=======
+    /**
+     * @return static
+     */
+    final public function withPath(string $path): self
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $clone = clone $this;
         $clone->path = $clone->file = $path;

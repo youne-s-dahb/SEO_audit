@@ -35,7 +35,11 @@ class WindowsPipes extends AbstractPipes
     ];
     private $haveReadSupport;
 
+<<<<<<< HEAD
     public function __construct(mixed $input, bool $haveReadSupport)
+=======
+    public function __construct($input, bool $haveReadSupport)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->haveReadSupport = $haveReadSupport;
 
@@ -149,7 +153,11 @@ class WindowsPipes extends AbstractPipes
             if ($w) {
                 @stream_select($r, $w, $e, 0, Process::TIMEOUT_PRECISION * 1E6);
             } elseif ($this->fileHandles) {
+<<<<<<< HEAD
                 usleep(Process::TIMEOUT_PRECISION * 1E6);
+=======
+                usleep((int) (Process::TIMEOUT_PRECISION * 1E6));
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             }
         }
         foreach ($this->fileHandles as $type => $fileHandle) {

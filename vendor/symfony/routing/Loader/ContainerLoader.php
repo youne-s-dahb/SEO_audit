@@ -22,7 +22,11 @@ class ContainerLoader extends ObjectLoader
 {
     private $container;
 
+<<<<<<< HEAD
     public function __construct(ContainerInterface $container, string $env = null)
+=======
+    public function __construct(ContainerInterface $container, ?string $env = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->container = $container;
         parent::__construct($env);
@@ -31,7 +35,11 @@ class ContainerLoader extends ObjectLoader
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function supports(mixed $resource, string $type = null): bool
+=======
+    public function supports($resource, ?string $type = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return 'service' === $type && \is_string($resource);
     }
@@ -39,7 +47,11 @@ class ContainerLoader extends ObjectLoader
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function getObject(string $id): object
+=======
+    protected function getObject(string $id)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->container->get($id);
     }

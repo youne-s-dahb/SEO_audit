@@ -28,6 +28,7 @@ class PhpExecutableFinder
 
     /**
      * Finds The PHP executable.
+<<<<<<< HEAD
      */
     public function find(bool $includeArgs = true): string|false
     {
@@ -41,6 +42,16 @@ class PhpExecutableFinder
                 } else {
                     return false;
                 }
+=======
+     *
+     * @return string|false
+     */
+    public function find(bool $includeArgs = true)
+    {
+        if ($php = getenv('PHP_BINARY')) {
+            if (!is_executable($php) && !$php = $this->executableFinder->find($php)) {
+                return false;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             }
 
             if (@is_dir($php)) {
@@ -54,7 +65,11 @@ class PhpExecutableFinder
         $args = $includeArgs && $args ? ' '.implode(' ', $args) : '';
 
         // PHP_BINARY return the current sapi executable
+<<<<<<< HEAD
         if (\PHP_BINARY && \in_array(\PHP_SAPI, ['cgi-fcgi', 'cli', 'cli-server', 'phpdbg'], true)) {
+=======
+        if (\PHP_BINARY && \in_array(\PHP_SAPI, ['cli', 'cli-server', 'phpdbg'], true)) {
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
             return \PHP_BINARY.$args;
         }
 
@@ -86,8 +101,15 @@ class PhpExecutableFinder
 
     /**
      * Finds the PHP executable arguments.
+<<<<<<< HEAD
      */
     public function findArguments(): array
+=======
+     *
+     * @return array
+     */
+    public function findArguments()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $arguments = [];
         if ('phpdbg' === \PHP_SAPI) {

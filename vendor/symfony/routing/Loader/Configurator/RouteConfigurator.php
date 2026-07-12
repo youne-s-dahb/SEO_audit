@@ -24,7 +24,11 @@ class RouteConfigurator
 
     protected $parentConfigurator;
 
+<<<<<<< HEAD
     public function __construct(RouteCollection $collection, RouteCollection $route, string $name = '', CollectionConfigurator $parentConfigurator = null, array $prefixes = null)
+=======
+    public function __construct(RouteCollection $collection, RouteCollection $route, string $name = '', ?CollectionConfigurator $parentConfigurator = null, ?array $prefixes = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->collection = $collection;
         $this->route = $route;
@@ -40,7 +44,11 @@ class RouteConfigurator
      *
      * @return $this
      */
+<<<<<<< HEAD
     final public function host(string|array $host): static
+=======
+    final public function host($host): self
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->addHost($this->route, $host);
 

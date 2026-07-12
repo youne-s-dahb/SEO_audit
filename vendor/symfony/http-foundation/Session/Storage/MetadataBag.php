@@ -26,8 +26,20 @@ class MetadataBag implements SessionBagInterface
     public const UPDATED = 'u';
     public const LIFETIME = 'l';
 
+<<<<<<< HEAD
     private string $name = '__metadata';
     private string $storageKey;
+=======
+    /**
+     * @var string
+     */
+    private $name = '__metadata';
+
+    /**
+     * @var string
+     */
+    private $storageKey;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @var array
@@ -36,10 +48,22 @@ class MetadataBag implements SessionBagInterface
 
     /**
      * Unix timestamp.
+<<<<<<< HEAD
      */
     private int $lastUsed;
 
     private int $updateThreshold;
+=======
+     *
+     * @var int
+     */
+    private $lastUsed;
+
+    /**
+     * @var int
+     */
+    private $updateThreshold;
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
 
     /**
      * @param string $storageKey      The key used to store bag in the session
@@ -72,8 +96,15 @@ class MetadataBag implements SessionBagInterface
 
     /**
      * Gets the lifetime that the session cookie was set with.
+<<<<<<< HEAD
      */
     public function getLifetime(): int
+=======
+     *
+     * @return int
+     */
+    public function getLifetime()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->meta[self::LIFETIME];
     }
@@ -81,12 +112,21 @@ class MetadataBag implements SessionBagInterface
     /**
      * Stamps a new session's metadata.
      *
+<<<<<<< HEAD
      * @param int $lifetime Sets the cookie lifetime for the session cookie. A null value
      *                      will leave the system settings unchanged, 0 sets the cookie
      *                      to expire with browser session. Time is in seconds, and is
      *                      not a Unix timestamp.
      */
     public function stampNew(int $lifetime = null)
+=======
+     * @param int|null $lifetime Sets the cookie lifetime for the session cookie. A null value
+     *                           will leave the system settings unchanged, 0 sets the cookie
+     *                           to expire with browser session. Time is in seconds, and is
+     *                           not a Unix timestamp.
+     */
+    public function stampNew(?int $lifetime = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->stampCreated($lifetime);
     }
@@ -94,7 +134,11 @@ class MetadataBag implements SessionBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function getStorageKey(): string
+=======
+    public function getStorageKey()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->storageKey;
     }
@@ -104,7 +148,11 @@ class MetadataBag implements SessionBagInterface
      *
      * @return int Unix timestamp
      */
+<<<<<<< HEAD
     public function getCreated(): int
+=======
+    public function getCreated()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->meta[self::CREATED];
     }
@@ -114,7 +162,11 @@ class MetadataBag implements SessionBagInterface
      *
      * @return int Unix timestamp
      */
+<<<<<<< HEAD
     public function getLastUsed(): int
+=======
+    public function getLastUsed()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->lastUsed;
     }
@@ -122,7 +174,11 @@ class MetadataBag implements SessionBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function clear(): mixed
+=======
+    public function clear()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         // nothing to do
         return null;
@@ -131,7 +187,11 @@ class MetadataBag implements SessionBagInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function getName(): string
+=======
+    public function getName()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->name;
     }
@@ -144,7 +204,11 @@ class MetadataBag implements SessionBagInterface
         $this->name = $name;
     }
 
+<<<<<<< HEAD
     private function stampCreated(int $lifetime = null): void
+=======
+    private function stampCreated(?int $lifetime = null): void
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $timeStamp = time();
         $this->meta[self::CREATED] = $this->meta[self::UPDATED] = $this->lastUsed = $timeStamp;

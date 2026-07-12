@@ -28,9 +28,15 @@ class StreamedResponse extends Response
 {
     protected $callback;
     protected $streamed;
+<<<<<<< HEAD
     private bool $headersSent;
 
     public function __construct(callable $callback = null, int $status = 200, array $headers = [])
+=======
+    private $headersSent;
+
+    public function __construct(?callable $callback = null, int $status = 200, array $headers = [])
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         parent::__construct(null, $status, $headers);
 
@@ -42,11 +48,34 @@ class StreamedResponse extends Response
     }
 
     /**
+<<<<<<< HEAD
+=======
+     * Factory method for chainability.
+     *
+     * @param callable|null $callback A valid PHP callback or null to set it later
+     *
+     * @return static
+     *
+     * @deprecated since Symfony 5.1, use __construct() instead.
+     */
+    public static function create($callback = null, int $status = 200, array $headers = [])
+    {
+        trigger_deprecation('symfony/http-foundation', '5.1', 'The "%s()" method is deprecated, use "new %s()" instead.', __METHOD__, static::class);
+
+        return new static($callback, $status, $headers);
+    }
+
+    /**
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
      * Sets the PHP callback associated with this Response.
      *
      * @return $this
      */
+<<<<<<< HEAD
     public function setCallback(callable $callback): static
+=======
+    public function setCallback(callable $callback)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $this->callback = $callback;
 
@@ -60,7 +89,11 @@ class StreamedResponse extends Response
      *
      * @return $this
      */
+<<<<<<< HEAD
     public function sendHeaders(): static
+=======
+    public function sendHeaders()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ($this->headersSent) {
             return $this;
@@ -78,7 +111,11 @@ class StreamedResponse extends Response
      *
      * @return $this
      */
+<<<<<<< HEAD
     public function sendContent(): static
+=======
+    public function sendContent()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if ($this->streamed) {
             return $this;
@@ -98,11 +135,19 @@ class StreamedResponse extends Response
     /**
      * {@inheritdoc}
      *
+<<<<<<< HEAD
      * @throws \LogicException when the content is not null
      *
      * @return $this
      */
     public function setContent(?string $content): static
+=======
+     * @return $this
+     *
+     * @throws \LogicException when the content is not null
+     */
+    public function setContent(?string $content)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (null !== $content) {
             throw new \LogicException('The content cannot be set on a StreamedResponse instance.');
@@ -116,7 +161,11 @@ class StreamedResponse extends Response
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function getContent(): string|false
+=======
+    public function getContent()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return false;
     }

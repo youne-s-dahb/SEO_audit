@@ -98,8 +98,15 @@ abstract class AbstractAdapter implements AdapterInterface, CacheInterface, Logg
      * Returns the best possible adapter that your runtime supports.
      *
      * Using ApcuAdapter makes system caches compatible with read-only filesystems.
+<<<<<<< HEAD
      */
     public static function createSystemCache(string $namespace, int $defaultLifetime, string $version, string $directory, LoggerInterface $logger = null): AdapterInterface
+=======
+     *
+     * @return AdapterInterface
+     */
+    public static function createSystemCache(string $namespace, int $defaultLifetime, string $version, string $directory, ?LoggerInterface $logger = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $opcache = new PhpFilesAdapter($namespace, $defaultLifetime, $directory, true);
         if (null !== $logger) {
@@ -138,13 +145,24 @@ abstract class AbstractAdapter implements AdapterInterface, CacheInterface, Logg
             return CouchbaseCollectionAdapter::createConnection($dsn, $options);
         }
 
+<<<<<<< HEAD
         throw new InvalidArgumentException(sprintf('Unsupported DSN: "%s".', $dsn));
+=======
+        throw new InvalidArgumentException('Unsupported DSN: it does not start with "redis[s]:", "memcached:" nor "couchbase:".');
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function commit(): bool
+=======
+     *
+     * @return bool
+     */
+    public function commit()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $ok = true;
         $byLifetime = (self::$mergeByLifetime)($this->deferred, $this->namespace, $expiredIds, \Closure::fromCallable([$this, 'getId']), $this->defaultLifetime);

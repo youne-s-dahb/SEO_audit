@@ -39,7 +39,11 @@ class CouchbaseBucketAdapter extends AbstractAdapter
     private $bucket;
     private $marshaller;
 
+<<<<<<< HEAD
     public function __construct(\CouchbaseBucket $bucket, string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
+=======
+    public function __construct(\CouchbaseBucket $bucket, string $namespace = '', int $defaultLifetime = 0, ?MarshallerInterface $marshaller = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!static::isSupported()) {
             throw new CacheException('Couchbase >= 2.6.0 < 3.0.0 is required.');
@@ -54,10 +58,22 @@ class CouchbaseBucketAdapter extends AbstractAdapter
         $this->marshaller = $marshaller ?? new DefaultMarshaller();
     }
 
+<<<<<<< HEAD
     public static function createConnection(array|string $servers, array $options = []): \CouchbaseBucket
     {
         if (\is_string($servers)) {
             $servers = [$servers];
+=======
+    /**
+     * @param array|string $servers
+     */
+    public static function createConnection($servers, array $options = []): \CouchbaseBucket
+    {
+        if (\is_string($servers)) {
+            $servers = [$servers];
+        } elseif (!\is_array($servers)) {
+            throw new \TypeError(sprintf('Argument 1 passed to "%s()" must be array or string, "%s" given.', __METHOD__, get_debug_type($servers)));
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         }
 
         if (!static::isSupported()) {
@@ -78,7 +94,11 @@ class CouchbaseBucketAdapter extends AbstractAdapter
 
             foreach ($servers as $dsn) {
                 if (0 !== strpos($dsn, 'couchbase:')) {
+<<<<<<< HEAD
                     throw new InvalidArgumentException(sprintf('Invalid Couchbase DSN: "%s" does not start with "couchbase:".', $dsn));
+=======
+                    throw new InvalidArgumentException('Invalid Couchbase DSN: it does not start with "couchbase:".');
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
                 }
 
                 preg_match($dsnPattern, $dsn, $matches);
@@ -159,7 +179,11 @@ class CouchbaseBucketAdapter extends AbstractAdapter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doFetch(array $ids): iterable
+=======
+    protected function doFetch(array $ids)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $resultsCouchbase = $this->bucket->get($ids);
 
@@ -216,7 +240,11 @@ class CouchbaseBucketAdapter extends AbstractAdapter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doSave(array $values, int $lifetime): array|bool
+=======
+    protected function doSave(array $values, int $lifetime)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$values = $this->marshaller->marshall($values, $failed)) {
             return $failed;

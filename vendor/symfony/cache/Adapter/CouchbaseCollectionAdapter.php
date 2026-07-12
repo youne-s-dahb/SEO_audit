@@ -29,10 +29,18 @@ class CouchbaseCollectionAdapter extends AbstractAdapter
 {
     private const MAX_KEY_LENGTH = 250;
 
+<<<<<<< HEAD
     private $connection;
     private $marshaller;
 
     public function __construct(Collection $connection, string $namespace = '', int $defaultLifetime = 0, MarshallerInterface $marshaller = null)
+=======
+    /** @var Collection */
+    private $connection;
+    private $marshaller;
+
+    public function __construct(Collection $connection, string $namespace = '', int $defaultLifetime = 0, ?MarshallerInterface $marshaller = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!static::isSupported()) {
             throw new CacheException('Couchbase >= 3.0.0 < 4.0.0 is required.');
@@ -47,10 +55,24 @@ class CouchbaseCollectionAdapter extends AbstractAdapter
         $this->marshaller = $marshaller ?? new DefaultMarshaller();
     }
 
+<<<<<<< HEAD
     public static function createConnection(array|string $dsn, array $options = []): Bucket|Collection
     {
         if (\is_string($dsn)) {
             $dsn = [$dsn];
+=======
+    /**
+     * @param array|string $dsn
+     *
+     * @return Bucket|Collection
+     */
+    public static function createConnection($dsn, array $options = [])
+    {
+        if (\is_string($dsn)) {
+            $dsn = [$dsn];
+        } elseif (!\is_array($dsn)) {
+            throw new \TypeError(sprintf('Argument 1 passed to "%s()" must be array or string, "%s" given.', __METHOD__, get_debug_type($dsn)));
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
         }
 
         if (!static::isSupported()) {
@@ -71,7 +93,11 @@ class CouchbaseCollectionAdapter extends AbstractAdapter
 
             foreach ($dsn as $server) {
                 if (0 !== strpos($server, 'couchbase:')) {
+<<<<<<< HEAD
                     throw new InvalidArgumentException(sprintf('Invalid Couchbase DSN: "%s" does not start with "couchbase:".', $server));
+=======
+                    throw new InvalidArgumentException('Invalid Couchbase DSN: it does not start with "couchbase:".');
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
                 }
 
                 preg_match($dsnPattern, $server, $matches);
@@ -191,7 +217,11 @@ class CouchbaseCollectionAdapter extends AbstractAdapter
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     protected function doSave(array $values, $lifetime): array|bool
+=======
+    protected function doSave(array $values, $lifetime)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         if (!$values = $this->marshaller->marshall($values, $failed)) {
             return $failed;

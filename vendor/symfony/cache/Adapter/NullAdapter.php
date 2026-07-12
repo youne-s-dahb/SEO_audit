@@ -40,7 +40,11 @@ class NullAdapter implements AdapterInterface, CacheInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function get(string $key, callable $callback, float $beta = null, array &$metadata = null): mixed
+=======
+    public function get(string $key, callable $callback, ?float $beta = null, ?array &$metadata = null)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         $save = true;
 
@@ -50,7 +54,11 @@ class NullAdapter implements AdapterInterface, CacheInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function getItem(mixed $key): CacheItem
+=======
+    public function getItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return (self::$createCacheItem)($key);
     }
@@ -58,63 +66,116 @@ class NullAdapter implements AdapterInterface, CacheInterface
     /**
      * {@inheritdoc}
      */
+<<<<<<< HEAD
     public function getItems(array $keys = []): iterable
+=======
+    public function getItems(array $keys = [])
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return $this->generateItems($keys);
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function hasItem(mixed $key): bool
+=======
+     *
+     * @return bool
+     */
+    public function hasItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return false;
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function clear(string $prefix = ''): bool
+=======
+     *
+     * @return bool
+     */
+    public function clear(string $prefix = '')
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return true;
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function deleteItem(mixed $key): bool
+=======
+     *
+     * @return bool
+     */
+    public function deleteItem($key)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return true;
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function deleteItems(array $keys): bool
+=======
+     *
+     * @return bool
+     */
+    public function deleteItems(array $keys)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return true;
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function save(CacheItemInterface $item): bool
+=======
+     *
+     * @return bool
+     */
+    public function save(CacheItemInterface $item)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return true;
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function saveDeferred(CacheItemInterface $item): bool
+=======
+     *
+     * @return bool
+     */
+    public function saveDeferred(CacheItemInterface $item)
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return true;
     }
 
     /**
      * {@inheritdoc}
+<<<<<<< HEAD
      */
     public function commit(): bool
+=======
+     *
+     * @return bool
+     */
+    public function commit()
+>>>>>>> 3a5b7382167f26153998906199b73a658eb282a1
     {
         return true;
     }
