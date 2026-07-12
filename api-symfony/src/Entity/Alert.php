@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\AlertRepository;
+use ApiPlatform\Metadata\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AlertRepository::class)]

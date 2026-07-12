@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\AuditPageRepository;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
 
 #[ORM\Entity(repositoryClass: AuditPageRepository::class)]
 #[ORM\Table(name: 'audit_pages')] // Smiya dial l-table f DB dyalk
