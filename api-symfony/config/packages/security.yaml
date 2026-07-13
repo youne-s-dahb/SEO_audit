@@ -34,6 +34,7 @@ security:
 
     # 5. L-permissions dial les routes
     access_control:
-        - { path: ^/api/login_check, roles: PUBLIC_ACCESS } # L-login accessible l-kolshi
-        - { path: ^/api$, roles: PUBLIC_ACCESS }             # Swagger UI mftoha
-        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }    # L-bâqi kamel khasso Token
+        # Khlli l-GET dial users y-koun open gha l-test daba
+        - { path: ^/api/users, roles: PUBLIC_ACCESS, methods: [GET] }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }

@@ -7,11 +7,13 @@ use ApiPlatform\Metadata\ApiResource;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: 'users')] //smya f database dyalk
-#[ApiResource]              // 2. Zid had l-khatem s-s7ri hna 🔥
-class User
+#[ORM\Table(name: 'users')]
+#[ApiResource]
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -71,6 +73,40 @@ class User
         $this->alerts = new ArrayCollection();
     }
 
+    // ==========================================
+    // SYMFONY SECURITY INTERFACES METHODS
+    // ==========================================
+
+    public function getRoles(): array
+    {
+        $roles = [];
+        if ($this->role) {
+            $roles[] = 'ROLE_' . strtoupper($this->role);
+        }
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    public function getPassword(): ?string
+    {
+        return $this->passwordHash;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    public function eraseCredentials(): void
+    {
+        // No-op
+    }
+
+    // ==========================================
+    // GETTERS & SETTERS
+    // ==========================================
+
     public function getId(): ?int
     {
         return $this->id;
@@ -84,7 +120,6 @@ class User
     public function setEmail(string $email): static
     {
         $this->email = $email;
-
         return $this;
     }
 
@@ -96,7 +131,6 @@ class User
     public function setPasswordHash(string $passwordHash): static
     {
         $this->passwordHash = $passwordHash;
-
         return $this;
     }
 
@@ -108,7 +142,6 @@ class User
     public function setFullName(?string $fullName): static
     {
         $this->fullName = $fullName;
-
         return $this;
     }
 
@@ -120,7 +153,6 @@ class User
     public function setRole(string $role): static
     {
         $this->role = $role;
-
         return $this;
     }
 
@@ -132,7 +164,6 @@ class User
     public function setIsActive(bool $isActive): static
     {
         $this->isActive = $isActive;
-
         return $this;
     }
 
@@ -144,7 +175,6 @@ class User
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
-
         return $this;
     }
 
@@ -156,7 +186,6 @@ class User
     public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
-
         return $this;
     }
 
@@ -174,19 +203,16 @@ class User
             $this->apiQuotas->add($apiQuota);
             $apiQuota->setAccount($this);
         }
-
         return $this;
     }
 
     public function removeApiQuota(ApiQuota $apiQuota): static
     {
         if ($this->apiQuotas->removeElement($apiQuota)) {
-            // set the owning side to null (unless already changed)
             if ($apiQuota->getAccount() === $this) {
                 $apiQuota->setAccount(null);
             }
         }
-
         return $this;
     }
 
@@ -204,19 +230,16 @@ class User
             $this->sites->add($site);
             $site->setAccount($this);
         }
-
         return $this;
     }
 
     public function removeSite(Site $site): static
     {
         if ($this->sites->removeElement($site)) {
-            // set the owning side to null (unless already changed)
             if ($site->getAccount() === $this) {
                 $site->setAccount(null);
             }
         }
-
         return $this;
     }
 
@@ -234,19 +257,16 @@ class User
             $this->requestedAudits->add($requestedAudit);
             $requestedAudit->setRequestedBy($this);
         }
-
         return $this;
     }
 
     public function removeRequestedAudit(Audit $requestedAudit): static
     {
         if ($this->requestedAudits->removeElement($requestedAudit)) {
-            // set the owning side to null (unless already changed)
             if ($requestedAudit->getRequestedBy() === $this) {
                 $requestedAudit->setRequestedBy(null);
             }
         }
-
         return $this;
     }
 
@@ -264,19 +284,16 @@ class User
             $this->alerts->add($alert);
             $alert->setAccount($this);
         }
-
         return $this;
     }
 
     public function removeAlert(Alert $alert): static
     {
         if ($this->alerts->removeElement($alert)) {
-            // set the owning side to null (unless already changed)
             if ($alert->getAccount() === $this) {
                 $alert->setAccount(null);
             }
         }
-
         return $this;
     }
 }
