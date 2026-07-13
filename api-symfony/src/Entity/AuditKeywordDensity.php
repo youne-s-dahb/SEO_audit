@@ -25,6 +25,10 @@ class AuditKeywordDensity
     #[ORM\Column(nullable: true)]
     private ?float $densityPercent = null;
 
+    #[ORM\ManyToOne(inversedBy: 'keywordDensities')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?AuditPage $auditPage = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -62,6 +66,18 @@ class AuditKeywordDensity
     public function setDensityPercent(?float $densityPercent): static
     {
         $this->densityPercent = $densityPercent;
+
+        return $this;
+    }
+
+    public function getAuditPage(): ?AuditPage
+    {
+        return $this->auditPage;
+    }
+
+    public function setAuditPage(?AuditPage $auditPage): static
+    {
+        $this->auditPage = $auditPage;
 
         return $this;
     }

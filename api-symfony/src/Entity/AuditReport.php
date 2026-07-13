@@ -26,6 +26,10 @@ class AuditReport
     #[ORM\Column]
     private ?\DateTimeImmutable $generatedAt = null;
 
+    #[ORM\ManyToOne(inversedBy: 'reports')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Audit $audit = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -63,6 +67,18 @@ class AuditReport
     public function setGeneratedAt(\DateTimeImmutable $generatedAt): static
     {
         $this->generatedAt = $generatedAt;
+
+        return $this;
+    }
+
+    public function getAudit(): ?Audit
+    {
+        return $this->audit;
+    }
+
+    public function setAudit(?Audit $audit): static
+    {
+        $this->audit = $audit;
 
         return $this;
     }

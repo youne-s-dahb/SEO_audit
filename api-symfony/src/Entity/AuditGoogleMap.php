@@ -28,6 +28,10 @@ class AuditGoogleMap
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $placeId = null;
 
+    #[ORM\OneToOne(inversedBy: 'googleMap', cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Audit $audit = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -77,6 +81,18 @@ class AuditGoogleMap
     public function setPlaceId(?string $placeId): static
     {
         $this->placeId = $placeId;
+
+        return $this;
+    }
+
+    public function getAudit(): ?Audit
+    {
+        return $this->audit;
+    }
+
+    public function setAudit(Audit $audit): static
+    {
+        $this->audit = $audit;
 
         return $this;
     }

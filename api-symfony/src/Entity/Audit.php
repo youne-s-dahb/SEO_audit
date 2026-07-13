@@ -75,9 +75,47 @@ class Audit
     #[ORM\OneToMany(targetEntity: AuditPage::class, mappedBy: 'audit')]
     private Collection $pages;
 
+    #[ORM\OneToOne(mappedBy: 'audit', cascade: ['persist', 'remove'])]
+    private ?AuditGoogleMap $googleMap = null;
+
+    /**
+     * @var Collection<int, AuditCriteriaScore>
+     */
+    #[ORM\OneToMany(targetEntity: AuditCriteriaScore::class, mappedBy: 'audit')]
+    private Collection $criteriaScore;
+
+    /**
+     * @var Collection<int, AuditReport>
+     */
+    #[ORM\OneToMany(targetEntity: AuditReport::class, mappedBy: 'audit')]
+    private Collection $reports;
+
+    /**
+     * @var Collection<int, KeywordRanking>
+     */
+    #[ORM\OneToMany(targetEntity: KeywordRanking::class, mappedBy: 'audit')]
+    private Collection $keywordRankings;
+
+    /**
+     * @var Collection<int, CompetitorComparison>
+     */
+    #[ORM\OneToMany(targetEntity: CompetitorComparison::class, mappedBy: 'audit')]
+    private Collection $competitorComparisons;
+
+    /**
+     * @var Collection<int, Recommendation>
+     */
+    #[ORM\OneToMany(targetEntity: Recommendation::class, mappedBy: 'audit')]
+    private Collection $recommendations;
+
     public function __construct()
     {
         $this->pages = new ArrayCollection();
+        $this->criteriaScore = new ArrayCollection();
+        $this->reports = new ArrayCollection();
+        $this->keywordRankings = new ArrayCollection();
+        $this->competitorComparisons = new ArrayCollection();
+        $this->recommendations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -303,6 +341,173 @@ class Audit
             // set the owning side to null (unless already changed)
             if ($page->getAudit() === $this) {
                 $page->setAudit(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getGoogleMap(): ?AuditGoogleMap
+    {
+        return $this->googleMap;
+    }
+
+    public function setGoogleMap(AuditGoogleMap $googleMap): static
+    {
+        // set the owning side of the relation if necessary
+        if ($googleMap->getAudit() !== $this) {
+            $googleMap->setAudit($this);
+        }
+
+        $this->googleMap = $googleMap;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, AuditCriteriaScore>
+     */
+    public function getCriteriaScore(): Collection
+    {
+        return $this->criteriaScore;
+    }
+
+    public function addCriteriaScore(AuditCriteriaScore $criteriaScore): static
+    {
+        if (!$this->criteriaScore->contains($criteriaScore)) {
+            $this->criteriaScore->add($criteriaScore);
+            $criteriaScore->setAudit($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCriteriaScore(AuditCriteriaScore $criteriaScore): static
+    {
+        if ($this->criteriaScore->removeElement($criteriaScore)) {
+            // set the owning side to null (unless already changed)
+            if ($criteriaScore->getAudit() === $this) {
+                $criteriaScore->setAudit(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, AuditReport>
+     */
+    public function getReports(): Collection
+    {
+        return $this->reports;
+    }
+
+    public function addReport(AuditReport $report): static
+    {
+        if (!$this->reports->contains($report)) {
+            $this->reports->add($report);
+            $report->setAudit($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReport(AuditReport $report): static
+    {
+        if ($this->reports->removeElement($report)) {
+            // set the owning side to null (unless already changed)
+            if ($report->getAudit() === $this) {
+                $report->setAudit(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, KeywordRanking>
+     */
+    public function getKeywordRankings(): Collection
+    {
+        return $this->keywordRankings;
+    }
+
+    public function addKeywordRanking(KeywordRanking $keywordRanking): static
+    {
+        if (!$this->keywordRankings->contains($keywordRanking)) {
+            $this->keywordRankings->add($keywordRanking);
+            $keywordRanking->setAudit($this);
+        }
+
+        return $this;
+    }
+
+    public function removeKeywordRanking(KeywordRanking $keywordRanking): static
+    {
+        if ($this->keywordRankings->removeElement($keywordRanking)) {
+            // set the owning side to null (unless already changed)
+            if ($keywordRanking->getAudit() === $this) {
+                $keywordRanking->setAudit(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, CompetitorComparison>
+     */
+    public function getCompetitorComparisons(): Collection
+    {
+        return $this->competitorComparisons;
+    }
+
+    public function addCompetitorComparison(CompetitorComparison $competitorComparison): static
+    {
+        if (!$this->competitorComparisons->contains($competitorComparison)) {
+            $this->competitorComparisons->add($competitorComparison);
+            $competitorComparison->setAudit($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCompetitorComparison(CompetitorComparison $competitorComparison): static
+    {
+        if ($this->competitorComparisons->removeElement($competitorComparison)) {
+            // set the owning side to null (unless already changed)
+            if ($competitorComparison->getAudit() === $this) {
+                $competitorComparison->setAudit(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Recommendation>
+     */
+    public function getRecommendations(): Collection
+    {
+        return $this->recommendations;
+    }
+
+    public function addRecommendation(Recommendation $recommendation): static
+    {
+        if (!$this->recommendations->contains($recommendation)) {
+            $this->recommendations->add($recommendation);
+            $recommendation->setAudit($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRecommendation(Recommendation $recommendation): static
+    {
+        if ($this->recommendations->removeElement($recommendation)) {
+            // set the owning side to null (unless already changed)
+            if ($recommendation->getAudit() === $this) {
+                $recommendation->setAudit(null);
             }
         }
 

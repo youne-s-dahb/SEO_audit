@@ -26,6 +26,10 @@ class AuditPageHeading
     #[ORM\Column(nullable: true)]
     private ?int $position = null;
 
+    #[ORM\ManyToOne(inversedBy: 'heading')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?AuditPage $auditPage = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -63,6 +67,18 @@ class AuditPageHeading
     public function setPosition(?int $position): static
     {
         $this->position = $position;
+
+        return $this;
+    }
+
+    public function getAuditPage(): ?AuditPage
+    {
+        return $this->auditPage;
+    }
+
+    public function setAuditPage(?AuditPage $auditPage): static
+    {
+        $this->auditPage = $auditPage;
 
         return $this;
     }

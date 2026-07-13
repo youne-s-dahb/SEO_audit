@@ -31,6 +31,14 @@ class Alert
     #[ORM\Column]
     private ?bool $isRead = null;
 
+    #[ORM\ManyToOne(inversedBy: 'alerts')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $account = null;
+
+    #[ORM\ManyToOne(inversedBy: 'alerts')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Keyword $keyword = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -92,6 +100,30 @@ class Alert
     public function setIsRead(bool $isRead): static
     {
         $this->isRead = $isRead;
+
+        return $this;
+    }
+
+    public function getAccount(): ?User
+    {
+        return $this->account;
+    }
+
+    public function setAccount(?User $account): static
+    {
+        $this->account = $account;
+
+        return $this;
+    }
+
+    public function getKeyword(): ?Keyword
+    {
+        return $this->keyword;
+    }
+
+    public function setKeyword(?Keyword $keyword): static
+    {
+        $this->keyword = $keyword;
 
         return $this;
     }

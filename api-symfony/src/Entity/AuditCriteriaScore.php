@@ -29,6 +29,10 @@ class AuditCriteriaScore
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $comment = null;
 
+    #[ORM\ManyToOne(inversedBy: 'criteriaScore')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Audit $audit = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -78,6 +82,18 @@ class AuditCriteriaScore
     public function setComment(?string $comment): static
     {
         $this->comment = $comment;
+
+        return $this;
+    }
+
+    public function getAudit(): ?Audit
+    {
+        return $this->audit;
+    }
+
+    public function setAudit(?Audit $audit): static
+    {
+        $this->audit = $audit;
 
         return $this;
     }

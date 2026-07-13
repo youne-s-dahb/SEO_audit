@@ -26,6 +26,14 @@ class CompetitorComparison
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $competitorValue = null;
 
+    #[ORM\ManyToOne(inversedBy: 'comparisons')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Competitor $competitor = null;
+
+    #[ORM\ManyToOne(inversedBy: 'competitorComparisons')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Audit $audit = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -63,6 +71,30 @@ class CompetitorComparison
     public function setCompetitorValue(?string $competitorValue): static
     {
         $this->competitorValue = $competitorValue;
+
+        return $this;
+    }
+
+    public function getCompetitor(): ?Competitor
+    {
+        return $this->competitor;
+    }
+
+    public function setCompetitor(?Competitor $competitor): static
+    {
+        $this->competitor = $competitor;
+
+        return $this;
+    }
+
+    public function getAudit(): ?Audit
+    {
+        return $this->audit;
+    }
+
+    public function setAudit(?Audit $audit): static
+    {
+        $this->audit = $audit;
 
         return $this;
     }

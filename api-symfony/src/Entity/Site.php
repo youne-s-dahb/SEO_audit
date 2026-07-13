@@ -50,9 +50,16 @@ class Site
     #[ORM\OneToMany(targetEntity: Audit::class, mappedBy: 'site')]
     private Collection $audits;
 
+    /**
+     * @var Collection<int, Keyword>
+     */
+    #[ORM\OneToMany(targetEntity: Keyword::class, mappedBy: 'site')]
+    private Collection $keywords;
+
     public function __construct()
     {
         $this->audits = new ArrayCollection();
+        $this->keywords = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -180,6 +187,36 @@ class Site
             // set the owning side to null (unless already changed)
             if ($audit->getSite() === $this) {
                 $audit->setSite(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Keyword>
+     */
+    public function getKeywords(): Collection
+    {
+        return $this->keywords;
+    }
+
+    public function addKeyword(Keyword $keyword): static
+    {
+        if (!$this->keywords->contains($keyword)) {
+            $this->keywords->add($keyword);
+            $keyword->setSite($this);
+        }
+
+        return $this;
+    }
+
+    public function removeKeyword(Keyword $keyword): static
+    {
+        if ($this->keywords->removeElement($keyword)) {
+            // set the owning side to null (unless already changed)
+            if ($keyword->getSite() === $this) {
+                $keyword->setSite(null);
             }
         }
 

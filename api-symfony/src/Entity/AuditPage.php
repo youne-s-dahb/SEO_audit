@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\AuditPageRepository;
 use ApiPlatform\Metadata\ApiResource;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -92,6 +94,31 @@ class AuditPage
     #[ORM\ManyToOne(inversedBy: 'pages')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Audit $audit = null;
+
+    /**
+     * @var Collection<int, AuditPageHeading>
+     */
+    #[ORM\OneToMany(targetEntity: AuditPageHeading::class, mappedBy: 'auditPage')]
+    private Collection $heading;
+
+    /**
+     * @var Collection<int, AuditPageImage>
+     */
+    #[ORM\OneToMany(targetEntity: AuditPageImage::class, mappedBy: 'auditPage')]
+    private Collection $image;
+
+    /**
+     * @var Collection<int, AuditKeywordDensity>
+     */
+    #[ORM\OneToMany(targetEntity: AuditKeywordDensity::class, mappedBy: 'auditPage')]
+    private Collection $keywordDensities;
+
+    public function __construct()
+    {
+        $this->heading = new ArrayCollection();
+        $this->image = new ArrayCollection();
+        $this->keywordDensities = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -394,6 +421,96 @@ class AuditPage
     public function setAudit(?Audit $audit): static
     {
         $this->audit = $audit;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, AuditPageHeading>
+     */
+    public function getHeading(): Collection
+    {
+        return $this->heading;
+    }
+
+    public function addHeading(AuditPageHeading $heading): static
+    {
+        if (!$this->heading->contains($heading)) {
+            $this->heading->add($heading);
+            $heading->setAuditPage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeHeading(AuditPageHeading $heading): static
+    {
+        if ($this->heading->removeElement($heading)) {
+            // set the owning side to null (unless already changed)
+            if ($heading->getAuditPage() === $this) {
+                $heading->setAuditPage(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, AuditPageImage>
+     */
+    public function getImage(): Collection
+    {
+        return $this->image;
+    }
+
+    public function addImage(AuditPageImage $image): static
+    {
+        if (!$this->image->contains($image)) {
+            $this->image->add($image);
+            $image->setAuditPage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeImage(AuditPageImage $image): static
+    {
+        if ($this->image->removeElement($image)) {
+            // set the owning side to null (unless already changed)
+            if ($image->getAuditPage() === $this) {
+                $image->setAuditPage(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, AuditKeywordDensity>
+     */
+    public function getKeywordDensities(): Collection
+    {
+        return $this->keywordDensities;
+    }
+
+    public function addKeywordDensity(AuditKeywordDensity $keywordDensity): static
+    {
+        if (!$this->keywordDensities->contains($keywordDensity)) {
+            $this->keywordDensities->add($keywordDensity);
+            $keywordDensity->setAuditPage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeKeywordDensity(AuditKeywordDensity $keywordDensity): static
+    {
+        if ($this->keywordDensities->removeElement($keywordDensity)) {
+            // set the owning side to null (unless already changed)
+            if ($keywordDensity->getAuditPage() === $this) {
+                $keywordDensity->setAuditPage(null);
+            }
+        }
 
         return $this;
     }

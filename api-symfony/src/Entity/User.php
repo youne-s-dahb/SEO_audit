@@ -57,11 +57,18 @@ class User
     #[ORM\OneToMany(targetEntity: Audit::class, mappedBy: 'requestedBy')]
     private Collection $requestedAudits;
 
+    /**
+     * @var Collection<int, Alert>
+     */
+    #[ORM\OneToMany(targetEntity: Alert::class, mappedBy: 'account')]
+    private Collection $alerts;
+
     public function __construct()
     {
         $this->apiQuotas = new ArrayCollection();
         $this->sites = new ArrayCollection();
         $this->requestedAudits = new ArrayCollection();
+        $this->alerts = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -237,6 +244,36 @@ class User
             // set the owning side to null (unless already changed)
             if ($requestedAudit->getRequestedBy() === $this) {
                 $requestedAudit->setRequestedBy(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Alert>
+     */
+    public function getAlerts(): Collection
+    {
+        return $this->alerts;
+    }
+
+    public function addAlert(Alert $alert): static
+    {
+        if (!$this->alerts->contains($alert)) {
+            $this->alerts->add($alert);
+            $alert->setAccount($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAlert(Alert $alert): static
+    {
+        if ($this->alerts->removeElement($alert)) {
+            // set the owning side to null (unless already changed)
+            if ($alert->getAccount() === $this) {
+                $alert->setAccount(null);
             }
         }
 

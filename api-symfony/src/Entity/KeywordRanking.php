@@ -31,6 +31,13 @@ class KeywordRanking
     #[ORM\Column]
     private ?\DateTimeImmutable $checkedAt = null;
 
+    #[ORM\ManyToOne(inversedBy: 'rankings')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Keyword $keyword = null;
+
+    #[ORM\ManyToOne(inversedBy: 'keywordRankings')]
+    private ?Audit $audit = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -92,6 +99,30 @@ class KeywordRanking
     public function setCheckedAt(\DateTimeImmutable $checkedAt): static
     {
         $this->checkedAt = $checkedAt;
+
+        return $this;
+    }
+
+    public function getKeyword(): ?Keyword
+    {
+        return $this->keyword;
+    }
+
+    public function setKeyword(?Keyword $keyword): static
+    {
+        $this->keyword = $keyword;
+
+        return $this;
+    }
+
+    public function getAudit(): ?Audit
+    {
+        return $this->audit;
+    }
+
+    public function setAudit(?Audit $audit): static
+    {
+        $this->audit = $audit;
 
         return $this;
     }

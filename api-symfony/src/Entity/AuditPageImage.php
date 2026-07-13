@@ -32,6 +32,10 @@ class AuditPageImage
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $imageType = null;
 
+    #[ORM\ManyToOne(inversedBy: 'image')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?AuditPage $auditPage = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -93,6 +97,18 @@ class AuditPageImage
     public function setImageType(?string $imageType): static
     {
         $this->imageType = $imageType;
+
+        return $this;
+    }
+
+    public function getAuditPage(): ?AuditPage
+    {
+        return $this->auditPage;
+    }
+
+    public function setAuditPage(?AuditPage $auditPage): static
+    {
+        $this->auditPage = $auditPage;
 
         return $this;
     }

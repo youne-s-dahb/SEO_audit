@@ -35,6 +35,10 @@ class Recommendation
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
+    #[ORM\ManyToOne(inversedBy: 'recommendations')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Audit $audit = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -108,6 +112,18 @@ class Recommendation
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getAudit(): ?Audit
+    {
+        return $this->audit;
+    }
+
+    public function setAudit(?Audit $audit): static
+    {
+        $this->audit = $audit;
 
         return $this;
     }
