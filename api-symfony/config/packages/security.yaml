@@ -34,7 +34,12 @@ security:
 
     # 5. L-permissions dial les routes
     access_control:
-        # Khlli l-GET dial users y-koun open gha l-test daba
-        - { path: ^/api/users, roles: PUBLIC_ACCESS, methods: [GET] }
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
-        - { path: ^/api,       roles: IS_AUTHENTICATED_FULLY }
+        # 1. Khlli l-page dial Swagger UI (docs) t-koun open l gاع l-nas completely
+        - { path: ^/api/?$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+        
+        # 2. Khlli l-route dial login_check hta hya open bash t-qdr t-logat
+        - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
+
+        # 3. Gاع les endpoints khrîn (users, sites, audits...) darori khasshom Token 100%
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
