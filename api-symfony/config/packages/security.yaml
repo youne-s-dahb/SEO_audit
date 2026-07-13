@@ -1,9 +1,7 @@
 security:
-    # 1. Algorithme dial hachage dial l-passwords
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
-    # 2. Fin ghadi y-9leb ela l-User f l-DB
     providers:
         app_user_provider:
             entity:
@@ -15,7 +13,6 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
-        # 3. Endpoint dial l-Login (Fin gha t-akhd token)
         login:
             pattern: ^/api/login_check
             stateless: true
@@ -26,20 +23,15 @@ security:
                 success_handler: lexik_jwt_authentication.handler.authentication_success
                 failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
-        # 4. Protection dial l-API kamla
         api:
             pattern: ^/api
             stateless: true
-            jwt: true
+            provider: app_user_provider
+            jwt: ~
 
-    # 5. L-permissions dial les routes
+   
     access_control:
-        # 1. Khlli l-page dial Swagger UI (docs) t-koun open l gاع l-nas completely
-        - { path: ^/api/?$, roles: PUBLIC_ACCESS }
+        - { path: ^/api$, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
-        
-        # 2. Khlli l-route dial login_check hta hya open bash t-qdr t-logat
-        - { path: ^/api/login_check, roles: PUBLIC_ACCESS }
-
-        # 3. Gاع les endpoints khrîn (users, sites, audits...) darori khasshom Token 100%
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
