@@ -57,6 +57,9 @@ services:
     environment:
       DATABASE_URL: "postgresql://younes:secret_password123@db:5432/seo_audit"
       REDIS_URL: "redis://redis:6379/0"
+    env_file:
+      - analyzer-python/.env
+  
     depends_on:
       - db
       - redis
