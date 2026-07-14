@@ -56,7 +56,7 @@ def get_title_length(soup) -> int:
 
 def get_meta_description(soup: BeautifulSoup) -> str:
     """
-    Katjib Meta Description.
+    Katjib Meta Description. 
     """
 
     try:
