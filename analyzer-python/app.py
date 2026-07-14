@@ -1,9 +1,10 @@
-#lance l’API Python et reçoit les demandes d’analyse envoyées par le backend.
-
 from fastapi import FastAPI
+from routes import audit
 
 app = FastAPI()
 
+app.include_router(audit.router)
+
 @app.get("/")
-def root():
-    return {"message": "Analyzer API is running"}
+def read_root():
+    return {"status": "Analyzer is UP"}
