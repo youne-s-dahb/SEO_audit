@@ -1,10 +1,14 @@
 # liste les bibliothèques Python nécessaires au projet.
 
-psycopg2-binary>=2.9.0 #hada driver li ykhli python ydkhel l PostgreSQL
-redis>=5.0.0 # 
-beautifulsoup4==4.13.4 #hadoo les machines  dyal seo audit 
-requests>=2.31.0 #hadoo les machines dyal seo audit 
 
+#hada driver li ykhli python ydkhel l PostgreSQL
+psycopg2-binary>=2.9.0 
+redis>=5.0.0 
+ #hadoo les machines  dyal seo audit 
+beautifulsoup4==4.13.4 
+ #hadoo les machines dyal seo audit 
+
+requests>=2.31.0
 lxml==6.0.0
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
@@ -13,3 +17,5 @@ uvicorn[standard]>=0.30.0
 httpx>=0.27.0
 
 pydantic-settings
+
+python-dotenv
