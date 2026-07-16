@@ -4,14 +4,27 @@ namespace App\Entity;
 
 use App\Repository\AuditRepository;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Post;
+use App\State\AuditResultProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
-#[ORM\Table(name: 'audits')] // Smiya dial l-table f DB dyalk
-#[ApiResource]              // 2. Zid had l-khatem s-s7ri hna 🔥
+#[ORM\Table(name: 'audits')] // Smiya dial l-table f DB dyalk   
+
+#[ApiResource( // 2. Zid had l-khatem s-s7ri hna 🔥
+    operations: [
+        // هنا كنقولو لـ API Platform: استقبلي غير POST فهاد الـ URL
+        new Post(
+            uriTemplate: '/audit/callback',
+            processor: AuditResultProcessor::class ,// الربط مع الـ Brain ديالك
+            security: 'is_granted("PUBLIC_ACCESS")' // هادي هي الطريقة باش تعطي الوصول للكل
+        )
+    ]
+)]
+
 class Audit
 {
     #[ORM\Id]
