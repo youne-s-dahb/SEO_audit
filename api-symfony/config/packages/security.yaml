@@ -34,4 +34,7 @@ security:
         - { path: ^/api$, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        # زدنا هاد السطر هنا:
+        - { path: ^/api/audit/check, roles: PUBLIC_ACCESS } 
+        # هادي القاعدة العامة خاصها تبقى هي اللخرة
         - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
