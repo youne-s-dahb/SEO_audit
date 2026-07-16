@@ -1,2 +1,9 @@
-#effectue les vérifications techniques et de performance de base, comme le temps de réponse ou le code HTTP.
-# Les performances seront gérées par Google PageSpeed API (Personne 1).
+"""
+
+Ce fichier est réservé aux futurs contrôles de performance locaux.
+
+Les performances (LCP, CLS, FCP, Speed Index, etc.)
+sont actuellement récupérées via Google PageSpeed API.
+
+Aucune implémentation n'est nécessaire pour cette version.
+"""

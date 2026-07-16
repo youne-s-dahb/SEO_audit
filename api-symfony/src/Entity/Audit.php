@@ -8,10 +8,14 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\State\AuditProcessor;
 
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
 #[ORM\Table(name: 'audits')] // Smiya dial l-table f DB dyalk
-#[ApiResource]              // 2. Zid had l-khatem s-s7ri hna 🔥
+// #[ApiResource]              // 2. Zid had l-khatem s-s7ri hna 🔥
+#[ApiResource(
+    processor: AuditProcessor::class
+)]
 class Audit
 {
     #[ORM\Id]
