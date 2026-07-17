@@ -31,10 +31,15 @@ security:
 
    
     access_control:
-        - { path: ^/api$, roles: PUBLIC_ACCESS }
-        - { path: ^/api/docs, roles: PUBLIC_ACCESS }
-        - { path: ^/api/login, roles: PUBLIC_ACCESS }
-        # زدنا هاد السطر هنا:
-        - { path: ^/api/audit/check, roles: PUBLIC_ACCESS } 
-        # هادي القاعدة العامة خاصها تبقى هي اللخرة
-        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+            # Public endpoints
+            - { path: '^/api/login_check', roles: PUBLIC_ACCESS }
+            - { path: '^/api/login', roles: PUBLIC_ACCESS }
+            - { path: '^/api/docs', roles: PUBLIC_ACCESS }
+            - { path: '^/api$', roles: PUBLIC_ACCESS }
+            
+            # Audit endpoints public
+            - { path: '^/api/audit/callback$', roles: PUBLIC_ACCESS }
+            - { path: '^/api/audit/check$', roles: PUBLIC_ACCESS }
+            
+            # All other /api endpoints require authentication
+            - { path: '^/api', roles: IS_AUTHENTICATED_FULLY }
