@@ -56,12 +56,6 @@ class Audit
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $errorMessage = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $startedAt = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $finishedAt = null;
-
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
@@ -111,6 +105,18 @@ class Audit
      */
     #[ORM\OneToMany(targetEntity: Recommendation::class, mappedBy: 'audit')]
     private Collection $recommendations;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $accessibilityScore = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $bestPracticesScore = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $seoScore = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $metrics = null;
 
     public function __construct()
     {
@@ -256,30 +262,6 @@ class Audit
     public function setErrorMessage(?string $errorMessage): static
     {
         $this->errorMessage = $errorMessage;
-
-        return $this;
-    }
-
-    public function getStartedAt(): ?\DateTimeImmutable
-    {
-        return $this->startedAt;
-    }
-
-    public function setStartedAt(?\DateTimeImmutable $startedAt): static
-    {
-        $this->startedAt = $startedAt;
-
-        return $this;
-    }
-
-    public function getFinishedAt(): ?\DateTimeImmutable
-    {
-        return $this->finishedAt;
-    }
-
-    public function setFinishedAt(?\DateTimeImmutable $finishedAt): static
-    {
-        $this->finishedAt = $finishedAt;
 
         return $this;
     }
@@ -515,6 +497,50 @@ class Audit
             }
         }
 
+        return $this;
+    }
+
+    public function getAccessibilityScore(): ?int
+    {
+        return $this->accessibilityScore;
+    }
+
+    public function setAccessibilityScore(?int $accessibilityScore): static
+    {
+        $this->accessibilityScore = $accessibilityScore;
+        return $this;
+    }
+
+    public function getBestPracticesScore(): ?int
+    {
+        return $this->bestPracticesScore;
+    }
+
+    public function setBestPracticesScore(?int $bestPracticesScore): static
+    {
+        $this->bestPracticesScore = $bestPracticesScore;
+        return $this;
+    }
+
+    public function getSeoScore(): ?int
+    {
+        return $this->seoScore;
+    }
+
+    public function setSeoScore(?int $seoScore): static
+    {
+        $this->seoScore = $seoScore;
+        return $this;
+    }
+
+    public function getMetrics(): ?array
+    {
+        return $this->metrics;
+    }
+
+    public function setMetrics(?array $metrics): static
+    {
+        $this->metrics = $metrics;
         return $this;
     }
 }

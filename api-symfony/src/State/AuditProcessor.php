@@ -47,7 +47,6 @@ final class AuditProcessor implements ProcessorInterface
         }
         //audit demarre
         $data->setStatus('running');
-        $data->setStartedAt(new \DateTimeImmutable());
 
         //Sauvegarder l-statut 'running' f BD bach l-UI t-choufo
         $this->entityManager->persist($data);
@@ -165,8 +164,6 @@ final class AuditProcessor implements ProcessorInterface
             
             // Audit terminé et Sauvegarde
             $data->setStatus("completed");
-            $data->setFinishedAt(new \DateTimeImmutable());
-
             // Sauvegarde finale après succès de l'audit
             $this->entityManager->persist($data);
             $this->entityManager->flush();
@@ -178,7 +175,6 @@ final class AuditProcessor implements ProcessorInterface
             // Mise à jour de l'entité f l-cas dyal l'échec
             $data->setStatus('failed');
             $data->setErrorMessage($e->getMessage());
-            $data->setFinishedAt(new \DateTimeImmutable());
 
             // Sauvegarde même en cas d'erreur
             $this->entityManager->persist($data);
