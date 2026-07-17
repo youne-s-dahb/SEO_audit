@@ -4,14 +4,17 @@ namespace App\Entity;
 
 use App\Repository\AuditRepository;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Post;
+use App\State\AuditResultProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
-#[ORM\Table(name: 'audits')] // Smiya dial l-table f DB dyalk
-#[ApiResource]              // 2. Zid had l-khatem s-s7ri hna 🔥
+#[ORM\Table(name: 'audits')] // Smiya dial l-table f DB dyalk   
+
+#[ApiResource]
 class Audit
 {
     #[ORM\Id]
@@ -52,11 +55,7 @@ class Audit
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $errorMessage = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $startedAt = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $finishedAt = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -67,6 +66,18 @@ class Audit
 
     #[ORM\ManyToOne(inversedBy: 'requestedAudits')]
     private ?User $requestedBy = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $accessibilityScore = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $bestPracticesScore = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $seoScore = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $metrics = null;
 
 
     /**
@@ -118,6 +129,51 @@ class Audit
         $this->recommendations = new ArrayCollection();
     }
 
+
+
+                public function getAccessibilityScore(): ?int
+            {
+                return $this->accessibilityScore;
+            }
+
+            public function setAccessibilityScore(?int $accessibilityScore): static
+            {
+                $this->accessibilityScore = $accessibilityScore;
+                return $this;
+            }
+
+            public function getBestPracticesScore(): ?int
+            {
+                return $this->bestPracticesScore;
+            }
+
+            public function setBestPracticesScore(?int $bestPracticesScore): static
+            {
+                $this->bestPracticesScore = $bestPracticesScore;
+                return $this;
+            }
+
+            public function getSeoScore(): ?int
+            {
+                return $this->seoScore;
+            }
+
+            public function setSeoScore(?int $seoScore): static
+            {
+                $this->seoScore = $seoScore;
+                return $this;
+            }
+
+            public function getMetrics(): ?array
+            {
+                return $this->metrics;
+            }
+
+            public function setMetrics(?array $metrics): static
+            {
+                $this->metrics = $metrics;
+                return $this;
+            }
     public function getId(): ?int
     {
         return $this->id;
@@ -252,30 +308,6 @@ class Audit
     public function setErrorMessage(?string $errorMessage): static
     {
         $this->errorMessage = $errorMessage;
-
-        return $this;
-    }
-
-    public function getStartedAt(): ?\DateTimeImmutable
-    {
-        return $this->startedAt;
-    }
-
-    public function setStartedAt(?\DateTimeImmutable $startedAt): static
-    {
-        $this->startedAt = $startedAt;
-
-        return $this;
-    }
-
-    public function getFinishedAt(): ?\DateTimeImmutable
-    {
-        return $this->finishedAt;
-    }
-
-    public function setFinishedAt(?\DateTimeImmutable $finishedAt): static
-    {
-        $this->finishedAt = $finishedAt;
 
         return $this;
     }
