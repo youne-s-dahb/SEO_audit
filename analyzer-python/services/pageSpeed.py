@@ -18,9 +18,36 @@ async def get_pagespeed_data(url: str):
 
     api_url = (
         "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
-        f"?url={url}&key={api_key}&strategy=mobile"
+        f"?url={url}"
+        f"&key={api_key}"
+        f"&strategy=mobile"
+        f"&category=performance"
+        f"&category=accessibility"
+        f"&category=best-practices"
+        f"&category=seo"
     )
-
+    robots_exists = False
+    sitemap_exists = False
+    try:
+        async with httpx.AsyncClient() as client:
+            robots_response = await client.get(
+                f"{url.rstrip('/')}/robots.txt",
+                timeout=10,
+                follow_redirects=True
+            )
+            robots_exists = robots_response.status_code == 200
+    except:
+        pass
+    try:
+        async with httpx.AsyncClient() as client:
+            sitemap_response = await client.get(
+                f"{url.rstrip('/')}/sitemap.xml",
+                timeout=10,
+                follow_redirects=True
+            )
+        sitemap_exists = sitemap_response.status_code == 200
+    except:
+        pass
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(api_url, timeout=30.0)
@@ -30,7 +57,7 @@ async def get_pagespeed_data(url: str):
         lighthouse = data.get("lighthouseResult", {})
         categories = lighthouse.get("categories", {})
         audits = lighthouse.get("audits", {})
-
+        print("CATEGORIES =", categories, flush=True)
         performance_score = int(
             categories.get("performance", {}).get("score", 0) * 100
         )
@@ -48,6 +75,8 @@ async def get_pagespeed_data(url: str):
             "performance_score": performance_score,
             "accessibility_score": accessibility_score,
             "best_practices_score": best_practices_score,
+            "has_robots_txt": robots_exists,
+            "has_sitemap_xml": sitemap_exists,
             "seo_score": seo_score,
             "metrics": {
                 "first_contentful_paint": audits.get(

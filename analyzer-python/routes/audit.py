@@ -1,112 +1,81 @@
 import asyncio
 
 from fastapi import APIRouter
-from fastapi.concurrency import run_in_threadpool
-
-# Importi ga3 l-functions mn l-fichie dyalk
-from services.pageSpeed import get_pagespeed_data, format_simple_report
-from analyzer.seo_analyzer import analyze
-from services.places import check_google_maps_presence
-from services.serApi import get_ranking
+from urllib.parse import urlparse
+import redis
+import json
+from services.pageSpeed import get_pagespeed_data
 
 router = APIRouter()
+r = redis.Redis(host='redis', port=6379, db=0)
 
+def is_valid_url(url: str):
+    parsed = urlparse(url)
+    return parsed.scheme in ("http", "https") and parsed.netloc
 
 @router.get("/audit")
 async def audit_url(url: str):
-
-    # ----------------------------------
-    # Validation basique de l'URL
-    # (analyze() dir déjà validation/SSRF b3mق, hna ghi fail-fast bkri
-    # bach ma-nkhelsouch appels API mkelfin b7al PageSpeed/SERP l blast)
-    # ----------------------------------
-
-    if not url or not url.strip():
-        return {
-            "seo": {"success": False, "error": "URL invalide."},
-            "pagespeed": {"error": "URL invalide."},
-            "google_maps": {"success": False, "error": "URL invalide."},
-            "serp": {"success": False, "error": "URL invalide."}
+     # Validation URL
+    if not is_valid_url(url):
+        payload = {
+            "status": "failed",
+            "error_message": "Invalid URL",
+            "url": url
         }
 
-    # ----------------------------------
-    # Analyse locale BeautifulSoup
-    # (run_in_threadpool: analyze() synchrone/blocking (requests),
-    # bach ma-tbloqich l-event loop dyal FastAPI)
-    # ----------------------------------
+        key = f"audit:{url}"
+        r.set(key, json.dumps(payload))
+        r.expire(key, 3600)
 
-    try:
-        seo_result = await run_in_threadpool(analyze, url)
-    except Exception as e:
-        seo_result = {
-            "success": False,
-            "error": f"SEO analysis failed: {str(e)}"
-        }
+        return payload
+    
+    full_data = await get_pagespeed_data(url)
 
-    # ----------------------------------
-    # Google PageSpeed, Google Maps, SERP API
-    # (asyncio.gather: 3 appels indépendants li kaymchiw f parallèle
-    # bdl séquentiel, m3a return_exceptions bach chi failure
-    # ma-ywa9afch les autres)
-    # ----------------------------------
-
-    pagespeed_data, google_maps_result, serp_result = await asyncio.gather(
-        get_pagespeed_data(url),
-        check_google_maps_presence(url),
-        get_ranking(url),
-        return_exceptions=True
+    lcp = (
+        full_data.get("metrics", {})
+        .get("largest_contentful_paint", "0 s")
+        .replace("\xa0", "")
+        .replace("s", "")
+        .strip()
     )
 
-    # ----------------------------------
-    # Google PageSpeed
-    # ----------------------------------
+    page_load_time_ms = int(float(lcp) * 1000)
 
-    if isinstance(pagespeed_data, Exception):
+    payload = {
+        "status": "completed",
+        "global_score": full_data.get("performance_score"),
+        "pagespeed_desktop_score": full_data.get("performance_score"),
+        "pagespeed_mobile_score": full_data.get("performance_score"),
+        "has_robots_txt": full_data.get("has_robots_txt"),
+        "has_sitemap_xml": full_data.get("has_sitemap_xml"),
+        "score_color":
+            "green" if full_data.get("performance_score", 0) >= 90
+            else "orange" if full_data.get("performance_score", 0) >= 50
+            else "red",
 
-        pagespeed_result = {"error": f"PageSpeed analysis failed: {str(pagespeed_data)}"}
+        "is_https": url.startswith("https://"),
+        "is_mobile_friendly": full_data.get("is_fast"),
+        "page_load_time_ms": page_load_time_ms,
 
-    elif "error" in pagespeed_data:
+        "accessibility_score": full_data.get("accessibility_score"),
+        "best_practices_score": full_data.get("best_practices_score"),
+        "seo_score": full_data.get("seo_score"),
 
-        pagespeed_result = pagespeed_data
+        "metrics": full_data.get("metrics"),
+        "recommendations": full_data.get("recommendations"),
 
-    else:
+        "url": url
+    }
 
-        pagespeed_result = format_simple_report(
-            pagespeed_data
-        )
-
-    # ----------------------------------
-    # Google Maps
-    # ----------------------------------
-
-    if isinstance(google_maps_result, Exception):
-        google_maps_result = {
-            "success": False,
-            "error": f"Google Maps check failed: {str(google_maps_result)}"
-        }
-
-    # ----------------------------------
-    # SERP API
-    # ----------------------------------
-
-    if isinstance(serp_result, Exception):
-        serp_result = {
-            "success": False,
-            "error": f"SERP ranking check failed: {str(serp_result)}"
-        }
-
-    # ----------------------------------
-    # Fusion
-    # ----------------------------------
+    key = f"audit:{url}"
+    r.set(key, json.dumps(payload))
+    r.expire(key, 3600)
 
     return {
-
-        "seo": seo_result,
-
-        "pagespeed": pagespeed_result,
-
-        "google_maps": google_maps_result,
-
-        "serp": serp_result
-
+        "message": "Audit completed and saved in Redis",
+        "status": "success"
     }
+@router.get("/test")
+async def test(url: str):
+    full_data = await get_pagespeed_data(url)
+    return full_data

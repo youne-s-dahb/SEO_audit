@@ -2,3 +2,6 @@ __pycache__
 tempCodeRunnerFile.py
 requirements.txt
 .env
+test_html.py
+test_seo.py
+test_utils.py
