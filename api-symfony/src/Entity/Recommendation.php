@@ -4,12 +4,11 @@ namespace App\Entity;
 
 use App\Repository\RecommendationRepository;
 use ApiPlatform\Metadata\ApiResource;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: RecommendationRepository::class)]
-#[ORM\Table(name: 'recommendations')] // Smiya dial l-table f DB dyalk
-#[ApiResource]              // 2. Zid had l-khatem s-s7ri hna 🔥
+#[ORM\Table(name: 'recommendations')]
+#[ApiResource]
 class Recommendation
 {
     #[ORM\Id]
@@ -17,20 +16,8 @@ class Recommendation
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $title = null;
-
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $description = null;
-
-    #[ORM\Column(length: 20)]
-    private ?string $priority = null;
-
-    #[ORM\Column(length: 20, nullable: true)]
-    private ?string $impactLevel = null;
-
-    #[ORM\Column]
-    private ?bool $isDone = null;
+    #[ORM\Column(type: 'text')]
+    private ?string $recommendation = null;
 
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
@@ -44,62 +31,14 @@ class Recommendation
         return $this->id;
     }
 
-    public function getTitle(): ?string
+    public function getRecommendation(): ?string
     {
-        return $this->title;
+        return $this->recommendation;
     }
 
-    public function setTitle(string $title): static
+    public function setRecommendation(string $recommendation): static
     {
-        $this->title = $title;
-
-        return $this;
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(?string $description): static
-    {
-        $this->description = $description;
-
-        return $this;
-    }
-
-    public function getPriority(): ?string
-    {
-        return $this->priority;
-    }
-
-    public function setPriority(string $priority): static
-    {
-        $this->priority = $priority;
-
-        return $this;
-    }
-
-    public function getImpactLevel(): ?string
-    {
-        return $this->impactLevel;
-    }
-
-    public function setImpactLevel(?string $impactLevel): static
-    {
-        $this->impactLevel = $impactLevel;
-
-        return $this;
-    }
-
-    public function isDone(): ?bool
-    {
-        return $this->isDone;
-    }
-
-    public function setIsDone(bool $isDone): static
-    {
-        $this->isDone = $isDone;
+        $this->recommendation = $recommendation;
 
         return $this;
     }
