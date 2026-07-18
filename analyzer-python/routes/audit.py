@@ -76,4 +76,5 @@ async def audit_url(url: str):
 @router.get("/test")
 async def test(url: str):
     full_data = await get_pagespeed_data(url)
+    print(full_data.get("recommendations"))
     return full_data

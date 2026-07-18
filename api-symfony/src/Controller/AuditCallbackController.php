@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Audit;
 use App\Entity\Site;
 use App\Entity\User;
+use App\Entity\Recommendation;
 use Doctrine\ORM\EntityManagerInterface;
 use Predis\Client as RedisClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -92,11 +93,23 @@ class AuditCallbackController extends AbstractController
         $audit->setErrorMessage($auditData['error_message'] ?? null);
 
         $audit->setCreatedAt(new \DateTimeImmutable());
-
-     
-
         $em->persist($audit);
         $em->flush();
+        foreach ($auditData['recommendations'] ?? [] as $item) {
+
+          $recommendation = new Recommendation();
+
+          $recommendation->setRecommendation($item);
+          $recommendation->setCreatedAt(new \DateTimeImmutable());
+          $recommendation->setAudit($audit);
+
+          $em->persist($recommendation);
+        }
+
+        $em->flush();
+     
+
+        
 
         $redis->del($redisKey);
 
