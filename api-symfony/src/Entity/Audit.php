@@ -5,12 +5,10 @@ namespace App\Entity;
 use App\Repository\AuditRepository;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;
-use App\State\AuditResultProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use App\State\AuditProcessor;
 
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
 #[ORM\Table(name: 'audits')] // Smiya dial l-table f DB dyalk   
@@ -79,12 +77,6 @@ class Audit
     private ?AuditGoogleMap $googleMap = null;
 
     /**
-     * @var Collection<int, AuditCriteriaScore>
-     */
-    #[ORM\OneToMany(targetEntity: AuditCriteriaScore::class, mappedBy: 'audit')]
-    private Collection $criteriaScore;
-
-    /**
      * @var Collection<int, AuditReport>
      */
     #[ORM\OneToMany(targetEntity: AuditReport::class, mappedBy: 'audit')]
@@ -123,7 +115,6 @@ class Audit
     public function __construct()
     {
         $this->pages = new ArrayCollection();
-        $this->criteriaScore = new ArrayCollection();
         $this->reports = new ArrayCollection();
         $this->keywordRankings = new ArrayCollection();
         $this->competitorComparisons = new ArrayCollection();
@@ -351,36 +342,6 @@ class Audit
         }
 
         $this->googleMap = $googleMap;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, AuditCriteriaScore>
-     */
-    public function getCriteriaScore(): Collection
-    {
-        return $this->criteriaScore;
-    }
-
-    public function addCriteriaScore(AuditCriteriaScore $criteriaScore): static
-    {
-        if (!$this->criteriaScore->contains($criteriaScore)) {
-            $this->criteriaScore->add($criteriaScore);
-            $criteriaScore->setAudit($this);
-        }
-
-        return $this;
-    }
-
-    public function removeCriteriaScore(AuditCriteriaScore $criteriaScore): static
-    {
-        if ($this->criteriaScore->removeElement($criteriaScore)) {
-            // set the owning side to null (unless already changed)
-            if ($criteriaScore->getAudit() === $this) {
-                $criteriaScore->setAudit(null);
-            }
-        }
 
         return $this;
     }
