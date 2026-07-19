@@ -76,6 +76,7 @@ class Audit
     #[ORM\OneToOne(mappedBy: 'audit', cascade: ['persist', 'remove'])]
     private ?AuditGoogleMap $googleMap = null;
 
+
     /**
      * @var Collection<int, AuditReport>
      */
@@ -346,6 +347,7 @@ class Audit
         return $this;
     }
 
+  
     /**
      * @return Collection<int, AuditReport>
      */
