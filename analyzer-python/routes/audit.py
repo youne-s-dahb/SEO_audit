@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter
 from urllib.parse import urlparse
 import redis

@@ -10,6 +10,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\State\AuditProcessor;
 
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
 #[ORM\Table(name: 'audits')] // Smiya dial l-table f DB dyalk   
@@ -67,18 +68,6 @@ class Audit
     #[ORM\ManyToOne(inversedBy: 'requestedAudits')]
     private ?User $requestedBy = null;
 
-    #[ORM\Column(nullable: true)]
-    private ?int $accessibilityScore = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?int $bestPracticesScore = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?int $seoScore = null;
-
-    #[ORM\Column(type: Types::JSON, nullable: true)]
-    private ?array $metrics = null;
-
 
     /**
      * @var Collection<int, AuditPage>
@@ -119,6 +108,18 @@ class Audit
     #[ORM\OneToMany(targetEntity: Recommendation::class, mappedBy: 'audit')]
     private Collection $recommendations;
 
+    #[ORM\Column(nullable: true)]
+    private ?int $accessibilityScore = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $bestPracticesScore = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $seoScore = null;
+
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $metrics = null;
+
     public function __construct()
     {
         $this->pages = new ArrayCollection();
@@ -131,49 +132,7 @@ class Audit
 
 
 
-                public function getAccessibilityScore(): ?int
-            {
-                return $this->accessibilityScore;
-            }
-
-            public function setAccessibilityScore(?int $accessibilityScore): static
-            {
-                $this->accessibilityScore = $accessibilityScore;
-                return $this;
-            }
-
-            public function getBestPracticesScore(): ?int
-            {
-                return $this->bestPracticesScore;
-            }
-
-            public function setBestPracticesScore(?int $bestPracticesScore): static
-            {
-                $this->bestPracticesScore = $bestPracticesScore;
-                return $this;
-            }
-
-            public function getSeoScore(): ?int
-            {
-                return $this->seoScore;
-            }
-
-            public function setSeoScore(?int $seoScore): static
-            {
-                $this->seoScore = $seoScore;
-                return $this;
-            }
-
-            public function getMetrics(): ?array
-            {
-                return $this->metrics;
-            }
-
-            public function setMetrics(?array $metrics): static
-            {
-                $this->metrics = $metrics;
-                return $this;
-            }
+            
     public function getId(): ?int
     {
         return $this->id;
@@ -543,6 +502,50 @@ class Audit
             }
         }
 
+        return $this;
+    }
+
+    public function getAccessibilityScore(): ?int
+    {
+        return $this->accessibilityScore;
+    }
+
+    public function setAccessibilityScore(?int $accessibilityScore): static
+    {
+        $this->accessibilityScore = $accessibilityScore;
+        return $this;
+    }
+
+    public function getBestPracticesScore(): ?int
+    {
+        return $this->bestPracticesScore;
+    }
+
+    public function setBestPracticesScore(?int $bestPracticesScore): static
+    {
+        $this->bestPracticesScore = $bestPracticesScore;
+        return $this;
+    }
+
+    public function getSeoScore(): ?int
+    {
+        return $this->seoScore;
+    }
+
+    public function setSeoScore(?int $seoScore): static
+    {
+        $this->seoScore = $seoScore;
+        return $this;
+    }
+
+    public function getMetrics(): ?array
+    {
+        return $this->metrics;
+    }
+
+    public function setMetrics(?array $metrics): static
+    {
+        $this->metrics = $metrics;
         return $this;
     }
 }
