@@ -49,7 +49,7 @@ def clean_soup_for_text(soup: BeautifulSoup) -> BeautifulSoup:
         if not soup:
             return soup
 
-        cleaned = copy.copy(soup)
+        cleaned = copy.deepcopy(soup)
 
         for tag in cleaned.find_all(NOISE_TAGS):
             tag.decompose()
@@ -78,32 +78,67 @@ def clean_soup_for_text(soup: BeautifulSoup) -> BeautifulSoup:
 
 
 def build_seo_text(soup: BeautifulSoup) -> str:
+    """
+    IMPORTANT: chaque etape est protegee individuellement. Si le nettoyage
+    (clean_soup_for_text) ou une extraction precise echoue sur une structure
+    HTML reelle complexe, on ne perd PAS tout le texte d'un coup - on garde
+    ce qui a pu etre recupere, et en dernier recours on retombe sur le texte
+    brut non nettoye plutot que de renvoyer une chaine vide.
+    """
     try:
         if not soup:
             return ""
 
         cleaned_soup = clean_soup_for_text(soup)
+
         parts = []
 
-        title = get_title(cleaned_soup)
-        if title:
-            parts.append(title)
+        # Chaque extraction est isolee: une erreur ici ne doit pas
+        # faire perdre les autres parties deja recuperees.
+        try:
+            title = get_title(cleaned_soup)
+            if title:
+                parts.append(title)
+        except Exception:
+            pass
 
-        meta = get_meta_description(cleaned_soup)
-        if meta:
-            parts.append(meta)
+        try:
+            meta = get_meta_description(cleaned_soup)
+            if meta:
+                parts.append(meta)
+        except Exception:
+            pass
 
-        headings = get_headings(cleaned_soup)
-        if headings and isinstance(headings, dict):
-            for values in headings.values():
-                if isinstance(values, list):
-                    parts.extend(values)
+        try:
+            headings = get_headings(cleaned_soup)
+            if headings and isinstance(headings, dict):
+                for values in headings.values():
+                    if isinstance(values, list):
+                        parts.extend(values)
+        except Exception:
+            pass
 
-        body_text = cleaned_soup.get_text(separator=" ", strip=True)
-        if body_text:
-            parts.append(body_text)
+        try:
+            body_text = cleaned_soup.get_text(separator=" ", strip=True)
+            if body_text:
+                parts.append(body_text)
+        except Exception:
+            pass
 
-        return remove_extra_spaces(" ".join(parts))
+        result = remove_extra_spaces(" ".join(parts))
+
+        # Filet de securite: si le nettoyage a fini par tout vider
+        # (bug de decompose() sur une structure complexe reelle), on
+        # retombe sur le texte brut NON nettoye plutot que de perdre
+        # completement le calcul de densite.
+        if not result:
+            try:
+                fallback_text = soup.get_text(separator=" ", strip=True)
+                return remove_extra_spaces(fallback_text)
+            except Exception:
+                return ""
+
+        return result
 
     except Exception:
         return ""
