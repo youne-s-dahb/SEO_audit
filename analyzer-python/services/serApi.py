@@ -1,5 +1,6 @@
 import os
 import httpx
+from urllib.parse import urlparse
 
 
 async def get_ranking(keyword: str, site_url: str):
@@ -21,6 +22,8 @@ async def get_ranking(keyword: str, site_url: str):
         "hl": "fr"
     }
 
+    target_domain = urlparse(site_url).netloc.replace("www.", "")
+
     async with httpx.AsyncClient() as client:
         response = await client.post(
             "https://google.serper.dev/search",
@@ -28,13 +31,13 @@ async def get_ranking(keyword: str, site_url: str):
             json=payload
         )
 
-        data = response.json()
-
+    data = response.json()
+    print(data)
     for result in data.get("organic", []):
         link = result.get("link", "")
-        position = result.get("position")
+        result_domain = urlparse(link).netloc.replace("www.", "")
 
-        if site_url in link:
-            return position
+        if result_domain == target_domain:
+            return result.get("position")
 
     return None
