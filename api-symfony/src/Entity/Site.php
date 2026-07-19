@@ -56,11 +56,19 @@ class Site
     #[ORM\OneToMany(targetEntity: Keyword::class, mappedBy: 'site')]
     private Collection $keywords;
 
+    // public function __construct()
+    // {
+    //     $this->audits = new ArrayCollection();
+    //     $this->keywords = new ArrayCollection();
+    // }
     public function __construct()
-    {
-        $this->audits = new ArrayCollection();
-        $this->keywords = new ArrayCollection();
-    }
+{
+    $this->audits = new ArrayCollection();
+    $this->keywords = new ArrayCollection();
+
+    $this->createdAt = new \DateTimeImmutable();
+    $this->updatedAt = new \DateTimeImmutable();
+}
 
     public function getId(): ?int
     {

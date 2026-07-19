@@ -44,6 +44,8 @@ from analyzer.html_parser import (
     has_structured_data
 )
 
+from analyzer.keyword_density import calculate_keyword_density
+
 # Constantes
 
 # User-Agent bach ba3d sites ma y7bsouch request
@@ -419,8 +421,13 @@ def analyze(url: str) -> dict:
 
             #---------------
             #date
+            #---------------
+            "analysis_date": datetime.now(UTC).isoformat(),
 
-            "analysis_date": datetime.now(UTC).isoformat()
+            # -----------------------------
+            # Keyword Density
+            # -----------------------------
+            "keyword_density": _safe_call(calculate_keyword_density, soup, default=[])
         }
 
         return result
