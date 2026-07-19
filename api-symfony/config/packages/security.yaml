@@ -40,6 +40,9 @@ security:
             # Audit endpoints public
             - { path: '^/api/audit/callback$', roles: PUBLIC_ACCESS }
             - { path: '^/api/audit/check$', roles: PUBLIC_ACCESS }
+            - { path: '^/api/audit/callback$', roles: PUBLIC_ACCESS }
+            - { path: '^/api/audit/check$', roles: PUBLIC_ACCESS }
+            - { path: '^/api/audit-page/import$', roles: PUBLIC_ACCESS }
             
             # All other /api endpoints require authentication
             - { path: '^/api', roles: IS_AUTHENTICATED_FULLY }

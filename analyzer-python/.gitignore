@@ -5,3 +5,4 @@ requirements.txt
 test_html.py
 test_seo.py
 test_utils.py
+test_keyword_density.py
