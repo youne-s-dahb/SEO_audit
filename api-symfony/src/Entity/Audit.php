@@ -78,11 +78,6 @@ class Audit
     #[ORM\OneToOne(mappedBy: 'audit', cascade: ['persist', 'remove'])]
     private ?AuditGoogleMap $googleMap = null;
 
-    /**
-     * @var Collection<int, AuditCriteriaScore>
-     */
-    #[ORM\OneToMany(targetEntity: AuditCriteriaScore::class, mappedBy: 'audit')]
-    private Collection $criteriaScore;
 
     /**
      * @var Collection<int, AuditReport>
@@ -355,36 +350,7 @@ class Audit
         return $this;
     }
 
-    /**
-     * @return Collection<int, AuditCriteriaScore>
-     */
-    public function getCriteriaScore(): Collection
-    {
-        return $this->criteriaScore;
-    }
-
-    public function addCriteriaScore(AuditCriteriaScore $criteriaScore): static
-    {
-        if (!$this->criteriaScore->contains($criteriaScore)) {
-            $this->criteriaScore->add($criteriaScore);
-            $criteriaScore->setAudit($this);
-        }
-
-        return $this;
-    }
-
-    public function removeCriteriaScore(AuditCriteriaScore $criteriaScore): static
-    {
-        if ($this->criteriaScore->removeElement($criteriaScore)) {
-            // set the owning side to null (unless already changed)
-            if ($criteriaScore->getAudit() === $this) {
-                $criteriaScore->setAudit(null);
-            }
-        }
-
-        return $this;
-    }
-
+  
     /**
      * @return Collection<int, AuditReport>
      */
