@@ -5,7 +5,7 @@
 
 #--------------------------------------------------------------------------
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 from typing import Dict, List
 from urllib.parse import urlparse
 
@@ -121,10 +121,32 @@ def get_headings(soup: BeautifulSoup) -> Dict[str, List[str]]:
 def count_images(soup: BeautifulSoup) -> int:
     """
     Kat7seb ch7al mn image kayna.
+    Compatible avec le lazy loading.
     """
 
     try:
-        return len(soup.find_all("img"))
+
+        count = 0
+
+        for image in soup.find_all("img"):
+
+            src = (
+                image.get("src")
+                or image.get("data-src")
+                or image.get("data-lazy-src")
+                or image.get("data-original")
+                or image.get("srcset")
+                or image.get("data-srcset")
+                or ""
+            ).strip()
+
+            if "," in src:
+                src = src.split(",")[0].split()[0]
+
+            if src:
+                count += 1
+
+        return count
 
     except Exception:
         return 0
@@ -135,44 +157,69 @@ def count_images(soup: BeautifulSoup) -> int:
 def get_images_without_alt(soup: BeautifulSoup) -> List[str]:
     """
     Katjib images li ma3andhomch ALT.
+    Compatible avec le lazy loading.
     """
 
     images_without_alt = []
 
     try:
 
-        images = soup.find_all("img")
-
-        for image in images:
+        for image in soup.find_all("img"):
 
             alt = image.get("alt")
 
+            src = (
+                image.get("src")
+                or image.get("data-src")
+                or image.get("data-lazy-src")
+                or image.get("data-original")
+                or image.get("srcset")
+                or image.get("data-srcset")
+                or ""
+            ).strip()
+
+            if "," in src:
+                src = src.split(",")[0].split()[0]
+
             if alt is None or alt.strip() == "":
-                images_without_alt.append(
-                    image.get("src", "")
-                )
+                images_without_alt.append(src)
 
         return images_without_alt
 
     except Exception:
         return []
 
-
 # les images avec alt
 def get_images_with_alt(soup) -> list:
     """
     Katjib ghir les images li 3andhom alt.
+    Compatible avec le lazy loading.
     """
 
     try:
+
         images = []
 
         for image in soup.find_all("img"):
+
             alt = image.get("alt", "").strip()
+
+            src = (
+                image.get("src")
+                or image.get("data-src")
+                or image.get("data-lazy-src")
+                or image.get("data-original")
+                or image.get("srcset")
+                or image.get("data-srcset")
+                or ""
+            ).strip()
+
+            if "," in src:
+                src = src.split(",")[0].split()[0]
 
             if alt:
                 images.append({
-                    "src": image.get("src", "").strip(),
+                    "src": src,
                     "alt": alt
                 })
 
@@ -180,7 +227,7 @@ def get_images_with_alt(soup) -> list:
 
     except Exception:
         return []
-
+    
 
 # Links Count
 
@@ -199,7 +246,7 @@ def count_links(soup: BeautifulSoup) -> int:
 # links
 def get_links(soup) -> list:
     """
-    Katjib ga3 les liens.
+    Récupère les liens SEO utiles de la page.
     """
 
     try:
@@ -210,8 +257,26 @@ def get_links(soup) -> list:
 
             href = link.get("href", "").strip()
 
-            if href:
-                links.append(href)
+            if not href:
+                continue
+
+            # Ignorer les ancres internes
+            if href.startswith("#"):
+                continue
+
+            # Ignorer JavaScript
+            if href.lower().startswith("javascript:"):
+                continue
+
+            # Ignorer les emails
+            if href.lower().startswith("mailto:"):
+                continue
+
+            # Ignorer les numéros de téléphone
+            if href.lower().startswith("tel:"):
+                continue
+
+            links.append(href)
 
         return links
 
@@ -335,17 +400,6 @@ def is_h1_unique(soup) -> bool:
     except Exception:
         return False
 
-# tjib ga3 les liens
-def is_h1_unique(soup) -> bool:
-    """
-    Katverifi wach kayn H1 wa7ed.
-    """
-
-    try:
-        return get_h1_count(soup) == 1
-
-    except Exception:
-        return False
 
 #les liens interne (khaso base url)
 
@@ -420,3 +474,43 @@ def has_structured_data(soup) -> bool:
 
     except Exception:
         return False
+
+# anti-bruit
+
+def get_clean_soup(soup: BeautifulSoup) -> BeautifulSoup:
+    """
+    Nettoie le HTML pour ne garder que le contenu utile.
+    """
+
+    # Copier le soup pour ne pas modifier l'original
+    soup = BeautifulSoup(str(soup), "lxml")
+
+    # Supprimer les balises inutiles
+    for tag in soup([
+        "script",
+        "style",
+        "noscript",
+        "header",
+        "footer",
+        "nav",
+        "aside",
+        "form",
+        "svg"
+    ]):
+        tag.decompose()
+
+    # Supprimer les commentaires HTML
+    for comment in soup.find_all(string=lambda text: isinstance(text, Comment)):
+        comment.extract()
+
+    # Priorité au contenu principal
+    if soup.find("main"):
+        return BeautifulSoup(str(soup.find("main")), "lxml")
+
+    if soup.find("article"):
+        return BeautifulSoup(str(soup.find("article")), "lxml")
+
+    if soup.find("body"):
+        return BeautifulSoup(str(soup.find("body")), "lxml")
+
+    return soup
