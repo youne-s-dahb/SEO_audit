@@ -32,6 +32,15 @@ class AuditGoogleMap
     #[ORM\JoinColumn(nullable: false)]
     private ?Audit $audit = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $businessName = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $title = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $address = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -93,6 +102,41 @@ class AuditGoogleMap
     public function setAudit(Audit $audit): static
     {
         $this->audit = $audit;
+
+        return $this;
+    }
+        public function getBusinessName(): ?string
+    {
+        return $this->businessName;
+    }
+
+    public function setBusinessName(?string $businessName): static
+    {
+        $this->businessName = $businessName;
+
+        return $this;
+    }
+
+    public function getTitle(): ?string
+    {
+        return $this->title;
+    }
+
+    public function setTitle(?string $title): static
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    public function getAddress(): ?string
+    {
+        return $this->address;
+    }
+
+    public function setAddress(?string $address): static
+    {
+        $this->address = $address;
 
         return $this;
     }
