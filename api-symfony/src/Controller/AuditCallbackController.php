@@ -3,119 +3,122 @@
 namespace App\Controller;
 
 use App\Entity\Audit;
+use App\Entity\Recommendation;
 use App\Entity\Site;
 use App\Entity\User;
-use App\Entity\Recommendation;
 use Doctrine\ORM\EntityManagerInterface;
-use Predis\Client as RedisClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Routing\Attribute\Route;
 
 class AuditCallbackController extends AbstractController
 {
-    #[Route('/api/audit/callback', name: 'audit_callback', methods: ['POST'])]
+    #[Route('/api/audits/run', name: 'run_audit', methods: ['POST'])]
     public function __invoke(
         Request $request,
-        EntityManagerInterface $em,
-        RedisClient $redis
+        EntityManagerInterface $em
     ): JsonResponse {
 
-        $payload = json_decode($request->getContent(), true);
+        $body = json_decode($request->getContent(), true);
 
-        if (empty($payload['url'])) {
+        if (empty($body['url'])) {
             return $this->json([
                 'error' => 'URL is required'
             ], 400);
         }
 
-        $url = $payload['url'];
+        $url = trim($body['url']);
 
-        $redisKey = 'audit:' . $url;
-
-        $cached = $redis->get($redisKey);
-
-        if (!$cached) {
-            return $this->json([
-                'error' => 'Audit not found in Redis'
-            ], 404);
-        }
-
-        $auditData = json_decode($cached, true);
-
+        // Recherche du site
         $site = $em->getRepository(Site::class)->findOneBy([
             'url' => $url
         ]);
 
         if (!$site) {
-                $site = new Site();
 
-                $site->setUrl($url);
-                $site->setNormalizedUrl(strtolower(rtrim($url, '/')));
-                $site->setName(parse_url($url, PHP_URL_HOST));
+            $user = $em->getRepository(User::class)->find(2);
 
-                // Valeurs par défaut
-                $site->setCountryCode('MA');
-                $site->setLanguageCode('fr');
-
-                // User propriétaire
-                $user = $em->getRepository(User::class)->find(2);
-
-                if (!$user) {
-                    return $this->json([
-                        'error' => 'User  not found'
-                    ], 500);
-                }
-
-                $site->setAccount($user);
-              
-                $em->persist($site);
+            if (!$user) {
+                return $this->json([
+                    'error' => 'User not found'
+                ], 404);
             }
-        $audit = new Audit();
 
+            $site = new Site();
+            $site->setUrl($url);
+            $site->setNormalizedUrl(strtolower(rtrim($url, '/')));
+            $site->setName(parse_url($url, PHP_URL_HOST));
+            $site->setCountryCode($data['country_code'] ?? 'MA');
+            $site->setLanguageCode($data['language_code'] ?? 'fr');
+            $site->setAccount($user);
+
+            $em->persist($site);
+        }
+
+        $audit = new Audit();
         $audit->setSite($site);
         $audit->setRequestedBy($site->getAccount());
-        $audit->setStatus($auditData['status'] ?? 'completed');
-        $audit->setGlobalScore($auditData['global_score'] ?? null);
-        $audit->setScoreColor($auditData['score_color'] ?? null);
-        $audit->setIsHttps($auditData['is_https'] ?? false);
-        $audit->setHasRobotsTxt($auditData['has_robots_txt'] ?? false);
-        $audit->setHasSitemapXml($auditData['has_sitemap_xml'] ?? false);
-        $audit->setIsMobileFriendly($auditData['is_mobile_friendly'] ?? false);
-        $audit->setPageLoadTimeMs($auditData['page_load_time_ms'] ?? null);
-        $audit->setPagespeedDesktopScore($auditData['pagespeed_desktop_score'] ?? null);
-        $audit->setPagespeedMobileScore($auditData['pagespeed_mobile_score'] ?? null);
-        $audit->setAccessibilityScore($auditData['accessibility_score'] ?? null);
-        $audit->setBestPracticesScore($auditData['best_practices_score'] ?? null);
-        $audit->setSeoScore($auditData['seo_score'] ?? null);
-        $audit->setMetrics($auditData['metrics'] ?? null);
-        $audit->setErrorMessage($auditData['error_message'] ?? null);
-
+        $audit->setStatus('processing');
         $audit->setCreatedAt(new \DateTimeImmutable());
+
         $em->persist($audit);
         $em->flush();
-        foreach ($auditData['recommendations'] ?? [] as $item) {
 
-          $recommendation = new Recommendation();
+        $client = HttpClient::create();
 
-          $recommendation->setRecommendation($item);
-          $recommendation->setCreatedAt(new \DateTimeImmutable());
-          $recommendation->setAudit($audit);
+        $response = $client->request(
+            'GET',
+            'http://analyzer:8000/audit',
+            [
+                'query' => [
+                    'url' => $url
+                ]
+            ]
+        );
 
-          $em->persist($recommendation);
+        $data = $response->toArray();
+
+        $audit->setStatus($data['status'] ?? 'completed');
+        $audit->setGlobalScore($data['global_score'] ?? null);
+        $audit->setScoreColor($data['score_color'] ?? null);
+
+        $audit->setIsHttps($data['is_https'] ?? false);
+        $audit->setHasRobotsTxt($data['has_robots_txt'] ?? false);
+        $audit->setHasSitemapXml($data['has_sitemap_xml'] ?? false);
+        $audit->setIsMobileFriendly($data['is_mobile_friendly'] ?? false);
+
+        $audit->setPageLoadTimeMs($data['page_load_time_ms'] ?? null);
+
+        $audit->setPagespeedDesktopScore($data['pagespeed_desktop_score'] ?? null);
+        $audit->setPagespeedMobileScore($data['pagespeed_mobile_score'] ?? null);
+
+        $audit->setAccessibilityScore($data['accessibility_score'] ?? null);
+        $audit->setBestPracticesScore($data['best_practices_score'] ?? null);
+        $audit->setSeoScore($data['seo_score'] ?? null);
+
+        $audit->setMetrics($data['metrics'] ?? []);
+        $audit->setErrorMessage($data['error_message'] ?? null);
+
+        foreach ($data['recommendations'] ?? [] as $item) {
+
+            $recommendation = new Recommendation();
+
+            $recommendation->setAudit($audit);
+            $recommendation->setRecommendation($item);
+            $recommendation->setCreatedAt(new \DateTimeImmutable());
+
+            $em->persist($recommendation);
         }
 
         $em->flush();
-     
-
-        
-
-        $redis->del($redisKey);
 
         return $this->json([
-            'message' => 'Audit stored successfully',
-            'audit_id' => $audit->getId()
-        ]);
+            'message' => 'Audit completed successfully',
+            'audit_id' => $audit->getId(),
+            'score' => $audit->getGlobalScore()
+        ], Response::HTTP_OK);
     }
 }

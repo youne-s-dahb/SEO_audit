@@ -1,8 +1,10 @@
 import os
 import httpx
+from bs4 import BeautifulSoup
 
-
-async def get_pagespeed_data(url: str):
+     
+    
+async def get_pagespeed_data(url: str, strategy="mobile"):
     # Jib API Key mn variables d'environnement
     api_key = os.getenv("PAGESPEED_API_KEY")
 
@@ -20,7 +22,7 @@ async def get_pagespeed_data(url: str):
         "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
         f"?url={url}"
         f"&key={api_key}"
-        f"&strategy=mobile"
+        f"&strategy={strategy}"
         f"&category=performance"
         f"&category=accessibility"
         f"&category=best-practices"
@@ -70,8 +72,28 @@ async def get_pagespeed_data(url: str):
         seo_score = int(
             categories.get("seo", {}).get("score", 0) * 100
         )
+        
+        mobile_result = await check_mobile_friendly(url)
 
+        is_mobile_friendly = mobile_result["is_mobile_friendly"]
+        mobile_score = mobile_result["mobile_score"]
+        print(
+            "MOBILE RESULT =",
+            mobile_result,
+            flush=True
+        )
+        global_score = int(
+            (
+                performance_score
+                + accessibility_score
+                + best_practices_score
+                + seo_score
+            ) / 4
+        )
         return {
+            "global_score": global_score,
+            "mobile_score": mobile_score,
+            "is_mobile_friendly": is_mobile_friendly,
             "performance_score": performance_score,
             "accessibility_score": accessibility_score,
             "best_practices_score": best_practices_score,
@@ -103,7 +125,7 @@ async def get_pagespeed_data(url: str):
                     "interactive", {}
                 ).get("displayValue", "N/A"),
             },
-            "is_fast": performance_score >= 90,
+          
             "recommendations": (
                 [
                     "Compresser les images.",
@@ -127,8 +149,50 @@ async def get_pagespeed_data(url: str):
         return {
             "error": str(e)
         }
+async def check_mobile_friendly(url: str):
+    try:
+        async with httpx.AsyncClient(
+            follow_redirects=True,
+            headers={
+                "User-Agent": (
+                    "Mozilla/5.0 "
+                    "(iPhone; CPU iPhone OS 17_0 like Mac OS X)"
+                )
+            }
+        ) as client:
 
+            response = await client.get(url, timeout=10)
 
+            html = response.text.lower()
+
+            soup = BeautifulSoup(
+                html,
+                "html.parser"
+            )
+
+            viewport = soup.find(
+                "meta",
+                attrs={"name": "viewport"}
+            )
+
+            if viewport:
+                return {
+                    "mobile_score": 100,
+                    "is_mobile_friendly": True
+                }
+
+            return {
+                "mobile_score": 0,
+                "is_mobile_friendly": False
+            }
+
+    except Exception as e:
+        print("MOBILE ERROR:", e, flush=True)
+
+        return {
+            "mobile_score": 0,
+            "is_mobile_friendly": False
+        }
 def format_simple_report(data):
     perf_score = data.get("performance_score", 0)
     perf_emoji = "🟢" if perf_score >= 80 else ("🟡" if perf_score >= 50 else "🔴")
