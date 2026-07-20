@@ -109,5 +109,6 @@ async def check_google_maps_presence(url):
         "title": place.get("title"),
         "address": place.get("address"),
         "rating": place.get("rating"),
-        "reviews_count": place.get("ratingCount")
+        "reviews_count": place.get("ratingCount"),
+        "place_id": place.get("placeId")
     }
