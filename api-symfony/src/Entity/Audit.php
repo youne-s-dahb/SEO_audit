@@ -5,12 +5,10 @@ namespace App\Entity;
 use App\Repository\AuditRepository;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;
-use App\State\AuditResultProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use App\State\AuditProcessor;
 
 #[ORM\Entity(repositoryClass: AuditRepository::class)]
 #[ORM\Table(name: 'audits')] // Smiya dial l-table f DB dyalk   
@@ -118,7 +116,6 @@ class Audit
     public function __construct()
     {
         $this->pages = new ArrayCollection();
-        $this->criteriaScore = new ArrayCollection();
         $this->reports = new ArrayCollection();
         $this->keywordRankings = new ArrayCollection();
         $this->competitorComparisons = new ArrayCollection();

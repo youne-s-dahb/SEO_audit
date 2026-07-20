@@ -26,6 +26,7 @@ STOP_WORDS = {
     "in", "on", "at", "for", "with", "by", "from", "is", "are", "was",
     "were", "be", "been", "being", "this", "that", "these", "those",
     "it", "its", "as", "not", "we", "you", "they", "he", "she",
+    "our", "your", "their", "his", "her", "my",
 }
 
 MIN_WORD_LENGTH = 3
@@ -149,7 +150,8 @@ def clean_text(text: str) -> str:
         if not text:
             return ""
         text = text.lower()
-        text = re.sub(r"[^a-zàâäéèêëîïôöùûüÿçñ\s]", " ", text)
+        text = re.sub(r"[^\w\s]", " ", text, flags=re.UNICODE)
+        text = text.replace("_", " ")
         return remove_extra_spaces(text)
     except Exception:
         return ""
@@ -207,7 +209,9 @@ def calculate_keyword_density(soup: BeautifulSoup, top_n: int = 10) -> List[Dict
                 "density_percent": density,
             })
 
+            
         return results
+
 
     except Exception:
         return []

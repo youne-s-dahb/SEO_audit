@@ -41,10 +41,14 @@ from analyzer.html_parser import (
     count_images,
     get_images_with_alt,
     get_images_without_alt,
-    has_structured_data
+    has_structured_data,
+    get_clean_soup
 )
 
 from analyzer.keyword_density import calculate_keyword_density
+
+# NOUVEAU: fallback Playwright pour les sites JS (React/Vue/Next.js)
+from analyzer.js_renderer import render_page_with_js, looks_like_empty_shell
 
 # Constantes
 
@@ -297,7 +301,9 @@ def analyze(url: str) -> dict:
 
     URL
         ↓
-    fetch_page()
+    fetch_page() [requests, rapide]
+        ↓
+    Si page semble vide (site JS) -> render_page_with_js() [Playwright]
         ↓
     BeautifulSoup
         ↓
@@ -308,7 +314,7 @@ def analyze(url: str) -> dict:
 
     try:
         # --------------------------------------
-        # Télécharger la page
+        # Télécharger la page (methode rapide, requests)
         # --------------------------------------
         page = fetch_page(url)
 
@@ -320,11 +326,42 @@ def analyze(url: str) -> dict:
         # Parser HTML
         # --------------------------------------
         soup = parse_html(page["html"])
+        
         if not soup:
             return {
                 "success": False,
                 "error": "Failed to parse HTML document."
             }
+
+        clean_soup = get_clean_soup(soup)
+
+        # --------------------------------------
+        # NOUVEAU: Detection rapide "coquille vide" (site JS non rendu)
+        # Si detecte, on retente avec Playwright (navigateur headless)
+        # et on ne bascule dessus que si le resultat est meilleur.
+        # --------------------------------------
+        quick_headings = _safe_call(get_headings, soup, default={})
+        quick_check = {
+            "word_count": _safe_call(count_words, clean_soup, default=0),
+            "headings_count": sum(len(v) for v in quick_headings.values()),
+            "images_count": _safe_call(count_images, soup, default=0),
+            "links_count": len(_safe_call(get_links, soup, default=[])),
+        }
+
+        if looks_like_empty_shell(quick_check):
+            js_page = render_page_with_js(url)
+
+            if js_page.get("success"):
+                js_soup = parse_html(js_page["html"])
+
+                if js_soup:
+                    js_word_count = _safe_call(count_words, js_soup, default=0)
+
+                    # On bascule uniquement si le rendu JS donne PLUS
+                    # de contenu que la version requests d'origine
+                    if js_word_count > quick_check["word_count"]:
+                        page = js_page
+                        soup = js_soup
 
         # --------------------------------------
         # Récupération sécurisée des éléments SEO de base
@@ -372,6 +409,7 @@ def analyze(url: str) -> dict:
             "status_code": page.get("status_code"),
             "response_time_ms": page.get("response_time_ms"),
             "content_type": page.get("content_type"),
+            "rendered_with_js": page.get("rendered_with_js", False),
 
             # -----------------------------
             # SEO (Optimisé: parsing unique d'éléments)
@@ -427,7 +465,7 @@ def analyze(url: str) -> dict:
             # -----------------------------
             # Keyword Density
             # -----------------------------
-            "keyword_density": _safe_call(calculate_keyword_density, soup, default=[])
+            "keyword_density": _safe_call(calculate_keyword_density, clean_soup, default=[])
         }
 
         return result
