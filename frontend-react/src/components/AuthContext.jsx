@@ -1,80 +1,146 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext(null);
 
-const USERS_KEY = "app_users";
 const SESSION_KEY = "app_session";
-
-function readUsers() {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
-function writeUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
+const TOKEN_KEY = "token";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Restore session after refresh
   useEffect(() => {
-    const saved = localStorage.getItem(SESSION_KEY);
-    if (saved) {
-      try {
-        setUser(JSON.parse(saved));
-      } catch {
-        localStorage.removeItem(SESSION_KEY);
+    try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      const savedSession = localStorage.getItem(SESSION_KEY);
+
+      console.log("RESTORE TOKEN:", token);
+      console.log("RESTORE SESSION:", savedSession);
+
+      if (token && savedSession) {
+        const session = JSON.parse(savedSession);
+
+        setUser(session);
+
+        console.log("SESSION RESTORED:", session);
+      } else {
+        setUser(null);
       }
+    } catch (error) {
+      console.error("Session invalid:", error);
+
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(SESSION_KEY);
+
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  function register({ name, email, password }) {
-    const users = readUsers();
-    const exists = users.some((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (exists) {
-      return { ok: false, error: "Kayn deja compte b had email." };
-    }
-    const newUser = { id: crypto.randomUUID(), name, email, password };
-    writeUsers([...users, newUser]);
-    const session = { id: newUser.id, name: newUser.name, email: newUser.email };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    setUser(session);
-    return { ok: true };
-  }
+  async function login(email, password) {
+    try {
+      const response = await fetch(
+        "http://localhost:8000/api/login_check",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
 
-  function login({ email, password }) {
-    const users = readUsers();
-    const found = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
-    if (!found) {
-      return { ok: false, error: "Email wla password machi sahih." };
+      const data = await response.json();
+
+      console.log("LOGIN STATUS:", response.status);
+      console.log("LOGIN DATA:", data);
+
+      if (!response.ok) {
+        return {
+          ok: false,
+          error:
+            data.message ||
+            "Email wla password machi sahih.",
+        };
+      }
+
+      // Check JWT
+      if (!data.token) {
+        return {
+          ok: false,
+          error: "Backend ma rje3ch JWT token.",
+        };
+      }
+
+      // Save token
+      localStorage.setItem(TOKEN_KEY, data.token);
+
+      // Save user session
+      const session = {
+        email: email,
+      };
+
+      localStorage.setItem(
+        SESSION_KEY,
+        JSON.stringify(session)
+      );
+
+      // Update React state
+      setUser(session);
+
+      console.log("TOKEN SAVED:", data.token);
+      console.log("USER SAVED:", session);
+
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      console.error("LOGIN ERROR:", error);
+
+      return {
+        ok: false,
+        error: "Ma9drnach نتاصلو بالـ backend.",
+      };
     }
-    const session = { id: found.id, name: found.name, email: found.email };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    setUser(session);
-    return { ok: true };
   }
 
   function logout() {
+    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(SESSION_KEY);
+
     setUser(null);
+
+    console.log("LOGOUT DONE");
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, register, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth khass ykon dakhel AuthProvider");
-  return ctx;
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error(
+      "useAuth khass ykon dakhel AuthProvider"
+    );
+  }
+
+  return context;
 }
