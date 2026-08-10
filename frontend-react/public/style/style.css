@@ -135,7 +135,38 @@ button {
   color: var(--paper);
   border-color: var(--line);
 }
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
 
+.btn-block {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.field input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .btn-ghost:hover {
   border-color: var(--amber);
   text-decoration: none;
