@@ -13,7 +13,7 @@ export default function LoginForm() {
     setForm({...form, [name]: value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
@@ -22,7 +22,7 @@ export default function LoginForm() {
       return;
     }
 
-    const result = login(form);
+    const result = await login(form.email, form.password);
     if (!result.ok) {
       setError(result.error);
       return;
@@ -64,6 +64,7 @@ export default function LoginForm() {
         Login
       </button>
 
+    
       <p className="form-hint">
         Mazal 3andek compte? <Link to="/register">Créer wahed</Link>
       </p>

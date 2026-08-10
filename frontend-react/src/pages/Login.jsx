@@ -1,6 +1,21 @@
+import { Navigate } from "react-router-dom";
 import LoginForm from "../components/LoginForm";
+import { useAuth } from "../components/AuthContext";
 
 export default function Login() {
+  const { user, loading } = useAuth();
+   if (loading) {
+    return (
+      <div className="page-loading">
+        Kaytloaded...
+      </div>
+    );
+  }
+
+  // إلا كان connecté، ممنوع عليه يبقى فـ login
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
   return (
     <div className="auth-page">
       <div className="auth-shell">
