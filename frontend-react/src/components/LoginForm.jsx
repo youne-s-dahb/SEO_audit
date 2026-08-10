@@ -7,10 +7,11 @@ export default function LoginForm() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   function handleChange(e) {
-    const {name,value}=e.target
-    setForm({...form, [name]: value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
   }
 
   async function handleSubmit(e) {
@@ -22,12 +23,17 @@ export default function LoginForm() {
       return;
     }
 
-    const result = await login(form.email, form.password);
-    if (!result.ok) {
-      setError(result.error);
-      return;
+    setIsLoading(true);
+    try {
+      const result = await login(form.email, form.password);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      navigate("/");
+    } finally {
+      setIsLoading(false);
     }
-    navigate("/");
   }
 
   return (
@@ -42,6 +48,7 @@ export default function LoginForm() {
           value={form.email}
           onChange={handleChange}
           autoComplete="email"
+          disabled={isLoading}
         />
       </div>
 
@@ -55,16 +62,28 @@ export default function LoginForm() {
           value={form.password}
           onChange={handleChange}
           autoComplete="current-password"
+          disabled={isLoading}
         />
       </div>
 
       {error && <p className="form-error">{error}</p>}
 
-      <button type="submit" className="btn btn-primary btn-block">
-        Login
+      <button
+        type="submit"
+        className="btn btn-primary btn-block"
+        disabled={isLoading}
+        aria-busy={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <span className="spinner" aria-hidden="true" />
+            loading...
+          </>
+        ) : (
+          "Login"
+        )}
       </button>
 
-    
       <p className="form-hint">
         Mazal 3andek compte? <Link to="/register">Créer wahed</Link>
       </p>
