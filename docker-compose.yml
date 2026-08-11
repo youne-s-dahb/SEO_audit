@@ -1,10 +1,9 @@
-# version: '3.8'
-
 services:
+
   db:
     image: postgres:16-alpine
     container_name: seo_postgres
-    restart: always 
+    restart: always
     environment:
       POSTGRES_DB: seo_audit
       POSTGRES_USER: younes
@@ -58,32 +57,34 @@ services:
       DATABASE_URL: "postgresql://younes:secret_password123@db:5432/seo_audit"
       REDIS_URL: "redis://redis:6379/0"
     env_file:
-      - analyzer-python/.env
-  
+      - ./analyzer-python/.env
     depends_on:
       - db
       - redis
     networks:
       - seo_network
+
   frontend:
     build:
       context: ./frontend-react
       dockerfile: Dockerfile
     container_name: seo_react_frontend
+    restart: always
     ports:
       - "5173:5173"
     volumes:
       - ./frontend-react:/app
       - /app/node_modules
     environment:
-      - CHOKIDAR_USEPOLLING=true
+      CHOKIDAR_USEPOLLING: "true"
+    depends_on:
+      - api
     networks:
       - seo_network
+
 networks:
   seo_network:
     driver: bridge
 
 volumes:
   pgdata:
-
-
