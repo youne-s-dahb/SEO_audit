@@ -36,6 +36,11 @@ security:
             - { path: '^/api/login', roles: PUBLIC_ACCESS }
             - { path: '^/api/docs', roles: PUBLIC_ACCESS }
             - { path: '^/api$', roles: PUBLIC_ACCESS }
+             # Register endpoints public
+            - { path: '^/api/register/send-code$', roles: PUBLIC_ACCESS }
+            - { path: '^/api/register/verify-code$', roles: PUBLIC_ACCESS }
+            - { path: '^/api/register$', roles: PUBLIC_ACCESS }
+            - { path: '^/api/verify-email', roles: PUBLIC_ACCESS }
             
             # Audit endpoints public
             - { path: '^/api/audit/callback$', roles: PUBLIC_ACCESS }
