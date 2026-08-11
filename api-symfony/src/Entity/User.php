@@ -205,7 +205,47 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
         return $this;
     }
+        #[ORM\Column(type: 'boolean')]
+    private bool $isVerified = false;
 
+    #[ORM\Column(type: 'string', length: 64, nullable: true)]
+    private ?string $verificationToken = null;
+
+        #[ORM\Column(type: 'datetime', nullable: true)]
+        private ?\DateTimeInterface $verificationTokenExpiresAt = null;
+
+        public function isVerified(): bool
+        {
+            return $this->isVerified;
+        }
+
+        public function setIsVerified(bool $isVerified): static
+        {
+            $this->isVerified = $isVerified;
+            return $this;
+        }
+
+        public function getVerificationToken(): ?string
+        {
+            return $this->verificationToken;
+        }
+
+        public function setVerificationToken(?string $token): static
+        {
+            $this->verificationToken = $token;
+            return $this;
+        }
+
+        public function getVerificationTokenExpiresAt(): ?\DateTimeInterface
+        {
+            return $this->verificationTokenExpiresAt;
+        }
+
+        public function setVerificationTokenExpiresAt(?\DateTimeInterface $date): static
+        {
+            $this->verificationTokenExpiresAt = $date;
+            return $this;
+        }
     public function removeApiQuota(ApiQuota $apiQuota): static
     {
         if ($this->apiQuotas->removeElement($apiQuota)) {

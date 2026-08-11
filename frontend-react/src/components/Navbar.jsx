@@ -10,15 +10,32 @@ export default function Navbar() {
     navigate("/login");
   }
 
+  const initial = (user?.name || user?.email || "?").trim().charAt(0).toUpperCase();
+
   return (
-    <nav className="navbar">
+    <header className="navbar">
       <Link to="/" className="navbar-brand">
-        Marhba<span className="dot">.</span>
+        SEO<span className="dot">Audit</span>
       </Link>
+
+      {user && (
+        <nav className="navbar-nav">
+          <Link to="/" className="nav-link">
+            Dashboard
+          </Link>
+          <Link to="/history" className="nav-link">
+            Historique
+          </Link>
+        </nav>
+      )}
+
       <div className="navbar-links">
         {user ? (
           <>
-            <span className="navbar-user">Ahlan, {user.name}</span>
+            <div className="user-menu">
+              <span className="user-avatar">{initial}</span>
+              <span className="navbar-user">{user.name || user.email}</span>
+            </div>
             <button className="btn btn-ghost" onClick={handleLogout}>
               Kharej
             </button>
@@ -34,6 +51,6 @@ export default function Navbar() {
           </>
         )}
       </div>
-    </nav>
+    </header>
   );
 }
