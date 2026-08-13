@@ -37,7 +37,7 @@ export default function Navbar() {
               <span className="navbar-user">{user.name || user.email}</span>
             </div>
             <button className="btn btn-ghost" onClick={handleLogout}>
-              Kharej
+              Deconnexion
             </button>
           </>
         ) : (
