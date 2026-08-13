@@ -1,0 +1,360 @@
+/* =========================================================
+   HOME — RECENT AUDITS LOADING
+========================================================= */
+
+.home-recent-loading-card {
+    min-height: 300px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 35px;
+
+    background: var(--ink-card);
+
+    border: 1px solid var(--line);
+
+    border-radius: var(--radius-xl);
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.20),
+        inset 0 1px 0 rgba(246, 244, 238, 0.03);
+}
+
+.home-recent-loading-content {
+    display: flex;
+    align-items: center;
+
+    gap: 34px;
+}
+
+
+/* =========================================================
+   CIRCLE
+========================================================= */
+
+.home-recent-progress-circle {
+    --progress: 0deg;
+
+    width: 145px;
+    height: 145px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        conic-gradient(
+            var(--amber) var(--progress),
+            rgba(246, 244, 238, 0.08) var(--progress)
+        );
+
+    position: relative;
+
+    box-shadow:
+        0 0 30px rgba(224, 164, 88, 0.08);
+
+    transition:
+        background 0.25s ease,
+        box-shadow 0.3s ease;
+}
+
+
+/* Inner circle */
+
+.home-recent-progress-circle::before {
+    content: "";
+
+    position: absolute;
+
+    width: 121px;
+    height: 121px;
+
+    border-radius: 50%;
+
+    background: var(--ink-card);
+
+    border: 1px solid var(--line-soft);
+}
+
+
+/* Center */
+
+.home-recent-progress-inner {
+    position: relative;
+    z-index: 2;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    line-height: 1;
+}
+
+.home-recent-progress-inner strong {
+    font-family: var(--font-display);
+
+    font-size: 30px;
+    font-weight: 500;
+
+    letter-spacing: -1px;
+
+    color: var(--paper);
+}
+
+.home-recent-progress-inner span {
+    margin-top: 7px;
+
+    font-family: var(--font-body);
+
+    font-size: 9px;
+    font-weight: 600;
+
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+
+    color: var(--text-muted);
+}
+
+
+/* =========================================================
+   TEXT
+========================================================= */
+
+.home-recent-loading-text {
+    max-width: 290px;
+}
+
+.home-recent-loading-text h3 {
+    margin: 0;
+
+    font-family: var(--font-display);
+
+    font-size: 20px;
+    font-weight: 500;
+
+    color: var(--paper);
+}
+
+.home-recent-loading-text p {
+    margin: 8px 0 0;
+
+    font-family: var(--font-body);
+
+    font-size: 13px;
+    line-height: 1.7;
+
+    color: var(--text-dim);
+}
+
+
+/* =========================================================
+   DOTS
+========================================================= */
+
+.home-recent-loading-dots {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    margin-top: 15px;
+}
+
+.home-recent-loading-dots span {
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background: var(--amber);
+
+    animation:
+        homeRecentDot
+        1.2s
+        infinite
+        ease-in-out;
+}
+
+.home-recent-loading-dots span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.home-recent-loading-dots span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes homeRecentDot {
+    0%,
+    60%,
+    100% {
+        opacity: 0.25;
+        transform: translateY(0);
+    }
+
+    30% {
+        opacity: 1;
+        transform: translateY(-4px);
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .home-recent-loading-card {
+        min-height: 350px;
+        padding: 30px 20px;
+    }
+
+    .home-recent-loading-content {
+        flex-direction: column;
+
+        text-align: center;
+
+        gap: 25px;
+    }
+
+    .home-recent-loading-text {
+        max-width: 260px;
+    }
+
+    .home-recent-loading-dots {
+        justify-content: center;
+    }
+}
+
+/* =========================================================
+   REPORT BUTTON
+========================================================= */
+
+.home-report-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    min-width: 105px;
+
+    padding: 9px 14px;
+
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+
+    color: var(--paper);
+
+    background: transparent;
+
+    border: 1px solid var(--amber-border);
+
+    border-radius: var(--radius-md);
+
+    cursor: pointer;
+
+    transition:
+        color 0.25s ease,
+        background 0.25s ease,
+        border-color 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+
+/* Hover */
+
+.home-report-button:hover:not(:disabled) {
+    color: var(--amber-light);
+
+    background: var(--amber-soft);
+
+    border-color: var(--amber);
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 8px 22px rgba(224, 164, 88, 0.12);
+}
+
+
+/* =========================================================
+   OPENING STATE
+========================================================= */
+
+.home-report-button.opening {
+    color: var(--amber-light);
+
+    background: var(--amber-soft);
+
+    border-color: var(--amber);
+
+    cursor: wait;
+
+    animation:
+        reportButtonPulse
+        1.2s
+        ease-in-out
+        infinite;
+}
+
+
+.home-report-button:disabled {
+    opacity: 1;
+}
+
+
+/* =========================================================
+   SPINNER
+========================================================= */
+
+.report-button-spinner {
+    width: 13px;
+    height: 13px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    border: 2px solid var(--amber-border);
+
+    border-top-color: var(--amber);
+
+    animation:
+        reportButtonSpin
+        0.7s
+        linear
+        infinite;
+}
+
+
+@keyframes reportButtonSpin {
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+@keyframes reportButtonPulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 rgba(224, 164, 88, 0);
+    }
+
+    50% {
+        box-shadow:
+            0 0 20px rgba(224, 164, 88, 0.14);
+    }
+}
+

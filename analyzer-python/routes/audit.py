@@ -35,14 +35,19 @@ async def audit_url(url: str):
         "desktop"
     )
     lcp = (
-        full_data.get("metrics", {})
-        .get("largest_contentful_paint", "0 s")
-        .replace("\xa0", "")
-        .replace("s", "")
-        .strip()
+    full_data.get("metrics", {})
+    .get("largest_contentful_paint", "0 s")
+    .replace("\xa0", "")
+    .replace("s", "")
+    .strip()
     )
+
+    try:
+        page_load_time_ms = int(float(lcp) * 1000)
+    except (ValueError, TypeError):
+        page_load_time_ms = 0
     language_code, country_code = extract_language_and_country(url)
-    page_load_time_ms = int(float(lcp) * 1000)
+    
     global_score = int(
         (
             full_data.get("performance_score", 0)
