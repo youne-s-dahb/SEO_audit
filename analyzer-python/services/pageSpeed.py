@@ -145,13 +145,11 @@ async def get_pagespeed_data(url: str, strategy: str = "mobile"):
             (categories.get("seo", {}).get("score", 0) or 0) * 100
         )
 
-        global_score = int(
-            (
-                performance_score
-                + accessibility_score
-                + best_practices_score
-                + seo_score
-            ) / 4
+        global_score = round(
+            performance_score * 0.30
+            + seo_score * 0.30
+            + accessibility_score * 0.20
+            + best_practices_score * 0.20
         )
 
         is_mobile_friendly = mobile_result["is_mobile_friendly"]

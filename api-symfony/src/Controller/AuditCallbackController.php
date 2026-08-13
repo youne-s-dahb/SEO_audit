@@ -3,15 +3,16 @@
 namespace App\Controller;
 
 use App\Entity\Audit;
+use App\Entity\AuditGoogleMap;
 use App\Entity\Recommendation;
 use App\Entity\Site;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
@@ -24,11 +25,9 @@ class AuditCallbackController extends AbstractController
         #[CurrentUser] ?User $user
     ): JsonResponse {
 
-        /*
-         * ==========================================
-         * 1. Vérifier user connecté
-         * ==========================================
-         */
+        // =====================================================
+        // 1. USER CONNECTÉ
+        // =====================================================
 
         if (!$user) {
             return $this->json([
@@ -37,11 +36,9 @@ class AuditCallbackController extends AbstractController
         }
 
 
-        /*
-         * ==========================================
-         * 2. Lire le body JSON
-         * ==========================================
-         */
+        // =====================================================
+        // 2. JSON BODY
+        // =====================================================
 
         $body = json_decode(
             $request->getContent(),
@@ -55,11 +52,9 @@ class AuditCallbackController extends AbstractController
         }
 
 
-        /*
-         * ==========================================
-         * 3. Vérifier URL
-         * ==========================================
-         */
+        // =====================================================
+        // 3. URL
+        // =====================================================
 
         if (empty($body['url'])) {
             return $this->json([
@@ -70,14 +65,9 @@ class AuditCallbackController extends AbstractController
         $url = trim($body['url']);
 
 
-        /*
-         * ==========================================
-         * 4. Recherche du site
-         * ==========================================
-         *
-         * Important:
-         * Le site appartient au user connecté.
-         */
+        // =====================================================
+        // 4. FIND SITE
+        // =====================================================
 
         $site = $em
             ->getRepository(Site::class)
@@ -87,11 +77,9 @@ class AuditCallbackController extends AbstractController
             ]);
 
 
-        /*
-         * ==========================================
-         * 5. Créer le site s'il n'existe pas
-         * ==========================================
-         */
+        // =====================================================
+        // 5. CREATE SITE
+        // =====================================================
 
         if (!$site) {
 
@@ -120,36 +108,22 @@ class AuditCallbackController extends AbstractController
                 $body['language_code'] ?? 'fr'
             );
 
-            /*
-             * IMPORTANT:
-             * Le site appartient au user connecté.
-             */
             $site->setAccount($user);
 
             $em->persist($site);
 
-            /*
-             * Flush pour garantir que le site
-             * existe avant l'audit.
-             */
             $em->flush();
         }
 
 
-        /*
-         * ==========================================
-         * 6. Créer l'Audit
-         * ==========================================
-         */
+        // =====================================================
+        // 6. CREATE AUDIT
+        // =====================================================
 
         $audit = new Audit();
 
         $audit->setSite($site);
 
-        /*
-         * IMPORTANT:
-         * L'audit appartient au user connecté.
-         */
         $audit->setRequestedBy($user);
 
         $audit->setStatus('processing');
@@ -163,11 +137,9 @@ class AuditCallbackController extends AbstractController
         $em->flush();
 
 
-        /*
-         * ==========================================
-         * 7. Appeler Python Analyzer
-         * ==========================================
-         */
+        // =====================================================
+        // 7. PYTHON ANALYZER
+        // =====================================================
 
         $client = HttpClient::create([
             'timeout' => 150,
@@ -188,12 +160,8 @@ class AuditCallbackController extends AbstractController
             );
 
             $data = $response->toArray();
-        
-        } catch (\Throwable $e) {
 
-            /*
-             * Si Python timeout / erreur
-             */
+        } catch (\Throwable $e) {
 
             $audit->setStatus('failed');
 
@@ -206,17 +174,17 @@ class AuditCallbackController extends AbstractController
             return $this->json([
                 'error' =>
                     'L\'audit khda wa9t bzaf o waqef.',
+
                 'audit_id' =>
                     $audit->getId(),
+
             ], Response::HTTP_GATEWAY_TIMEOUT);
         }
 
 
-        /*
-         * ==========================================
-         * 8. Sauvegarder résultat audit
-         * ==========================================
-         */
+        // =====================================================
+        // 8. SAVE MAIN AUDIT
+        // =====================================================
 
         $audit->setStatus(
             $data['status'] ?? 'completed'
@@ -231,11 +199,9 @@ class AuditCallbackController extends AbstractController
         );
 
 
-        /*
-         * ==========================================
-         * Technical SEO
-         * ==========================================
-         */
+        // =====================================================
+        // TECHNICAL SEO
+        // =====================================================
 
         $audit->setIsHttps(
             $data['is_https'] ?? false
@@ -254,11 +220,9 @@ class AuditCallbackController extends AbstractController
         );
 
 
-        /*
-         * ==========================================
-         * Performance
-         * ==========================================
-         */
+        // =====================================================
+        // PERFORMANCE
+        // =====================================================
 
         $audit->setPageLoadTimeMs(
             $data['page_load_time_ms'] ?? null
@@ -273,11 +237,9 @@ class AuditCallbackController extends AbstractController
         );
 
 
-        /*
-         * ==========================================
-         * Lighthouse scores
-         * ==========================================
-         */
+        // =====================================================
+        // LIGHTHOUSE
+        // =====================================================
 
         $audit->setAccessibilityScore(
             $data['accessibility_score'] ?? null
@@ -292,33 +254,27 @@ class AuditCallbackController extends AbstractController
         );
 
 
-        /*
-         * ==========================================
-         * Metrics
-         * ==========================================
-         */
+        // =====================================================
+        // METRICS
+        // =====================================================
 
         $audit->setMetrics(
             $data['metrics'] ?? []
         );
 
 
-        /*
-         * ==========================================
-         * Error message
-         * ==========================================
-         */
+        // =====================================================
+        // ERROR
+        // =====================================================
 
         $audit->setErrorMessage(
             $data['error_message'] ?? null
         );
 
 
-        /*
-         * ==========================================
-         * 9. Recommendations
-         * ==========================================
-         */
+        // =====================================================
+        // 9. RECOMMENDATIONS
+        // =====================================================
 
         foreach (
             $data['recommendations'] ?? []
@@ -346,71 +302,276 @@ class AuditCallbackController extends AbstractController
         }
 
 
-        /*
-         * ==========================================
-         * 10. Save everything
-         * ==========================================
-         */
+        // =====================================================
+        // 10. GOOGLE MAPS ANALYSIS
+        // =====================================================
+
+        $googleMapPayload = null;
+
+        try {
+
+            $mapsResponse = $client->request(
+                'GET',
+                'http://analyzer:8000/maps/presence',
+                [
+                    'query' => [
+                        'url' => $url
+                    ]
+                ]
+            );
+
+            $googleMapPayload =
+                $mapsResponse->toArray();
+
+        } catch (\Throwable $e) {
+
+            // Google Maps failure
+            // ne bloque pas l'audit principal
+
+            $googleMapPayload = [
+                'is_present' => false,
+                'status' => 'not_analyzed',
+                'error' => $e->getMessage()
+            ];
+        }
+
+
+        // =====================================================
+        // 11. SAVE GOOGLE MAPS
+        // =====================================================
+
+        $googleMap = new AuditGoogleMap();
+
+        $googleMap->setAudit(
+            $audit
+        );
+
+
+        $isPresent =
+            (bool) (
+                $googleMapPayload['is_present']
+                ?? $googleMapPayload['isPresent']
+                ?? false
+            );
+
+
+        $businessName =
+            $googleMapPayload['business_name']
+            ?? $googleMapPayload['businessName']
+            ?? null;
+
+
+        $title =
+            $googleMapPayload['title']
+            ?? null;
+
+
+        $address =
+            $googleMapPayload['address']
+            ?? null;
+
+
+        $rating =
+            $googleMapPayload['rating']
+            ?? null;
+
+
+        $reviewsCount =
+            $googleMapPayload['reviews_count']
+            ?? $googleMapPayload['reviewsCount']
+            ?? null;
+
+
+        $placeId =
+            $googleMapPayload['place_id']
+            ?? $googleMapPayload['placeId']
+            ?? null;
+
+
+        $googleMap->setIsPresent(
+            $isPresent
+        );
+
+
+        $googleMap->setBusinessName(
+            is_scalar($businessName)
+                ? (string) $businessName
+                : null
+        );
+
+
+        $googleMap->setTitle(
+            is_scalar($title)
+                ? (string) $title
+                : null
+        );
+
+
+        $googleMap->setAddress(
+            is_scalar($address)
+                ? (string) $address
+                : null
+        );
+
+
+        $googleMap->setRating(
+            is_numeric($rating)
+                ? (float) $rating
+                : null
+        );
+
+
+        $googleMap->setReviewsCount(
+            is_numeric($reviewsCount)
+                ? (int) $reviewsCount
+                : null
+        );
+
+
+        $googleMap->setPlaceId(
+            is_scalar($placeId)
+                ? (string) $placeId
+                : null
+        );
+
+
+        $em->persist(
+            $googleMap
+        );
+
+
+        // =====================================================
+        // 12. FINAL FLUSH
+        // =====================================================
 
         $em->flush();
 
 
-        /*
-         * ==========================================
-         * 11. Response Frontend
-         * ==========================================
-         */
+        // =====================================================
+        // 13. RESPONSE
+        // =====================================================
 
-       return $this->json([
-                'message' => 'Audit completed successfully',
+        return $this->json([
 
-                'audit_id' => $audit->getId(),
+            'message' =>
+                'Audit completed successfully',
 
-                'status' => $audit->getStatus(),
+            'audit_id' =>
+                $audit->getId(),
 
-                'url' => $site->getUrl(),
+            'status' =>
+                $audit->getStatus(),
 
-                'global_score' => $audit->getGlobalScore(),
+            'url' =>
+                $site->getUrl(),
 
-                'score_color' => $audit->getScoreColor(),
 
-                'page_load_time_ms' => $audit->getPageLoadTimeMs(),
+            // -----------------------------
+            // GLOBAL
+            // -----------------------------
 
-                'pagespeed_desktop_score' =>
-                    $audit->getPagespeedDesktopScore(),
+            'global_score' =>
+                $audit->getGlobalScore(),
 
-                'pagespeed_mobile_score' =>
-                    $audit->getPagespeedMobileScore(),
+            'score_color' =>
+                $audit->getScoreColor(),
 
-                'accessibility_score' =>
-                    $audit->getAccessibilityScore(),
 
-                'best_practices_score' =>
-                    $audit->getBestPracticesScore(),
+            // -----------------------------
+            // PERFORMANCE
+            // -----------------------------
 
-                'seo_score' =>
-                    $audit->getSeoScore(),
+            'page_load_time_ms' =>
+                $audit->getPageLoadTimeMs(),
 
-                'metrics' =>
-                    $audit->getMetrics(),
+            'pagespeed_desktop_score' =>
+                $audit->getPagespeedDesktopScore(),
 
-                'https' =>
-                    $audit->isHttps(),
+            'pagespeed_mobile_score' =>
+                $audit->getPagespeedMobileScore(),
 
-                'robots_txt' =>
-                    $audit->hasRobotsTxt(),
 
-                'sitemap_xml' =>
-                    $audit->hasSitemapXml(),
+            // -----------------------------
+            // LIGHTHOUSE
+            // -----------------------------
 
-                'mobile_friendly' =>
-                    $audit->isMobileFriendly(),
+            'accessibility_score' =>
+                $audit->getAccessibilityScore(),
 
-                'created_at' =>
-                    $audit->getCreatedAt()
-                        ?->format(\DateTimeInterface::ATOM),
+            'best_practices_score' =>
+                $audit->getBestPracticesScore(),
 
-            ], Response::HTTP_OK);
+            'seo_score' =>
+                $audit->getSeoScore(),
+
+
+            // -----------------------------
+            // TECHNICAL SEO
+            // -----------------------------
+
+            'https' =>
+                $audit->isHttps(),
+
+            'robots_txt' =>
+                $audit->hasRobotsTxt(),
+
+            'sitemap_xml' =>
+                $audit->hasSitemapXml(),
+
+            'mobile_friendly' =>
+                $audit->isMobileFriendly(),
+
+
+            // -----------------------------
+            // METRICS
+            // -----------------------------
+
+            'metrics' =>
+                $audit->getMetrics(),
+
+
+            // -----------------------------
+            // GOOGLE MAPS
+            // -----------------------------
+
+            'google_maps' => [
+
+                'is_present' =>
+                    $googleMap->isPresent(),
+
+                'business_name' =>
+                    $googleMap->getBusinessName(),
+
+                'title' =>
+                    $googleMap->getTitle(),
+
+                'address' =>
+                    $googleMap->getAddress(),
+
+                'rating' =>
+                    $googleMap->getRating(),
+
+                'reviews_count' =>
+                    $googleMap->getReviewsCount(),
+
+                'place_id' =>
+                    $googleMap->getPlaceId(),
+
+                'status' =>
+                    $googleMapPayload['status']
+                    ?? (
+                        $googleMap->isPresent()
+                            ? 'present'
+                            : 'not_found'
+                    ),
+            ],
+
+
+            'created_at' =>
+                $audit->getCreatedAt()
+                    ?->format(
+                        \DateTimeInterface::ATOM
+                    ),
+        ]);
     }
 }
-

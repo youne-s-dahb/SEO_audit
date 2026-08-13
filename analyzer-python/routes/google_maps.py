@@ -1,7 +1,9 @@
 from fastapi import APIRouter
+
 from services.places import (
     check_google_maps_presence
 )
+
 
 router = APIRouter(
     prefix="/maps",
@@ -11,4 +13,7 @@ router = APIRouter(
 
 @router.get("/presence")
 async def presence(url: str):
-    return await check_google_maps_presence(url)
+
+    return await check_google_maps_presence(
+        url
+    )
