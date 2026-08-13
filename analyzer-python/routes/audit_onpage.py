@@ -1,126 +1,104 @@
-
 # Endpoint /audit-onpage : lance l'analyse BeautifulSoup (analyzer.seo_analyzer.analyze)
-# w kaysauvegardi resultat f Redis, groupé EXACTEMENT selon les entités Doctrine
-# AuditPage, AuditPageHeading, AuditPageImage, AuditKeywordDensity.
-
+# w kayrj3 resultat DIRECTEMENT f la reponse HTTP, groupé EXACTEMENT selon
+# les entités Doctrine AuditPage, AuditPageHeading, AuditPageImage,
+# AuditKeywordDensity.
 # ----------------------------------------------------------------------------
+ 
 
-import json
+import ipaddress
+import logging
+import socket
 from urllib.parse import urlparse
 
-import redis
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
+from fastapi.concurrency import run_in_threadpool
 
 from analyzer.seo_analyzer import analyze
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/audit-onpage", tags=["On-Page Audit"])
-
-# Meme connexion Redis que Personne 1 (meme host/port/db, service "redis" du docker-compose)
-r = redis.Redis(host="redis", port=6379, db=0)
-
-# Duree de vie du cache (1h, comme le cache PageSpeed de Personne 1)
-CACHE_TTL_SECONDS = 3600
 
 
 def is_valid_url(url: str) -> bool:
     """
-    Katverifi wach URL valide (http/https + domaine).
+    Vérifie la validité de l'URL ET bloque les IP privées/locales (Protection SSRF).
     """
     try:
         parsed = urlparse(url)
-        return parsed.scheme in ("http", "https") and bool(parsed.netloc)
-    except Exception:
+        if parsed.scheme not in ("http", "https") or not parsed.netloc:
+            return False
+
+        # Extraction du hostname (sans le port)
+        hostname = parsed.hostname
+        if not hostname:
+            return False
+
+        # Résolution DNS pour vérifier l'adresse IP sous-jacente
+        ip_list = socket.getaddrinfo(hostname, None)
+        for item in ip_list:
+            ip_str = item[4][0]
+            ip_obj = ipaddress.ip_address(ip_str)
+            # Bloque 127.0.0.1, 10.x.x.x, 192.168.x.x, 169.254.x.x (AWS Metadata), etc.
+            if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local:
+                logger.warning(f"Tentative SSRF bloquée pour le domaine/IP: {hostname} ({ip_str})")
+                return False
+
+        return True
+    except Exception as e:
+        logger.error(f"Erreur validation URL ({url}): {e}")
         return False
 
 
-# --------------------------------------------------
-# Flatten headings: dict {h1: [...], h2: [...]} -> liste de lignes
-# pretes pour AuditPageHeading (headingLevel, content, position)
-# --------------------------------------------------
-
 def flatten_headings(headings: dict) -> list:
-    """
-    Kay7awel dict dyal headings l liste dyal dict, wa7ed par ligne DB.
-    position = ordre dyal heading DAKHEL nefss l-level (h1 #1, h1 #2, h2 #1...).
-    """
-    try:
-        if not headings or not isinstance(headings, dict):
-            return []
+    if not isinstance(headings, dict):
+        return []
 
-        rows = []
-
-        for level, texts in headings.items():
-            if not isinstance(texts, list):
-                continue
-
+    rows = []
+    for level, texts in headings.items():
+        if isinstance(texts, list):
             for index, text in enumerate(texts, start=1):
                 rows.append({
                     "heading_level": level,
                     "content": text,
                     "position": index,
                 })
+    return rows
 
-        return rows
-
-    except Exception:
-        return []
-
-
-# --------------------------------------------------
-# Deviner le type de fichier image depuis l'URL (extension)
-# --------------------------------------------------
 
 def guess_image_type(image_url: str):
-    """
-    Kaychouf extension dyal image mn URL dyalha (jpg, png, webp...).
-    """
-    try:
-        if not image_url:
-            return None
-
-        path = urlparse(image_url).path
-
-        if "." not in path:
-            return None
-
-        extension = path.rsplit(".", 1)[-1].lower()
-
-        # Securite: extension trop longue = probablement pas une vraie extension
-        if len(extension) > 10:
-            return None
-
-        return extension
-
-    except Exception:
+    if not image_url:
         return None
+    try:
+        path = urlparse(image_url).path
+        if "." in path:
+            ext = path.rsplit(".", 1)[-1].lower()
+            return ext if len(ext) <= 10 else None
+    except Exception:
+        pass
+    return None
 
-
-# --------------------------------------------------
-# Flatten images: fusionne images_with_alt + images_without_alt
-# en une seule liste prete pour AuditPageImage
-# --------------------------------------------------
 
 def flatten_images(images_with_alt: list, images_without_alt: list) -> list:
-    """
-    Kayjma3 images (avec ALT + sans ALT) f liste wa7da coherente
-    avec les colonnes dyal AuditPageImage.
-    """
-    try:
-        rows = []
+    rows = []
+    seen_urls = set()
 
-        for img in (images_with_alt or []):
-            src = img.get("src", "") if isinstance(img, dict) else ""
-            alt = img.get("alt", "") if isinstance(img, dict) else ""
+    for img in (images_with_alt or []):
+        if isinstance(img, dict):
+            src = img.get("src", "")
+            if src and src not in seen_urls:
+                seen_urls.add(src)
+                rows.append({
+                    "image_url": src,
+                    "has_alt": True,
+                    "alt_text": img.get("alt", ""),
+                    "file_size_kb": None,
+                    "image_type": guess_image_type(src),
+                })
 
-            rows.append({
-                "image_url": src,
-                "has_alt": True,
-                "alt_text": alt,
-                "file_size_kb": None,   # pas calcule ici (necessite download image)
-                "image_type": guess_image_type(src),
-            })
-
-        for src in (images_without_alt or []):
+    for src in (images_without_alt or []):
+        if isinstance(src, str) and src and src not in seen_urls:
+            seen_urls.add(src)
             rows.append({
                 "image_url": src,
                 "has_alt": False,
@@ -129,25 +107,10 @@ def flatten_images(images_with_alt: list, images_without_alt: list) -> list:
                 "image_type": guess_image_type(src),
             })
 
-        return rows
-
-    except Exception:
-        return []
+    return rows
 
 
-# --------------------------------------------------
-# Construire le payload Redis, groupe EXACTEMENT selon les entites Doctrine
-# --------------------------------------------------
-
-def build_redis_payload(result: dict) -> dict:
-    """
-    Kat-organisi resultat dyal analyze() f des groupes, un groupe par
-    table Doctrine cible. Les cles JSON sont en snake_case pour lisibilite,
-    mais c'est le code Symfony qui va mapper chaque cle vers le setter
-    PHP correspondant (setTitle(), setWordCount()...) - donc PAS besoin
-    que les noms JSON soient identiques aux noms camelCase des entites.
-    """
-
+def build_response_payload(result: dict) -> dict:
     url = result.get("url") or ""
     images_without_alt = result.get("images_without_alt") or []
     response_time = result.get("response_time_ms")
@@ -156,10 +119,6 @@ def build_redis_payload(result: dict) -> dict:
         "status": "success",
         "url": url,
         "analysis_date": result.get("analysis_date"),
-
-        # -----------------------------
-        # Table: audit_pages (AuditPage)
-        # -----------------------------
         "page": {
             "url": url,
             "status_code": result.get("status_code"),
@@ -175,96 +134,43 @@ def build_redis_payload(result: dict) -> dict:
             "word_count": result.get("word_count"),
             "internal_links_count": result.get("internal_links"),
             "external_links_count": result.get("external_links"),
-            # broken_links_count: pas calcule (demanderait de tester chaque
-            # lien un par un -> lent). A ajouter plus tard si besoin.
             "broken_links_count": None,
             "images_count": result.get("images_count") or 0,
             "images_without_alt_count": len(images_without_alt),
             "has_structured_data": bool(result.get("structured_data")),
-            "viewport_meta": bool(result.get("viewport")) if result.get("viewport") else False,
+            "viewport_meta": bool(result.get("viewport")),
             "is_https": url.startswith("https://"),
             "response_time_ms": int(response_time) if response_time is not None else None,
-            # load_time_ms: c'est une metrique PageSpeed (Personne 1), pas dispo ici
             "load_time_ms": None,
-            # crawl_depth: audit d'une seule page (pas de crawl multi-pages)
             "crawl_depth": 0,
             "created_at": result.get("analysis_date"),
         },
-
-        # -----------------------------
-        # Table: audit_page_headings (AuditPageHeading) - liste
-        # -----------------------------
         "headings": flatten_headings(result.get("headings")),
-
-        # -----------------------------
-        # Table: audit_page_images (AuditPageImage) - liste
-        # -----------------------------
         "images": flatten_images(
             result.get("images_with_alt"),
             result.get("images_without_alt"),
         ),
-
-        # -----------------------------
-        # Table: audit_keyword_density (AuditKeywordDensity) - liste
-        # -----------------------------
         "keyword_density": result.get("keyword_density", []),
     }
 
 
 @router.get("")
 async def audit_onpage(url: str):
-    """
-    Lance l'analyse on-page complete (BeautifulSoup) w kaysauvegardiha f Redis.
-
-    Cle Redis: audit:onpage:{url}  (differente de audit:{url} li kayst3ml
-    Personne 1 bach ma-tt9ta3ch m3a son cache PageSpeed).
-    """
-
-    key = f"audit:onpage:{url}"
-
     if not is_valid_url(url):
-        payload = {
+        return {
             "status": "failed",
-            "error_message": "Invalid URL",
+            "error_message": "Invalid or restricted URL",
             "url": url,
         }
-        r.set(key, json.dumps(payload))
-        r.expire(key, CACHE_TTL_SECONDS)
-        return payload
 
-    result = analyze(url)
+    # Utilisation de threadpool pour ne pas bloquer l'Event Loop de FastAPI
+    result = await run_in_threadpool(analyze, url)
 
     if not result.get("success"):
-        payload = {
+        return {
             "status": "failed",
             "error_message": result.get("error", "Unknown error"),
             "url": url,
         }
-        r.set(key, json.dumps(payload))
-        r.expire(key, CACHE_TTL_SECONDS)
-        return payload
 
-    payload = build_redis_payload(result)
-
-    r.set(key, json.dumps(payload))
-    r.expire(key, CACHE_TTL_SECONDS)
-
-    return {
-        "message": "On-page audit completed and saved in Redis",
-        "status": "success",
-        "key": key,
-    }
-
-
-@router.get("/debug")
-async def audit_onpage_debug(url: str):
-    """
-    Route de debug: rj3 direct le payload structure complet (sans passer
-    par Redis), utile bach ttesti rapidement le mapping vers les tables.
-    """
-    result = analyze(url)
-
-    if not result.get("success"):
-        return result
-
-    return build_redis_payload(result)
+    return build_response_payload(result)
