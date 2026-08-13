@@ -7,8 +7,8 @@ use ApiPlatform\Metadata\ApiResource;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditGoogleMapRepository::class)]
-#[ORM\Table(name: 'audit_google_maps')] // Smiya dial l-table f DB dyalk
-#[ApiResource]              // 2. Zid had l-khatem s-s7ri hna 🔥
+#[ORM\Table(name: 'audit_google_maps')]
+#[ApiResource]
 class AuditGoogleMap
 {
     #[ORM\Id]
@@ -28,7 +28,10 @@ class AuditGoogleMap
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $placeId = null;
 
-    #[ORM\OneToOne(inversedBy: 'googleMap', cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(
+        inversedBy: 'googleMap',
+        cascade: ['persist', 'remove']
+    )]
     #[ORM\JoinColumn(nullable: false)]
     private ?Audit $audit = null;
 
@@ -41,10 +44,20 @@ class AuditGoogleMap
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $address = null;
 
+
+    // =====================================================
+    // ID
+    // =====================================================
+
     public function getId(): ?int
     {
         return $this->id;
     }
+
+
+    // =====================================================
+    // IS PRESENT
+    // =====================================================
 
     public function isPresent(): ?bool
     {
@@ -58,6 +71,11 @@ class AuditGoogleMap
         return $this;
     }
 
+
+    // =====================================================
+    // RATING
+    // =====================================================
+
     public function getRating(): ?float
     {
         return $this->rating;
@@ -69,6 +87,11 @@ class AuditGoogleMap
 
         return $this;
     }
+
+
+    // =====================================================
+    // REVIEWS
+    // =====================================================
 
     public function getReviewsCount(): ?int
     {
@@ -82,6 +105,11 @@ class AuditGoogleMap
         return $this;
     }
 
+
+    // =====================================================
+    // PLACE ID
+    // =====================================================
+
     public function getPlaceId(): ?string
     {
         return $this->placeId;
@@ -94,6 +122,11 @@ class AuditGoogleMap
         return $this;
     }
 
+
+    // =====================================================
+    // AUDIT
+    // =====================================================
+
     public function getAudit(): ?Audit
     {
         return $this->audit;
@@ -105,7 +138,13 @@ class AuditGoogleMap
 
         return $this;
     }
-        public function getBusinessName(): ?string
+
+
+    // =====================================================
+    // BUSINESS NAME
+    // =====================================================
+
+    public function getBusinessName(): ?string
     {
         return $this->businessName;
     }
@@ -116,6 +155,11 @@ class AuditGoogleMap
 
         return $this;
     }
+
+
+    // =====================================================
+    // TITLE
+    // =====================================================
 
     public function getTitle(): ?string
     {
@@ -128,6 +172,11 @@ class AuditGoogleMap
 
         return $this;
     }
+
+
+    // =====================================================
+    // ADDRESS
+    // =====================================================
 
     public function getAddress(): ?string
     {

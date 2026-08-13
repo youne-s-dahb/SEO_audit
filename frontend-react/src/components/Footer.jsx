@@ -6,7 +6,7 @@ export default function Footer() {
           SEO<span className="dot">Audit</span>
         </span>
         <p className="footer-text">
-          © {new Date().getFullYear()} SEOAudit. Analyse o traqui l'performance SEO dyal les sites dyalek.
+          © {new Date().getFullYear()} SEOAudit.
         </p>
       </div>
     </footer>
