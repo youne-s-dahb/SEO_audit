@@ -51,7 +51,8 @@ security:
             - { path: '^/api/audit-page-heading/import$', roles: PUBLIC_ACCESS }
             - { path: '^/api/audit-page-image/import$', roles: PUBLIC_ACCESS }
             - { path: '^/api/audit-keyword-density/import$', roles: PUBLIC_ACCESS }
-
+            - { path: '^/api/audit-report', roles: PUBLIC_ACCESS }
+            - { path: '^/api/audit-pipeline/run', roles: PUBLIC_ACCESS }
             
             # All other /api endpoints require authentication
             - { path: '^/api', roles: IS_AUTHENTICATED_FULLY }
