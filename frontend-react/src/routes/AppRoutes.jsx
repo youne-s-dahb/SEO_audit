@@ -10,6 +10,8 @@ import VerifyEmail from "../pages/VerifyEmail";
 import NotFound from "../pages/NotFound";
 
 import ProtectedRoute from "../components/ProtectedRoute";
+import Keyword from "../pages/Keyword";
+import KeywordHistory from "../components/KeywordHistory";
 
 export default function AppRoutes() {
     return (
@@ -27,7 +29,7 @@ export default function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
-
+  
 
             {/* =========================
                 HISTORY
@@ -55,7 +57,22 @@ export default function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
-
+            <Route
+                path="/Keyword"
+                element={
+                    <ProtectedRoute>
+                        <Keyword />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/Keyword-Historique"
+                element={
+                    <ProtectedRoute>
+                        <KeywordHistory />
+                    </ProtectedRoute>
+                }
+            />
 
             {/* =========================
                 AUTH

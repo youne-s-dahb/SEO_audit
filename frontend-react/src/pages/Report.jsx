@@ -994,7 +994,7 @@ export default function Report() {
                                     score
                                 )}
                             </strong>
-
+                                        
                             <span>
                                 avis
                             </span>

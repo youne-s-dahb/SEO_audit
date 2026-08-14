@@ -26,6 +26,12 @@ export default function Navbar() {
           <Link to="/history" className="nav-link">
             Historique
           </Link>
+          <Link to="/Keyword" className="nav-link">
+            Keyword
+          </Link>
+           <Link to="/Keyword-Historique" className="nav-link">
+            Keyword Historique
+          </Link>
         </nav>
       )}
 

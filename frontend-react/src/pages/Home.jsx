@@ -12,7 +12,7 @@ import {
 import { useAuth } from "../components/AuthContext";
 
 import AuditResult from "../components/AuditResult";
-import "../style/Home.css"
+import "../style/Home.css";
 
 /*
 |--------------------------------------------------------------------------
