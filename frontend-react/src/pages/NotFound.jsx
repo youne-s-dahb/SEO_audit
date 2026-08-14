@@ -5,9 +5,9 @@ export default function NotFound() {
     <div className="home-page">
       <div className="home-card">
         <span className="eyebrow">404</span>
-        <h1>Had page mal9ynahach</h1>
+        <h1>Not Found</h1>
         <p>
-          <Link to="/">Rje3 l home</Link>
+          <Link to="/">Home</Link>
         </p>
       </div>
     </div>
