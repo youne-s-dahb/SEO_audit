@@ -4,12 +4,24 @@ namespace App\Entity;
 
 use App\Repository\AuditPageHeadingRepository;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditPageHeadingRepository::class)]
-#[ORM\Table(name: 'audit_page_headings')] // Smiya dial l-table f DB dyalk
-#[ApiResource]              // 2. Zid had l-khatem s-s7ri hna 🔥
+#[ORM\Table(name: 'audit_page_headings')]
+#[ApiResource]
+// Permet de filtrer via :
+//   ?auditPage.audit=30       -> toutes les headings d'un audit donne
+//   ?auditPage=5              -> toutes les headings d'une page precise
+// Sans ce filtre, GET /api/audit_page_headings ignore silencieusement
+// tout parametre et renvoie TOUJOURS la table entiere (c'est la cause
+// du chargement lent : la table grandit a chaque nouvel audit).
+#[ApiFilter(SearchFilter::class, properties: [
+    'auditPage' => 'exact',
+    'auditPage.audit' => 'exact',
+])]
 class AuditPageHeading
 {
     #[ORM\Id]
