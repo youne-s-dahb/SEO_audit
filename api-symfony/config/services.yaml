@@ -9,6 +9,7 @@ parameters:
     app_frontend_url: '%env(APP_FRONTEND_URL)%'
     app_mail_from: '%env(APP_MAIL_FROM)%'
     python_analyzer_base_url: 'http://analyzer:8000'
+    reports_directory: '%kernel.project_dir%/var/reports'
 
 services:
     _defaults:
@@ -18,6 +19,14 @@ services:
     App\:
         resource: '../src/'
 
+    App\Service\AuditPipelineOrchestrator:        
+        arguments:
+            $pythonAnalyzerBaseUrl: '%python_analyzer_base_url%'
+    
     App\Controller\AuditPageHeadingImportController:
         arguments:
             $pythonAnalyzerBaseUrl: '%python_analyzer_base_url%'
+
+    App\Service\AuditReportGenerator:
+        arguments:
+            $reportsDirectory: '%reports_directory%'

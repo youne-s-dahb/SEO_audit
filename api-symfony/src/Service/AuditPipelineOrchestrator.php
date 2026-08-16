@@ -2,9 +2,14 @@
 
 namespace App\Service;
 
-// Ce service est un chef d'orchestre (Pipeline) complet qui reçoit une URL, demande son analyse à un microservice Python, 
-// récupère le résultat dans Redis, enregistre toutes les métriques SEO en base de données (4 tables), puis déclenche la 
-// création du rapport PDF.
+// Ce service contient la logique d'import des donnees SEO detaillees
+// (AuditPage + 3 tables liees) a partir du microservice Python /audit-onpage.
+//
+// Il est utilise de 2 facons :
+//   1) directement via run() pour la route /api/audit-pipeline/run
+//   2) via importOnPageData() appele automatiquement par
+//      App\EventListener\AuditPageImportListener des qu'un Audit passe
+//      au statut "completed" (peu importe le controleur qui a fait le flush)
 
 use App\Entity\Audit;
 use App\Entity\AuditKeywordDensity;
@@ -14,7 +19,6 @@ use App\Entity\AuditPageImage;
 use App\Entity\Site;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
-use Predis\Client as RedisClient;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AuditPipelineOrchestrator
@@ -27,7 +31,6 @@ class AuditPipelineOrchestrator
 
     public function __construct(
         private EntityManagerInterface $em,
-        private RedisClient $redis,
         private HttpClientInterface $httpClient,
         private AuditReportGenerator $reportGenerator,
         private string $pythonAnalyzerBaseUrl, // ex: http://analyzer:8000
@@ -35,9 +38,11 @@ class AuditPipelineOrchestrator
     }
 
     /**
-     * Pipeline complet: URL -> Site/Audit -> scraping Python -> import
-     * des 4 tables -> generation PDF. Arrete tout au premier probleme
-     * rencontre (pas de rapport partiel).
+     * Pipeline complet utilise par /api/audit-pipeline/run.
+     * Le crawl detaille (AuditPage + 3 tables) est desormais entierement
+     * delegue au listener Doctrine, declenche par le flush ci-dessous
+     * des que le statut passe a "completed" — evite toute duplication
+     * de logique entre ce point d'entree et /api/audits/run.
      *
      * @return array{report: \App\Entity\AuditReport, audit: Audit}
      * @throws \RuntimeException si une etape echoue
@@ -46,6 +51,27 @@ class AuditPipelineOrchestrator
     {
         $audit = $this->findOrCreateAudit($url);
 
+        $audit->setStatus('completed');
+
+        // Ce flush declenche AuditPageImportListener::onFlush/postFlush,
+        // qui importe AuditPage/Heading/Image/KeywordDensity de facon
+        // synchrone avant que ce flush() ne rende la main.
+        $this->em->flush();
+
+        $report = $this->reportGenerator->generate($audit);
+
+        return ['report' => $report, 'audit' => $audit];
+    }
+
+    /**
+     * Point d'entree public reutilisable : importe les donnees on-page
+     * detaillees pour un Audit DEJA EXISTANT (ne cree jamais d'Audit).
+     * Appele par AuditPageImportListener.
+     *
+     * @throws \RuntimeException si l'appel Python echoue
+     */
+    public function importOnPageData(Audit $audit, string $url): AuditPage
+    {
         $payload = $this->fetchOnPageData($url);
 
         $auditPage = $this->importPage($audit, $payload, $url);
@@ -53,14 +79,7 @@ class AuditPipelineOrchestrator
         $this->importImages($auditPage, $payload);
         $this->importKeywordDensity($auditPage, $payload);
 
-        $audit->setStatus('completed');
-
-        // Un seul flush centralise pour valider toutes les insertions et la mise a jour du statut
-        $this->em->flush();
-
-        $report = $this->reportGenerator->generate($audit);
-
-        return ['report' => $report, 'audit' => $audit];
+        return $auditPage;
     }
 
     // --------------------------------------------------
@@ -101,35 +120,40 @@ class AuditPipelineOrchestrator
     }
 
     // --------------------------------------------------
-    // 2. Appeler Python (scraping + fallback JS) et lire Redis
+    // 2. Appeler Python /audit-onpage
+    //    (REDIS SUPPRIME : /audit-onpage renvoie tout directement
+    //    dans le corps HTTP, confirme par le code Python fourni)
     // --------------------------------------------------
 
     private function fetchOnPageData(string $url): array
     {
         try {
-            $response = $this->httpClient->request('GET', rtrim($this->pythonAnalyzerBaseUrl, '/') . '/audit-onpage', [
-                'query' => ['url' => $url],
-                'timeout' => self::PYTHON_CALL_TIMEOUT,
-            ]);
+            $response = $this->httpClient->request(
+                'GET',
+                rtrim($this->pythonAnalyzerBaseUrl, '/') . '/audit-onpage',
+                [
+                    'query' => ['url' => $url],
+                    'timeout' => self::PYTHON_CALL_TIMEOUT,
+                ]
+            );
 
-            // On force la lecture du contenu ici pour bien capter les erreurs HTTP
-            $response->getContent(false);
+            $statusCode = $response->getStatusCode();
+
+            // false = ne jette pas d'exception HttpClient sur un 4xx/5xx,
+            // on gere nous-memes le statut juste apres.
+            $payload = $response->toArray(false);
 
         } catch (\Exception $e) {
             throw new \RuntimeException('Failed to reach the Python analyzer service: ' . $e->getMessage());
         }
 
-        $redisKey = 'audit:onpage:' . $url;
-        $cached = $this->redis->get($redisKey);
-
-        if (!$cached) {
-            throw new \RuntimeException('No on-page data found in Redis after scraping attempt.');
+        if ($statusCode !== 200) {
+            throw new \RuntimeException(sprintf(
+                'Python analyzer returned HTTP %d for %s',
+                $statusCode,
+                $url
+            ));
         }
-
-        // Nettoyage de la cle Redis une fois recuperee
-        $this->redis->del($redisKey);
-
-        $payload = json_decode($cached, true);
 
         if (($payload['status'] ?? null) !== 'success') {
             $error = $payload['error_message'] ?? $payload['error'] ?? 'Unknown scraping error';
@@ -174,10 +198,8 @@ class AuditPipelineOrchestrator
         $auditPage->setLoadTimeMs(isset($pageData['load_time_ms']) ? (int) $pageData['load_time_ms'] : null);
         $auditPage->setCreatedAt(new \DateTimeImmutable());
 
-        // FIX: synchroniser la collection en memoire cote Audit, sinon
-        // $audit->getPages() reste vide dans cette meme requete PHP et
-        // AuditReportGenerator::generate() leve "no pages to report on"
-        // meme si tout est bien insere en base.
+        // Synchronise la collection en memoire cote Audit, sinon
+        // $audit->getPages() reste vide dans cette meme requete PHP.
         $audit->addPage($auditPage);
 
         $this->em->persist($auditPage);
@@ -256,3 +278,5 @@ class AuditPipelineOrchestrator
         }
     }
 }
+
+
