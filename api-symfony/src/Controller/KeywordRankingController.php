@@ -58,10 +58,14 @@ class KeywordRankingController extends AbstractController
         // JSON
         // -----------------------------------------------------
 
-        $data = json_decode(
-            $request->getContent(),
-            true
-        );
+        $data = json_decode($request->getContent(), true);
+
+        if (!is_array($data)) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'Invalid JSON.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
 
         if (
             empty($data['site_url']) ||
@@ -77,26 +81,26 @@ class KeywordRankingController extends AbstractController
         $keywordValue = trim($data['keyword']);
 
         // -----------------------------------------------------
-        // Site
+        // SITE + SECURITY
+        // On cherche directement le site appartenant
+        // à l'utilisateur connecté.
         // -----------------------------------------------------
 
-        $site = $this->siteRepository->findOneBy([
-            'url' => $siteUrl
-        ]);
+        $site = $this->siteRepository
+            ->createQueryBuilder('s')
+            ->where('s.url = :url')
+            ->andWhere('s.account = :account')
+            ->setParameter('url', $siteUrl)
+            ->setParameter('account', $user)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        // -----------------------------------------------------
+        // Site introuvable ou pas appartenant au user
+        // -----------------------------------------------------
 
         if (!$site) {
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => 'Site not found for this URL.'
-            ], Response::HTTP_NOT_FOUND);
-        }
 
-        // -----------------------------------------------------
-        // SECURITY
-        // Vérifier que le site appartient au user connecté
-        // -----------------------------------------------------
-
-        if ($site->getAccount() !== $user) {
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Vous n’avez pas accès à ce site.'
@@ -156,7 +160,7 @@ class KeywordRankingController extends AbstractController
         $status = $pythonResult['status'] ?? null;
 
         // -----------------------------------------------------
-        // Site non trouvé
+        // Site non trouvé dans Google
         // -----------------------------------------------------
 
         if ($status === 'not_found') {
@@ -177,6 +181,21 @@ class KeywordRankingController extends AbstractController
                 $pythonResult,
                 Response::HTTP_OK
             );
+        }
+
+        // -----------------------------------------------------
+        // Vérifier les données retournées par Python
+        // -----------------------------------------------------
+
+        if (
+            !array_key_exists('position', $pythonResult) ||
+            !array_key_exists('search_page', $pythonResult)
+        ) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'Python response is missing ranking data.',
+                'data' => $pythonResult
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         // -----------------------------------------------------
@@ -211,8 +230,16 @@ class KeywordRankingController extends AbstractController
             ->setAudit($audit)
             ->setSearchEngine('google')
             ->setDevice('desktop')
-            ->setPosition($pythonResult['position'])
-            ->setSearchPage($pythonResult['search_page'])
+            ->setPosition(
+                isset($pythonResult['position'])
+                    ? (int) $pythonResult['position']
+                    : null
+            )
+            ->setSearchPage(
+                isset($pythonResult['search_page'])
+                    ? (int) $pythonResult['search_page']
+                    : null
+            )
             ->setCheckedAt(new \DateTimeImmutable());
 
         $this->em->persist($ranking);
@@ -269,29 +296,15 @@ class KeywordRankingController extends AbstractController
 
         // -----------------------------------------------------
         // Rankings du user connecté
-        //
-        // KeywordRanking
-        //      ↓
-        // Keyword
-        //      ↓
-        // Site
-        //      ↓
-        // account
-        //      ↓
-        // User
         // -----------------------------------------------------
 
         $rankings = $this->keywordRankingRepository
             ->createQueryBuilder('kr')
-
             ->join('kr.keyword', 'k')
             ->join('k.site', 's')
-
             ->where('s.account = :user')
             ->setParameter('user', $user)
-
             ->orderBy('kr.checkedAt', 'DESC')
-
             ->getQuery()
             ->getResult();
 
@@ -308,19 +321,12 @@ class KeywordRankingController extends AbstractController
 
             $history[] = [
                 'id' => $ranking->getId(),
-
                 'keyword' => $keyword?->getKeyword(),
-
                 'site' => $site?->getUrl(),
-
                 'position' => $ranking->getPosition(),
-
                 'search_page' => $ranking->getSearchPage(),
-
                 'search_engine' => $ranking->getSearchEngine(),
-
                 'device' => $ranking->getDevice(),
-
                 'checked_at' => $ranking
                     ->getCheckedAt()
                     ?->format('Y-m-d H:i:s'),
@@ -380,7 +386,7 @@ class KeywordRankingController extends AbstractController
         }
 
         // -----------------------------------------------------
-        // Get Site
+        // Get Keyword + Site
         // -----------------------------------------------------
 
         $keyword = $ranking->getKeyword();
@@ -396,11 +402,15 @@ class KeywordRankingController extends AbstractController
 
         // -----------------------------------------------------
         // SECURITY
-        // Ranking must belong to current user
+        // Vérification avec ID
         // -----------------------------------------------------
 
-        if ($site->getAccount() !== $user) {
+        $siteAccount = $site->getAccount();
 
+        if (
+            !$siteAccount ||
+            $siteAccount->getId() !== $user->getId()
+        ) {
             return new JsonResponse([
                 'status' => 'error',
                 'message' => 'Vous n’avez pas le droit de supprimer ce classement.'
