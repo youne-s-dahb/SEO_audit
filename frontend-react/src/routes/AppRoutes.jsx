@@ -12,6 +12,8 @@ import NotFound from "../pages/NotFound";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Keyword from "../pages/Keyword";
 import KeywordHistory from "../components/KeywordHistory";
+import Analyse from "../pages/Analyse";
+import AnalyseHistory from "../components/AnalyseHistory";
 
 export default function AppRoutes() {
     return (
@@ -70,6 +72,22 @@ export default function AppRoutes() {
                 element={
                     <ProtectedRoute>
                         <KeywordHistory />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/Analyse"
+                element={
+                    <ProtectedRoute>
+                        <Analyse/>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/Analyse-History"
+                element={
+                    <ProtectedRoute>
+                        <AnalyseHistory />
                     </ProtectedRoute>
                 }
             />
