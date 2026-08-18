@@ -32,6 +32,12 @@ export default function Navbar() {
            <Link to="/Keyword-Historique" className="nav-link">
             Keyword Historique
           </Link>
+           <Link to="/Analyse" className="nav-link">
+            Analyse Page
+          </Link>
+           <Link to="/Analyse-History" className="nav-link">
+            Analyse Historique
+          </Link>
         </nav>
       )}
 

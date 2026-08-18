@@ -891,7 +891,7 @@ export default function Home() {
 
                 <h1>
 
-                    Marhba,{" "}
+                    Bonjour,{" "}
 
                     {user?.name ||
                         user?.email ||

@@ -30,15 +30,16 @@ class KeywordRankingController extends AbstractController
 
     // =========================================================
     // NORMALIZE URL
-    // Ki-homogénise l'URL باش match ma-يتوقفch على
-    // trailing slash / www / http vs https
     // =========================================================
 
     private function normalizeUrl(string $url): string
     {
         $url = trim($url);
 
-        // Ajoute un scheme par défaut si absent (ex: "example.com")
+        if ($url === '') {
+            return '';
+        }
+
         if (!preg_match('#^https?://#i', $url)) {
             $url = 'https://' . $url;
         }
@@ -59,6 +60,40 @@ class KeywordRankingController extends AbstractController
     }
 
     // =========================================================
+    // FIND SITE FOR CURRENT USER
+    // =========================================================
+
+    private function findUserSite(
+        string $siteUrl,
+        $user
+    ): ?object {
+        $normalizedInput = $this->normalizeUrl($siteUrl);
+
+        $sites = $this->siteRepository->findAll();
+
+        foreach ($sites as $site) {
+            $account = $site->getAccount();
+
+            if (!$account) {
+                continue;
+            }
+
+            if ($account->getId() !== $user->getId()) {
+                continue;
+            }
+
+            if (
+                $this->normalizeUrl($site->getUrl())
+                === $normalizedInput
+            ) {
+                return $site;
+            }
+        }
+
+        return null;
+    }
+
+    // =========================================================
     // CREATE RANKING
     // POST /api/keyword-ranking
     // =========================================================
@@ -74,7 +109,7 @@ class KeywordRankingController extends AbstractController
     ): JsonResponse {
 
         // -----------------------------------------------------
-        // Vérification JWT
+        // JWT
         // -----------------------------------------------------
 
         if (!$user) {
@@ -88,7 +123,10 @@ class KeywordRankingController extends AbstractController
         // JSON
         // -----------------------------------------------------
 
-        $data = json_decode($request->getContent(), true);
+        $data = json_decode(
+            $request->getContent(),
+            true
+        );
 
         if (!is_array($data)) {
             return new JsonResponse([
@@ -97,9 +135,21 @@ class KeywordRankingController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
+        // -----------------------------------------------------
+        // VALIDATION
+        // -----------------------------------------------------
+
+        $siteUrl = trim(
+            (string) ($data['site_url'] ?? '')
+        );
+
+        $keywordValue = trim(
+            (string) ($data['keyword'] ?? '')
+        );
+
         if (
-            empty($data['site_url']) ||
-            empty($data['keyword'])
+            $siteUrl === '' ||
+            $keywordValue === ''
         ) {
             return new JsonResponse([
                 'status' => 'error',
@@ -107,55 +157,46 @@ class KeywordRankingController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $siteUrl = trim($data['site_url']);
-        $keywordValue = trim($data['keyword']);
-        $normalizedInputUrl = $this->normalizeUrl($siteUrl);
-
         // -----------------------------------------------------
-        // Site
+        // SITE
         // -----------------------------------------------------
 
-        $site = $this->siteRepository->findOneBy([
-            'url' => $siteUrl
-        ]);
+        $site = $this->findUserSite(
+            $siteUrl,
+            $user
+        );
 
         if (!$site) {
             return new JsonResponse([
                 'status' => 'error',
-                'message' => 'Site not found for this URL.'
+                'message' =>
+                    'Site introuvable ou vous n’avez pas accès à ce site.'
             ], Response::HTTP_NOT_FOUND);
         }
 
         // -----------------------------------------------------
-        // Site introuvable ou pas appartenant au user
-        // -----------------------------------------------------
-
-        if (!$site) {
-
-            return new JsonResponse([
-                'status' => 'error',
-                'message' => 'Vous n’avez pas accès à ce site.'
-            ], Response::HTTP_FORBIDDEN);
-        }
-
-        // -----------------------------------------------------
-        // Dernier audit du site
+        // DERNIER AUDIT
         // -----------------------------------------------------
 
         $audit = $this->auditRepository->findOneBy(
-            ['site' => $site],
-            ['createdAt' => 'DESC']
+            [
+                'site' => $site
+            ],
+            [
+                'createdAt' => 'DESC'
+            ]
         );
 
         if (!$audit) {
             return new JsonResponse([
                 'status' => 'error',
-                'message' => 'No audit found for this site. Run an audit first.'
+                'message' =>
+                    'Aucun audit trouvé pour ce site. Lancez d’abord un audit.'
             ], Response::HTTP_NOT_FOUND);
         }
 
         // -----------------------------------------------------
-        // Appel Python Analyzer
+        // PYTHON ANALYZER
         // -----------------------------------------------------
 
         $client = HttpClient::create();
@@ -173,64 +214,89 @@ class KeywordRankingController extends AbstractController
                 ]
             );
 
-            $pythonResult = $response->toArray();
+            $pythonResult = $response->toArray(false);
 
         } catch (\Throwable $e) {
 
             return new JsonResponse([
                 'status' => 'error',
-                'message' => 'Python service unavailable.',
-                'details' => $e->getMessage()
+                'message' =>
+                    'Python service unavailable.',
+                'details' =>
+                    $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         // -----------------------------------------------------
-        // Python status
+        // PYTHON STATUS
         // -----------------------------------------------------
 
-        $status = $pythonResult['status'] ?? null;
+        $status =
+            $pythonResult['status'] ?? null;
 
         // -----------------------------------------------------
-        // Site non trouvé dans Google
+        // NOT FOUND
         // -----------------------------------------------------
 
         if ($status === 'not_found') {
 
             return new JsonResponse([
                 'status' => 'not_found',
-                'message' => 'Le site n’est pas classé pour ce mot-clé.'
+                'message' =>
+                    'Le site n’est pas classé pour ce mot-clé.',
+                'data' => [
+                    'keyword' => $keywordValue,
+                    'site_url' => $site->getUrl(),
+                    'position' => null,
+                    'search_page' => null,
+                    'search_engine' => 'Google',
+                    'device' => 'Desktop',
+                    'checked_at' =>
+                        (new \DateTimeImmutable())
+                            ->format('Y-m-d H:i:s')
+                ]
             ], Response::HTTP_OK);
         }
 
         // -----------------------------------------------------
-        // Python error
+        // PYTHON ERROR
         // -----------------------------------------------------
 
         if ($status !== 'success') {
 
-            return new JsonResponse(
-                $pythonResult,
-                Response::HTTP_OK
-            );
-        }
-
-        // -----------------------------------------------------
-        // Vérifier les données retournées par Python
-        // -----------------------------------------------------
-
-        if (
-            !array_key_exists('position', $pythonResult) ||
-            !array_key_exists('search_page', $pythonResult)
-        ) {
             return new JsonResponse([
                 'status' => 'error',
-                'message' => 'Python response is missing ranking data.',
+                'message' =>
+                    $pythonResult['message']
+                    ?? 'Erreur lors de la récupération du classement.',
                 'data' => $pythonResult
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         // -----------------------------------------------------
-        // Keyword
+        // RANKING DATA
+        // -----------------------------------------------------
+
+        if (
+            !array_key_exists(
+                'position',
+                $pythonResult
+            ) ||
+            !array_key_exists(
+                'search_page',
+                $pythonResult
+            )
+        ) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' =>
+                    'Python response is missing ranking data.',
+                'data' => $pythonResult
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        // -----------------------------------------------------
+        // KEYWORD
         // -----------------------------------------------------
 
         $keyword = $this->keywordRepository->findOneBy([
@@ -245,13 +311,15 @@ class KeywordRankingController extends AbstractController
             $keyword
                 ->setKeyword($keywordValue)
                 ->setSite($site)
-                ->setCreatedAt(new \DateTimeImmutable());
+                ->setCreatedAt(
+                    new \DateTimeImmutable()
+                );
 
             $this->em->persist($keyword);
         }
 
         // -----------------------------------------------------
-        // Ranking
+        // RANKING
         // -----------------------------------------------------
 
         $ranking = new KeywordRanking();
@@ -259,46 +327,76 @@ class KeywordRankingController extends AbstractController
         $ranking
             ->setKeyword($keyword)
             ->setAudit($audit)
-            ->setSearchEngine('google')
-            ->setDevice('desktop')
+            ->setSearchEngine(
+                $pythonResult['search_engine']
+                ?? 'google'
+            )
+            ->setDevice(
+                $pythonResult['device']
+                ?? 'desktop'
+            )
             ->setPosition(
-                isset($pythonResult['position'])
+                $pythonResult['position'] !== null
                     ? (int) $pythonResult['position']
                     : null
             )
             ->setSearchPage(
-                isset($pythonResult['search_page'])
+                $pythonResult['search_page'] !== null
                     ? (int) $pythonResult['search_page']
                     : null
             )
-            ->setCheckedAt(new \DateTimeImmutable());
+            ->setCheckedAt(
+                new \DateTimeImmutable()
+            );
 
         $this->em->persist($ranking);
+
+        // -----------------------------------------------------
+        // SAVE DATABASE
+        // -----------------------------------------------------
 
         $this->em->flush();
 
         // -----------------------------------------------------
-        // Response
+        // RESPONSE
         // -----------------------------------------------------
 
         return new JsonResponse([
             'status' => 'success',
-            'message' => 'Keyword ranking saved successfully.',
+            'message' =>
+                'Keyword ranking saved successfully.',
             'data' => [
-                'id' => $ranking->getId(),
-                'keyword' => $keyword->getKeyword(),
-                'site' => $site->getUrl(),
-                'position' => $ranking->getPosition(),
-                'search_page' => $ranking->getSearchPage(),
-                'search_engine' => $ranking->getSearchEngine(),
-                'device' => $ranking->getDevice(),
-                'checked_at' => $ranking
-                    ->getCheckedAt()
-                    ->format('Y-m-d H:i:s'),
+                'id' =>
+                    $ranking->getId(),
+
+                'keyword' =>
+                    $keyword->getKeyword(),
+
+                'site' =>
+                    $site->getUrl(),
+
+                'site_url' =>
+                    $site->getUrl(),
+
+                'position' =>
+                    $ranking->getPosition(),
+
+                'search_page' =>
+                    $ranking->getSearchPage(),
+
+                'search_engine' =>
+                    $ranking->getSearchEngine(),
+
+                'device' =>
+                    $ranking->getDevice(),
+
+                'checked_at' =>
+                    $ranking
+                        ->getCheckedAt()
+                        ->format('Y-m-d H:i:s'),
             ]
         ], Response::HTTP_CREATED);
     }
-
 
     // =========================================================
     // HISTORY
@@ -321,51 +419,84 @@ class KeywordRankingController extends AbstractController
         if (!$user) {
             return new JsonResponse([
                 'status' => 'error',
-                'message' => 'Utilisateur non authentifié.'
+                'message' =>
+                    'Utilisateur non authentifié.'
             ], Response::HTTP_UNAUTHORIZED);
         }
 
         // -----------------------------------------------------
-        // Rankings du user connecté
+        // GET USER RANKINGS
         // -----------------------------------------------------
 
         $rankings = $this->keywordRankingRepository
             ->createQueryBuilder('kr')
-            ->join('kr.keyword', 'k')
-            ->join('k.site', 's')
-            ->where('s.account = :user')
-            ->setParameter('user', $user)
-            ->orderBy('kr.checkedAt', 'DESC')
+            ->innerJoin('kr.keyword', 'k')
+            ->innerJoin('k.site', 's')
+            ->innerJoin('s.account', 'a')
+            ->where('a.id = :userId')
+            ->setParameter(
+                'userId',
+                $user->getId()
+            )
+            ->orderBy(
+                'kr.checkedAt',
+                'DESC'
+            )
             ->getQuery()
             ->getResult();
 
         // -----------------------------------------------------
-        // Format response
+        // FORMAT
         // -----------------------------------------------------
 
         $history = [];
 
         foreach ($rankings as $ranking) {
 
-            $keyword = $ranking->getKeyword();
-            $site = $keyword?->getSite();
+            $keyword =
+                $ranking->getKeyword();
+
+            $site =
+                $keyword?->getSite();
 
             $history[] = [
-                'id' => $ranking->getId(),
-                'keyword' => $keyword?->getKeyword(),
-                'site' => $site?->getUrl(),
-                'position' => $ranking->getPosition(),
-                'search_page' => $ranking->getSearchPage(),
-                'search_engine' => $ranking->getSearchEngine(),
-                'device' => $ranking->getDevice(),
-                'checked_at' => $ranking
-                    ->getCheckedAt()
-                    ?->format('Y-m-d H:i:s'),
+                'id' =>
+                    $ranking->getId(),
+
+                'keyword' =>
+                    $keyword?->getKeyword(),
+
+                'site' =>
+                    $site?->getUrl(),
+
+                'site_url' =>
+                    $site?->getUrl(),
+
+                'position' =>
+                    $ranking->getPosition(),
+
+                'search_page' =>
+                    $ranking->getSearchPage(),
+
+                'search_engine' =>
+                    $ranking->getSearchEngine()
+                    ?? 'google',
+
+                'device' =>
+                    $ranking->getDevice()
+                    ?? 'desktop',
+
+                'checked_at' =>
+                    $ranking
+                        ->getCheckedAt()
+                        ?->format(
+                            'Y-m-d H:i:s'
+                        ),
             ];
         }
 
         // -----------------------------------------------------
-        // Response
+        // RESPONSE
         // -----------------------------------------------------
 
         return new JsonResponse([
@@ -374,7 +505,6 @@ class KeywordRankingController extends AbstractController
             'data' => $history
         ], Response::HTTP_OK);
     }
-
 
     // =========================================================
     // DELETE RANKING
@@ -398,58 +528,65 @@ class KeywordRankingController extends AbstractController
         if (!$user) {
             return new JsonResponse([
                 'status' => 'error',
-                'message' => 'Utilisateur non authentifié.'
+                'message' =>
+                    'Utilisateur non authentifié.'
             ], Response::HTTP_UNAUTHORIZED);
         }
 
         // -----------------------------------------------------
-        // Ranking
+        // FIND RANKING
         // -----------------------------------------------------
 
-        $ranking = $this->keywordRankingRepository->find($id);
+        $ranking =
+            $this->keywordRankingRepository
+                ->find($id);
 
         if (!$ranking) {
-
             return new JsonResponse([
                 'status' => 'error',
-                'message' => 'Keyword ranking not found.'
+                'message' =>
+                    'Keyword ranking not found.'
             ], Response::HTTP_NOT_FOUND);
         }
 
         // -----------------------------------------------------
-        // Get Keyword + Site
+        // KEYWORD + SITE
         // -----------------------------------------------------
 
-        $keyword = $ranking->getKeyword();
-        $site = $keyword?->getSite();
+        $keyword =
+            $ranking->getKeyword();
+
+        $site =
+            $keyword?->getSite();
 
         if (!$site) {
-
             return new JsonResponse([
                 'status' => 'error',
-                'message' => 'Site associated with ranking not found.'
+                'message' =>
+                    'Site associated with ranking not found.'
             ], Response::HTTP_NOT_FOUND);
         }
 
         // -----------------------------------------------------
         // SECURITY
-        // Vérification avec ID
         // -----------------------------------------------------
 
-        $siteAccount = $site->getAccount();
+        $account =
+            $site->getAccount();
 
         if (
-            !$siteAccount ||
-            $siteAccount->getId() !== $user->getId()
+            !$account ||
+            $account->getId() !== $user->getId()
         ) {
             return new JsonResponse([
                 'status' => 'error',
-                'message' => 'Vous n’avez pas le droit de supprimer ce classement.'
+                'message' =>
+                    'Vous n’avez pas le droit de supprimer ce classement.'
             ], Response::HTTP_FORBIDDEN);
         }
 
         // -----------------------------------------------------
-        // Delete
+        // DELETE
         // -----------------------------------------------------
 
         $this->em->remove($ranking);
@@ -457,7 +594,8 @@ class KeywordRankingController extends AbstractController
 
         return new JsonResponse([
             'status' => 'success',
-            'message' => 'Keyword ranking deleted successfully.'
+            'message' =>
+                'Keyword ranking deleted successfully.'
         ], Response::HTTP_OK);
     }
 }
