@@ -112,26 +112,18 @@ class KeywordRankingController extends AbstractController
         $normalizedInputUrl = $this->normalizeUrl($siteUrl);
 
         // -----------------------------------------------------
-        // SITE + SECURITY
-        // On récupère tous les sites de l'utilisateur puis on
-        // compare les URLs normalisées en PHP (évite les faux
-        // négatifs à cause de http/https, www., trailing slash...)
+        // Site
         // -----------------------------------------------------
 
-        $userSites = $this->siteRepository
-            ->createQueryBuilder('s')
-            ->where('s.account = :account')
-            ->setParameter('account', $user)
-            ->getQuery()
-            ->getResult();
+        $site = $this->siteRepository->findOneBy([
+            'url' => $siteUrl
+        ]);
 
-        $site = null;
-
-        foreach ($userSites as $candidate) {
-            if ($this->normalizeUrl($candidate->getUrl()) === $normalizedInputUrl) {
-                $site = $candidate;
-                break;
-            }
+        if (!$site) {
+            return new JsonResponse([
+                'status' => 'error',
+                'message' => 'Site not found for this URL.'
+            ], Response::HTTP_NOT_FOUND);
         }
 
         // -----------------------------------------------------
