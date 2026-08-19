@@ -26,7 +26,7 @@ class AuditCallbackController extends AbstractController
     ): JsonResponse {
 
         // =====================================================
-        // 1. USER CONNECTÉ
+        // 1. AUTH
         // =====================================================
 
         if (!$user) {
@@ -35,9 +35,8 @@ class AuditCallbackController extends AbstractController
             ], Response::HTTP_UNAUTHORIZED);
         }
 
-
         // =====================================================
-        // 2. JSON BODY
+        // 2. JSON
         // =====================================================
 
         $body = json_decode(
@@ -51,22 +50,20 @@ class AuditCallbackController extends AbstractController
             ], Response::HTTP_BAD_REQUEST);
         }
 
-
         // =====================================================
         // 3. URL
         // =====================================================
 
-        if (empty($body['url'])) {
+        $url = trim($body['url'] ?? '');
+
+        if ($url === '') {
             return $this->json([
                 'error' => 'URL is required'
             ], Response::HTTP_BAD_REQUEST);
         }
 
-        $url = trim($body['url']);
-
-
         // =====================================================
-        // 4. FIND SITE
+        // 4. FIND / CREATE SITE
         // =====================================================
 
         $site = $em
@@ -75,11 +72,6 @@ class AuditCallbackController extends AbstractController
                 'url' => $url,
                 'account' => $user
             ]);
-
-
-        // =====================================================
-        // 5. CREATE SITE
-        // =====================================================
 
         if (!$site) {
 
@@ -111,41 +103,41 @@ class AuditCallbackController extends AbstractController
             $site->setAccount($user);
 
             $em->persist($site);
-
-            $em->flush();
         }
 
-
         // =====================================================
-        // 6. CREATE AUDIT
+        // 5. CREATE AUDIT
         // =====================================================
 
         $audit = new Audit();
 
         $audit->setSite($site);
-
         $audit->setRequestedBy($user);
-
         $audit->setStatus('processing');
-
         $audit->setCreatedAt(
             new \DateTimeImmutable()
         );
 
         $em->persist($audit);
 
-        $em->flush();
-
+        /*
+         * IMPORTANT:
+         * Pas besoin de flush ici.
+         * On sauvegardera tout à la fin.
+         */
 
         // =====================================================
-        // 7. PYTHON ANALYZER
+        // 6. HTTP CLIENT
         // =====================================================
 
         $client = HttpClient::create([
-            'timeout' => 150,
-            'max_duration' => 150,
+            'timeout' => 120,
+            'max_duration' => 120,
         ]);
 
+        // =====================================================
+        // 7. PYTHON PAGE SPEED
+        // =====================================================
 
         try {
 
@@ -166,24 +158,19 @@ class AuditCallbackController extends AbstractController
             $audit->setStatus('failed');
 
             $audit->setErrorMessage(
-                'Audit timeout: ' . $e->getMessage()
+                'Audit failed: ' . $e->getMessage()
             );
 
             $em->flush();
 
             return $this->json([
-                'error' =>
-                    'L\'audit khda wa9t bzaf o waqef.',
-
-                'audit_id' =>
-                    $audit->getId(),
-
+                'error' => 'Impossible de terminer l\'audit.',
+                'audit_id' => $audit->getId(),
             ], Response::HTTP_GATEWAY_TIMEOUT);
         }
 
-
         // =====================================================
-        // 8. SAVE MAIN AUDIT
+        // 8. SAVE AUDIT DATA
         // =====================================================
 
         $audit->setStatus(
@@ -198,10 +185,9 @@ class AuditCallbackController extends AbstractController
             $data['score_color'] ?? null
         );
 
-
-        // =====================================================
+        // -----------------------------------------------------
         // TECHNICAL SEO
-        // =====================================================
+        // -----------------------------------------------------
 
         $audit->setIsHttps(
             $data['is_https'] ?? false
@@ -219,10 +205,9 @@ class AuditCallbackController extends AbstractController
             $data['is_mobile_friendly'] ?? false
         );
 
-
-        // =====================================================
+        // -----------------------------------------------------
         // PERFORMANCE
-        // =====================================================
+        // -----------------------------------------------------
 
         $audit->setPageLoadTimeMs(
             $data['page_load_time_ms'] ?? null
@@ -236,10 +221,9 @@ class AuditCallbackController extends AbstractController
             $data['pagespeed_mobile_score'] ?? null
         );
 
-
-        // =====================================================
+        // -----------------------------------------------------
         // LIGHTHOUSE
-        // =====================================================
+        // -----------------------------------------------------
 
         $audit->setAccessibilityScore(
             $data['accessibility_score'] ?? null
@@ -253,60 +237,53 @@ class AuditCallbackController extends AbstractController
             $data['seo_score'] ?? null
         );
 
-
-        // =====================================================
+        // -----------------------------------------------------
         // METRICS
-        // =====================================================
+        // -----------------------------------------------------
 
         $audit->setMetrics(
             $data['metrics'] ?? []
         );
 
-
-        // =====================================================
-        // ERROR
-        // =====================================================
-
         $audit->setErrorMessage(
             $data['error_message'] ?? null
         );
-
 
         // =====================================================
         // 9. RECOMMENDATIONS
         // =====================================================
 
         foreach (
-            $data['recommendations'] ?? []
-            as $item
+            ($data['recommendations'] ?? []) as $item
         ) {
 
-            $recommendation =
-                new Recommendation();
+            if (!is_scalar($item)) {
+                continue;
+            }
 
-            $recommendation->setAudit(
-                $audit
-            );
+            $recommendation = new Recommendation();
+
+            $recommendation->setAudit($audit);
 
             $recommendation->setRecommendation(
-                $item
+                (string) $item
             );
 
             $recommendation->setCreatedAt(
                 new \DateTimeImmutable()
             );
 
-            $em->persist(
-                $recommendation
-            );
+            $em->persist($recommendation);
         }
 
-
         // =====================================================
-        // 10. GOOGLE MAPS ANALYSIS
+        // 10. GOOGLE MAPS
         // =====================================================
 
-        $googleMapPayload = null;
+        $googleMapPayload = [
+            'is_present' => false,
+            'status' => 'not_analyzed'
+        ];
 
         try {
 
@@ -325,16 +302,13 @@ class AuditCallbackController extends AbstractController
 
         } catch (\Throwable $e) {
 
-            // Google Maps failure
-            // ne bloque pas l'audit principal
+            // Google Maps ne bloque pas l'audit principal.
 
             $googleMapPayload = [
                 'is_present' => false,
-                'status' => 'not_analyzed',
-                'error' => $e->getMessage()
+                'status' => 'not_analyzed'
             ];
         }
-
 
         // =====================================================
         // 11. SAVE GOOGLE MAPS
@@ -342,10 +316,7 @@ class AuditCallbackController extends AbstractController
 
         $googleMap = new AuditGoogleMap();
 
-        $googleMap->setAudit(
-            $audit
-        );
-
+        $googleMap->setAudit($audit);
 
         $isPresent =
             (bool) (
@@ -354,44 +325,36 @@ class AuditCallbackController extends AbstractController
                 ?? false
             );
 
-
         $businessName =
             $googleMapPayload['business_name']
             ?? $googleMapPayload['businessName']
             ?? null;
 
-
         $title =
             $googleMapPayload['title']
             ?? null;
-
 
         $address =
             $googleMapPayload['address']
             ?? null;
 
-
         $rating =
             $googleMapPayload['rating']
             ?? null;
-
 
         $reviewsCount =
             $googleMapPayload['reviews_count']
             ?? $googleMapPayload['reviewsCount']
             ?? null;
 
-
         $placeId =
             $googleMapPayload['place_id']
             ?? $googleMapPayload['placeId']
             ?? null;
 
-
         $googleMap->setIsPresent(
             $isPresent
         );
-
 
         $googleMap->setBusinessName(
             is_scalar($businessName)
@@ -399,13 +362,11 @@ class AuditCallbackController extends AbstractController
                 : null
         );
 
-
         $googleMap->setTitle(
             is_scalar($title)
                 ? (string) $title
                 : null
         );
-
 
         $googleMap->setAddress(
             is_scalar($address)
@@ -413,13 +374,11 @@ class AuditCallbackController extends AbstractController
                 : null
         );
 
-
         $googleMap->setRating(
             is_numeric($rating)
                 ? (float) $rating
                 : null
         );
-
 
         $googleMap->setReviewsCount(
             is_numeric($reviewsCount)
@@ -427,25 +386,19 @@ class AuditCallbackController extends AbstractController
                 : null
         );
 
-
         $googleMap->setPlaceId(
             is_scalar($placeId)
                 ? (string) $placeId
                 : null
         );
 
-
-        $em->persist(
-            $googleMap
-        );
-
+        $em->persist($googleMap);
 
         // =====================================================
-        // 12. FINAL FLUSH
+        // 12. ONE FINAL FLUSH
         // =====================================================
 
         $em->flush();
-
 
         // =====================================================
         // 13. RESPONSE
@@ -465,22 +418,14 @@ class AuditCallbackController extends AbstractController
             'url' =>
                 $site->getUrl(),
 
-
-            // -----------------------------
             // GLOBAL
-            // -----------------------------
-
             'global_score' =>
                 $audit->getGlobalScore(),
 
             'score_color' =>
                 $audit->getScoreColor(),
 
-
-            // -----------------------------
             // PERFORMANCE
-            // -----------------------------
-
             'page_load_time_ms' =>
                 $audit->getPageLoadTimeMs(),
 
@@ -490,11 +435,7 @@ class AuditCallbackController extends AbstractController
             'pagespeed_mobile_score' =>
                 $audit->getPagespeedMobileScore(),
 
-
-            // -----------------------------
             // LIGHTHOUSE
-            // -----------------------------
-
             'accessibility_score' =>
                 $audit->getAccessibilityScore(),
 
@@ -504,11 +445,7 @@ class AuditCallbackController extends AbstractController
             'seo_score' =>
                 $audit->getSeoScore(),
 
-
-            // -----------------------------
             // TECHNICAL SEO
-            // -----------------------------
-
             'https' =>
                 $audit->isHttps(),
 
@@ -521,19 +458,11 @@ class AuditCallbackController extends AbstractController
             'mobile_friendly' =>
                 $audit->isMobileFriendly(),
 
-
-            // -----------------------------
             // METRICS
-            // -----------------------------
-
             'metrics' =>
                 $audit->getMetrics(),
 
-
-            // -----------------------------
             // GOOGLE MAPS
-            // -----------------------------
-
             'google_maps' => [
 
                 'is_present' =>
@@ -565,7 +494,6 @@ class AuditCallbackController extends AbstractController
                             : 'not_found'
                     ),
             ],
-
 
             'created_at' =>
                 $audit->getCreatedAt()
