@@ -13,7 +13,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import Keyword from "../pages/Keyword";
 import KeywordHistory from "../components/KeywordHistory";
 import Analyse from "../pages/Analyse";
-import AnalyseHistory from "../components/AnalyseHistory";
+
 
 export default function AppRoutes() {
     return (
@@ -83,14 +83,7 @@ export default function AppRoutes() {
                     </ProtectedRoute>
                 }
             />
-            <Route
-                path="/Analyse-History"
-                element={
-                    <ProtectedRoute>
-                        <AnalyseHistory />
-                    </ProtectedRoute>
-                }
-            />
+           
 
             {/* =========================
                 AUTH

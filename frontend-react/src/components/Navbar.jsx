@@ -35,9 +35,7 @@ export default function Navbar() {
            <Link to="/Analyse" className="nav-link">
             Analyse Page
           </Link>
-           <Link to="/Analyse-History" className="nav-link">
-            Analyse Page Historique
-          </Link>
+           
         </nav>
       )}
 

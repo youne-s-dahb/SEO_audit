@@ -1625,3 +1625,290 @@
         gap: 8px;
     }
 }
+/* =========================================================
+   PDF REPORT
+   ========================================================= */
+
+/*
+|--------------------------------------------------------------------------
+| PAGE PRINCIPALE
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf {
+    background: #ffffff !important;
+    color: #111111 !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| TOUS LES ELEMENTS
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf,
+#analyse-report-pdf * {
+    box-sizing: border-box;
+}
+
+/*
+|--------------------------------------------------------------------------
+| BACKGROUND BLANC PARTOUT
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf,
+#analyse-report-pdf .analyse-report,
+#analyse-report-pdf .report-header,
+#analyse-report-pdf .score-section,
+#analyse-report-pdf .score-card,
+#analyse-report-pdf .score-information,
+#analyse-report-pdf .report-section,
+#analyse-report-pdf .report-section-header,
+#analyse-report-pdf .report-metrics,
+#analyse-report-pdf .metric-card,
+#analyse-report-pdf .checks-grid,
+#analyse-report-pdf .check-card,
+#analyse-report-pdf .content-overview,
+#analyse-report-pdf .overview-card,
+#analyse-report-pdf .detail-box,
+#analyse-report-pdf .headings-list,
+#analyse-report-pdf .heading-row,
+#analyse-report-pdf .image-summary,
+#analyse-report-pdf .image-stat,
+#analyse-report-pdf .images-table,
+#analyse-report-pdf .images-table-head,
+#analyse-report-pdf .image-row,
+#analyse-report-pdf .keywords-table,
+#analyse-report-pdf .keywords-table-head,
+#analyse-report-pdf .keyword-row,
+#analyse-report-pdf .empty-report,
+#analyse-report-pdf .report-footer {
+    background: #ffffff !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| TEXTE NOIR
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf,
+#analyse-report-pdf h1,
+#analyse-report-pdf h2,
+#analyse-report-pdf h3,
+#analyse-report-pdf h4,
+#analyse-report-pdf p,
+#analyse-report-pdf span,
+#analyse-report-pdf strong,
+#analyse-report-pdf small,
+#analyse-report-pdf div {
+    color: #111111 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| EXCEPTIONS : SCORE
+|--------------------------------------------------------------------------
+|
+| On garde le cercle coloré du score.
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .score-circle {
+    color: inherit !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| STATUS ICONS
+|--------------------------------------------------------------------------
+|
+| On garde les couleurs vert/orange des status.
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .check-status {
+    color: inherit !important;
+}
+
+#analyse-report-pdf .check-pass .check-status {
+    color: #22c55e !important;
+}
+
+#analyse-report-pdf .check-fail .check-status {
+    color: #f97316 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| BORDERS PROPRES
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .metric-card,
+#analyse-report-pdf .check-card,
+#analyse-report-pdf .overview-card,
+#analyse-report-pdf .detail-box,
+#analyse-report-pdf .images-table,
+#analyse-report-pdf .keywords-table {
+    border-color: #dddddd !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| SUPPRIMER LES OMBRES SOMBRES
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf *,
+#analyse-report-pdf *::before,
+#analyse-report-pdf *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| SECTIONS
+|--------------------------------------------------------------------------
+|
+| Chaque grosse section commence proprement.
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .report-section {
+    break-inside: auto;
+    page-break-inside: auto;
+}
+
+/*
+|--------------------------------------------------------------------------
+| ELEMENTS QUI NE DOIVENT PAS ÊTRE COUPÉS
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .report-header,
+#analyse-report-pdf .score-card,
+#analyse-report-pdf .metric-card,
+#analyse-report-pdf .check-card,
+#analyse-report-pdf .overview-card,
+#analyse-report-pdf .detail-box,
+#analyse-report-pdf .image-stat,
+#analyse-report-pdf .image-row,
+#analyse-report-pdf .keyword-row,
+#analyse-report-pdf .report-footer {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| GRID
+|--------------------------------------------------------------------------
+|
+| On évite que les cartes soient forcées bizarrement.
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .report-metrics,
+#analyse-report-pdf .checks-grid,
+#analyse-report-pdf .content-overview,
+#analyse-report-pdf .image-summary {
+    break-inside: auto;
+    page-break-inside: auto;
+}
+
+/*
+|--------------------------------------------------------------------------
+| TABLES
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .images-table,
+#analyse-report-pdf .keywords-table {
+    break-inside: auto;
+    page-break-inside: auto;
+}
+
+/*
+|--------------------------------------------------------------------------
+| LIGNES
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .image-row,
+#analyse-report-pdf .keyword-row,
+#analyse-report-pdf .heading-row {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| FOOTER
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .report-footer {
+    margin-top: 30px;
+    border-top: 1px solid #dddddd !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| URL
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .report-url {
+    color: #333333 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| DATE
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .report-date {
+    color: #555555 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| LABELS
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .report-eyebrow,
+#analyse-report-pdf .score-label,
+#analyse-report-pdf .metric-label {
+    color: #555555 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| DENSITY
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .density-value {
+    color: #111111 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| IMAGE ALT
+|--------------------------------------------------------------------------
+*/
+
+#analyse-report-pdf .alt-ok {
+    color: #16a34a !important;
+}
+
+#analyse-report-pdf .alt-missing {
+    color: #dc2626 !important;
+}
