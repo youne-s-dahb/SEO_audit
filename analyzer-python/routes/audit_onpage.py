@@ -102,6 +102,9 @@ def flatten_headings(headings: dict) -> list:
             if not isinstance(texts, list):
                 continue
 
+    rows = []
+    for level, texts in headings.items():
+        if isinstance(texts, list):
             for index, text in enumerate(texts, start=1):
 
                 rows.append({
@@ -445,7 +448,7 @@ async def audit_onpage(url: str):
 
         return {
             "status": "failed",
-            "error_message": "Invalid URL",
+            "error_message": "Invalid or restricted URL",
             "url": url,
         }
 

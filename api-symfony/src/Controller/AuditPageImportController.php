@@ -5,11 +5,11 @@ namespace App\Controller;
 use App\Entity\Audit;
 use App\Entity\AuditPage;
 use Doctrine\ORM\EntityManagerInterface;
-use Predis\Client as RedisClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AuditPageImportController extends AbstractController
 {
@@ -17,7 +17,7 @@ class AuditPageImportController extends AbstractController
     public function __invoke(
         Request $request,
         EntityManagerInterface $em,
-        RedisClient $redis
+        HttpClientInterface $httpClient
     ): JsonResponse {
 
         $payload = json_decode($request->getContent(), true);
@@ -36,18 +36,25 @@ class AuditPageImportController extends AbstractController
             return $this->json(['error' => "Audit with id {$auditId} not found"], 404);
         }
 
-        // Lire Redis
-        $redisKey = 'audit:onpage:' . $url;
-        $cached = $redis->get($redisKey);
+        // -----------------------------
+        // Appeler Python directement (SANS Redis)
+        // -----------------------------
+        $pythonBaseUrl = $this->getParameter('python_analyzer_base_url');
 
-        if (!$cached) {
+        try {
+            $response = $httpClient->request('GET', rtrim($pythonBaseUrl, '/') . '/audit-onpage', [
+                'query' => ['url' => $url],
+                'timeout' => 30,
+            ]);
+
+            $data = $response->toArray(false);
+        } catch (\Exception $e) {
             return $this->json([
-                'error' => 'On-page audit data not found in Redis.',
-                'redis_key' => $redisKey,
-            ], 404);
+                'error' => 'Failed to reach the Python analyzer service.',
+                'message' => $e->getMessage(),
+            ], 502);
         }
 
-        $data = json_decode($cached, true);
         if (($data['status'] ?? null) !== 'success') {
             return $this->json([
                 'error' => 'On-page scraping failed for this URL',
