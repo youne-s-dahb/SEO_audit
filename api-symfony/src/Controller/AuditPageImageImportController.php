@@ -6,7 +6,6 @@ use App\Entity\Audit;
 use App\Entity\AuditPage;
 use App\Entity\AuditPageImage;
 use Doctrine\ORM\EntityManagerInterface;
-use Predis\Client as RedisClient;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,112 +13,261 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class AuditPageImageImportController extends AbstractController
 {
-    #[Route('/api/audit-page-image/import', name: 'audit_page_image_import', methods: ['POST'])]
+    #[Route(
+        '/api/audit-page-image/import',
+        name: 'audit_page_image_import',
+        methods: ['POST']
+    )]
     public function __invoke(
         Request $request,
-        EntityManagerInterface $em,
-        RedisClient $redis
+        EntityManagerInterface $em
     ): JsonResponse {
 
-        $payload = json_decode($request->getContent(), true);
+        // -------------------------------------------------
+        // 1. Décoder le JSON
+        // -------------------------------------------------
+        $payload = json_decode(
+            $request->getContent(),
+            true
+        );
 
-        if (empty($payload['url']) || empty($payload['audit_id'])) {
+        if (!is_array($payload)) {
             return $this->json([
-                'error' => 'url and audit_id are required fields'
+                'error' => 'Invalid JSON payload.'
             ], 400);
         }
 
-        $url = $payload['url'];
-        $auditId = $payload['audit_id'];
-
-        // -----------------------------
-        // Recuperer l'Audit parent
-        // -----------------------------
-        $audit = $em->getRepository(Audit::class)->find($auditId);
-        if (!$audit) {
-            return $this->json(['error' => "Audit with id {$auditId} not found"], 404);
+        // -------------------------------------------------
+        // 2. Vérifier les champs obligatoires
+        // -------------------------------------------------
+        if (
+            empty($payload['url']) ||
+            empty($payload['audit_id'])
+        ) {
+            return $this->json([
+                'error' => 'url and audit_id are required fields.'
+            ], 400);
         }
 
-        // -----------------------------
-        // Recuperer l'AuditPage parent
-        // -----------------------------
-        $auditPage = $em->getRepository(AuditPage::class)->findOneBy([
-            'audit' => $audit,
-            'url' => $url,
-        ]);
+        $url = trim((string) $payload['url']);
+        $auditId = $payload['audit_id'];
+
+        // -------------------------------------------------
+        // 3. Vérifier audit_id
+        // -------------------------------------------------
+        if (
+            !is_int($auditId) &&
+            !ctype_digit((string) $auditId)
+        ) {
+            return $this->json([
+                'error' => 'audit_id must be a valid integer.'
+            ], 400);
+        }
+
+        $auditId = (int) $auditId;
+
+        // -------------------------------------------------
+        // 4. Normaliser l'URL
+        // -------------------------------------------------
+        $normalizedUrl = rtrim($url, '/');
+
+        // Garder "/" pour la racine
+        if ($normalizedUrl === '') {
+            $normalizedUrl = '/';
+        }
+
+        // -------------------------------------------------
+        // 5. Récupérer l'Audit parent
+        // -------------------------------------------------
+        $audit = $em
+            ->getRepository(Audit::class)
+            ->find($auditId);
+
+        if (!$audit) {
+            return $this->json([
+                'error' => "Audit with id {$auditId} not found."
+            ], 404);
+        }
+
+        // -------------------------------------------------
+        // 6. Récupérer l'AuditPage parent
+        // -------------------------------------------------
+        $auditPage = $em
+            ->getRepository(AuditPage::class)
+            ->findOneBy([
+                'audit' => $audit,
+                'url' => $url,
+            ]);
+
+        // Si l'URL exacte n'est pas trouvée,
+        // essayer avec l'URL normalisée.
+        if (!$auditPage && $normalizedUrl !== $url) {
+            $auditPage = $em
+                ->getRepository(AuditPage::class)
+                ->findOneBy([
+                    'audit' => $audit,
+                    'url' => $normalizedUrl,
+                ]);
+        }
 
         if (!$auditPage) {
             return $this->json([
-                'error' => 'AuditPage not found for this url/audit. '
-                    . 'Call /api/audit-page/import first.',
+                'error' => 'AuditPage not found for this url/audit.',
+                'details' => 'Call /api/audit-page/import first.'
             ], 404);
         }
 
-        // -----------------------------
-        // Lire les donnees on-page dans Redis
-        // -----------------------------
-        $redisKey = 'audit:onpage:' . $url;
-        $cached = $redis->get($redisKey);
+        // -------------------------------------------------
+        // 7. Vérifier le status du scraping
+        // -------------------------------------------------
+        $status = $payload['status'] ?? null;
 
-        if (!$cached) {
+        if (!$status) {
             return $this->json([
-                'error' => 'On-page audit data not found in Redis.',
-                'redis_key' => $redisKey,
-            ], 404);
+                'error' => 'On-page audit data missing in payload.'
+            ], 400);
         }
 
-        $data = json_decode($cached, true);
-
-        if (($data['status'] ?? null) !== 'success') {
+        if ($status !== 'success') {
             return $this->json([
-                'error' => 'On-page scraping failed for this URL',
-                'details' => $data,
+                'error' => 'On-page scraping failed for this URL.',
+                'status' => $status
             ], 422);
         }
 
-        $imagesData = $data['images'] ?? [];
+        // -------------------------------------------------
+        // 8. Vérifier images
+        // -------------------------------------------------
+        $imagesData = $payload['images'] ?? [];
 
-        // -----------------------------
-        // Idempotence: bulk delete des anciennes images de cette page
-        // -----------------------------
-        $em->getRepository(AuditPageImage::class)->createQueryBuilder('i')
-            ->delete()
-            ->where('i.auditPage = :auditPage')
-            ->setParameter('auditPage', $auditPage)
-            ->getQuery()
-            ->execute();
-
-        // -----------------------------
-        // Creer les nouvelles images
-        // -----------------------------
-        $insertedCount = 0;
-
-        foreach ($imagesData as $item) {
-            if (empty($item['image_url'])) {
-                continue;
-            }
-
-            $image = new AuditPageImage();
-            $image->setAuditPage($auditPage);
-            $image->setImageUrl((string) $item['image_url']);
-            $image->setHasAlt(isset($item['has_alt']) ? (bool) $item['has_alt'] : null);
-            $image->setAltText(isset($item['alt_text']) ? (string) $item['alt_text'] : null);
-            $image->setFileSizeKb(isset($item['file_size_kb']) ? (float) $item['file_size_kb'] : null);
-            $image->setImageType(isset($item['image_type']) ? (string) $item['image_type'] : null);
-
-            $em->persist($image);
-            $insertedCount++;
+        if (!is_array($imagesData)) {
+            return $this->json([
+                'error' => 'images must be an array.'
+            ], 400);
         }
 
+        // -------------------------------------------------
+        // 9. Transaction DB
+        // -------------------------------------------------
+        $connection = $em->getConnection();
+
         try {
+            $connection->beginTransaction();
+
+            // -------------------------------------------------
+            // 10. Supprimer les anciennes images
+            // -------------------------------------------------
+            $em->getRepository(AuditPageImage::class)
+                ->createQueryBuilder('i')
+                ->delete()
+                ->where('i.auditPage = :auditPage')
+                ->setParameter('auditPage', $auditPage)
+                ->getQuery()
+                ->execute();
+
+            // -------------------------------------------------
+            // 11. Ajouter les nouvelles images
+            // -------------------------------------------------
+            $insertedCount = 0;
+
+            foreach ($imagesData as $item) {
+
+                // Ignorer les éléments invalides
+                if (
+                    !is_array($item) ||
+                    empty($item['image_url'])
+                ) {
+                    continue;
+                }
+
+                $image = new AuditPageImage();
+
+                $image->setAuditPage($auditPage);
+
+                // URL de l'image
+                $image->setImageUrl(
+                    trim((string) $item['image_url'])
+                );
+
+                // Alt
+                if (array_key_exists('has_alt', $item)) {
+                    $image->setHasAlt(
+                        (bool) $item['has_alt']
+                    );
+                } else {
+                    $image->setHasAlt(null);
+                }
+
+                // Texte Alt
+                if (
+                    array_key_exists('alt_text', $item) &&
+                    $item['alt_text'] !== null
+                ) {
+                    $image->setAltText(
+                        (string) $item['alt_text']
+                    );
+                } else {
+                    $image->setAltText(null);
+                }
+
+                // Taille
+                if (
+                    array_key_exists('file_size_kb', $item) &&
+                    is_numeric($item['file_size_kb'])
+                ) {
+                    $image->setFileSizeKb(
+                        (float) $item['file_size_kb']
+                    );
+                } else {
+                    $image->setFileSizeKb(null);
+                }
+
+                // Type
+                if (
+                    array_key_exists('image_type', $item) &&
+                    $item['image_type'] !== null
+                ) {
+                    $image->setImageType(
+                        (string) $item['image_type']
+                    );
+                } else {
+                    $image->setImageType(null);
+                }
+
+                $em->persist($image);
+
+                $insertedCount++;
+            }
+
+            // -------------------------------------------------
+            // 12. Sauvegarder
+            // -------------------------------------------------
             $em->flush();
-        } catch (\Exception $e) {
+
+            // -------------------------------------------------
+            // 13. Valider la transaction
+            // -------------------------------------------------
+            $connection->commit();
+
+        } catch (\Throwable $e) {
+
+            // -------------------------------------------------
+            // 14. Rollback en cas d'erreur
+            // -------------------------------------------------
+            if ($connection->isTransactionActive()) {
+                $connection->rollBack();
+            }
+
+            // En développement, tu peux logger l'erreur.
+            // Ne pas exposer $e->getMessage() directement à l'utilisateur.
             return $this->json([
-                'error' => 'Database error while saving images.',
-                'message' => $e->getMessage(),
+                'error' => 'Database error while saving images.'
             ], 500);
         }
 
+        // -------------------------------------------------
+        // 15. Réponse
+        // -------------------------------------------------
         return $this->json([
             'message' => 'AuditPageImage stored successfully',
             'audit_page_id' => $auditPage->getId(),
