@@ -1,133 +1,776 @@
 import asyncio
+import re
+import time
+
+import httpx
+
+from urllib.parse import urlparse
 
 from fastapi import APIRouter
-from urllib.parse import urlparse
-import re       # <--- ضروري يكون هنا
-import httpx    # <--- ضروري يكون هنا
-from bs4 import BeautifulSoup # <--- ضروري يكون هنا
-import json
+from bs4 import BeautifulSoup
+
 from services.pageSpeed import get_pagespeed_data
+
 
 router = APIRouter()
 
 
-def is_valid_url(url: str):
-    parsed = urlparse(url)
-    return parsed.scheme in ("http", "https") and parsed.netloc
+# =========================================================
+# HTTP SETTINGS
+# =========================================================
+
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 "
+    "(KHTML, like Gecko) "
+    "Chrome/151.0 Safari/537.36"
+)
+
+HTTP_TIMEOUT = httpx.Timeout(
+    4.0,
+    connect=2.0,
+    read=4.0,
+    write=4.0,
+    pool=2.0
+)
+
+
+# =========================================================
+# VALIDATE URL
+# =========================================================
+
+def is_valid_url(url: str) -> bool:
+
+    try:
+
+        parsed = urlparse(url)
+
+        return (
+            parsed.scheme in ("http", "https")
+            and bool(parsed.netloc)
+        )
+
+    except Exception:
+
+        return False
+
+
+# =========================================================
+# EXTRACT LANGUAGE + COUNTRY
+# =========================================================
+
+async def extract_language_and_country(url: str):
+
+    language_code = "fr"
+    country_code = "MA"
+
+    try:
+
+        parsed_url = urlparse(url)
+
+        netloc = parsed_url.netloc.lower()
+
+        # Remove port
+        netloc = netloc.split(":")[0]
+
+        # Remove www
+        if netloc.startswith("www."):
+            netloc = netloc[4:]
+
+        # -------------------------------------------------
+        # COUNTRY FROM DOMAIN
+        # -------------------------------------------------
+
+        tld_match = re.search(
+            r"\.([a-z]{2})$",
+            netloc
+        )
+
+        if tld_match:
+
+            country_code = (
+                tld_match.group(1).upper()
+            )
+
+        # -------------------------------------------------
+        # REQUEST HTML
+        # -------------------------------------------------
+
+        headers = {
+            "User-Agent": USER_AGENT,
+            "Accept": "text/html,application/xhtml+xml",
+        }
+
+        async with httpx.AsyncClient(
+            timeout=HTTP_TIMEOUT,
+            follow_redirects=True,
+            headers=headers
+        ) as client:
+
+            response = await client.get(url)
+
+        # -------------------------------------------------
+        # STATUS
+        # -------------------------------------------------
+
+        if response.status_code != 200:
+
+            return (
+                language_code,
+                country_code
+            )
+
+        # -------------------------------------------------
+        # PARSE HTML
+        # -------------------------------------------------
+
+        soup = BeautifulSoup(
+            response.text,
+            "html.parser"
+        )
+
+        html_tag = soup.find("html")
+
+        if not html_tag:
+
+            return (
+                language_code,
+                country_code
+            )
+
+        lang = html_tag.get("lang")
+
+        if not lang:
+
+            return (
+                language_code,
+                country_code
+            )
+
+        lang = lang.strip()
+
+        # -------------------------------------------------
+        # LANGUAGE
+        # -------------------------------------------------
+
+        if len(lang) >= 2:
+
+            language_code = (
+                lang[:2].lower()
+            )
+
+        # -------------------------------------------------
+        # COUNTRY FROM LANG
+        # -------------------------------------------------
+
+        if "-" in lang:
+
+            parts = lang.split("-")
+
+            if (
+                len(parts) > 1
+                and len(parts[1]) == 2
+            ):
+
+                country_code = (
+                    parts[1].upper()
+                )
+
+        elif "_" in lang:
+
+            parts = lang.split("_")
+
+            if (
+                len(parts) > 1
+                and len(parts[1]) == 2
+            ):
+
+                country_code = (
+                    parts[1].upper()
+                )
+
+    except Exception as e:
+
+        print(
+            "LANGUAGE DETECTION ERROR:",
+            str(e)
+        )
+
+    return (
+        language_code,
+        country_code
+    )
+
+
+# =========================================================
+# SAFE SCORE
+# =========================================================
+
+def safe_score(data, key):
+
+    try:
+
+        if not isinstance(data, dict):
+
+            return 0
+
+        value = data.get(
+            key,
+            0
+        )
+
+        if value is None:
+
+            return 0
+
+        return int(
+            round(
+                float(value)
+            )
+        )
+
+    except (
+        ValueError,
+        TypeError
+    ):
+
+        return 0
+
+
+# =========================================================
+# SCORE COLOR
+# =========================================================
+
+def get_score_color(score: int):
+
+    if score >= 90:
+
+        return "green"
+
+    if score >= 50:
+
+        return "orange"
+
+    return "red"
+
+
+# =========================================================
+# LCP CONVERSION
+# =========================================================
+
+def convert_lcp_to_ms(value):
+
+    if value is None:
+
+        return 0
+
+    try:
+
+        lcp_string = str(value)
+
+        lcp_string = (
+            lcp_string
+            .replace("\xa0", "")
+            .strip()
+            .lower()
+        )
+
+        # Example: 2500ms
+        if lcp_string.endswith("ms"):
+
+            lcp_string = (
+                lcp_string[:-2]
+                .strip()
+            )
+
+            return int(
+                float(lcp_string)
+            )
+
+        # Example: 2.5s
+        if lcp_string.endswith("s"):
+
+            lcp_string = (
+                lcp_string[:-1]
+                .strip()
+            )
+
+            return int(
+                float(lcp_string) * 1000
+            )
+
+        # Unknown numeric format
+        return int(
+            float(lcp_string) * 1000
+        )
+
+    except (
+        ValueError,
+        TypeError
+    ):
+
+        return 0
+
+
+# =========================================================
+# MAIN AUDIT
+#
+# GET /audit?url=https://example.com
+# =========================================================
 
 @router.get("/audit")
 async def audit_url(url: str):
-     # Validation URL
+
+    # =====================================================
+    # START TIMER
+    # =====================================================
+
+    total_start = time.perf_counter()
+
+    # =====================================================
+    # VALIDATE URL
+    # =====================================================
+
     if not is_valid_url(url):
-        payload = {
+
+        return {
             "status": "failed",
             "error_message": "Invalid URL",
             "url": url
         }
 
+    try:
 
+        # =================================================
+        # START PARALLEL TASKS
+        # =================================================
+        #
+        # IMPORTANT:
+        #
+        # PageSpeed Mobile
+        # PageSpeed Desktop
+        # Language detection
+        #
+        # run at the same time.
+        #
+        # =================================================
 
-        return payload
-    
-    full_data = await get_pagespeed_data(url)
-    desktop_data = await get_pagespeed_data(
-        url,
-        "desktop"
-    )
-    lcp = (
-        full_data.get("metrics", {})
-        .get("largest_contentful_paint", "0 s")
-        .replace("\xa0", "")
-        .replace("s", "")
-        .strip()
-    )
-    language_code, country_code = extract_language_and_country(url)
-    page_load_time_ms = int(float(lcp) * 1000)
-    global_score = int(
+        page_start = time.perf_counter()
+
+        mobile_task = get_pagespeed_data(
+            url
+        )
+
+        desktop_task = get_pagespeed_data(
+            url,
+            "desktop"
+        )
+
+        language_task = (
+            extract_language_and_country(
+                url
+            )
+        )
+
         (
-            full_data.get("performance_score", 0)
-            + desktop_data.get("performance_score", 0)
-            + full_data.get("accessibility_score", 0)
-            + full_data.get("best_practices_score", 0)
-            + full_data.get("seo_score", 0)
-        ) / 5
+            mobile_data,
+            desktop_data,
+            language_result
+        ) = await asyncio.gather(
+            mobile_task,
+            desktop_task,
+            language_task
+        )
+
+        page_time = (
+            time.perf_counter()
+            - page_start
+        )
+
+        print(
+            f"PAGE SPEED + LANGUAGE TIME: "
+            f"{page_time:.2f}s"
+        )
+
+    except Exception as e:
+
+        print(
+            "AUDIT ERROR:",
+            str(e)
+        )
+
+        return {
+            "status": "failed",
+            "error_message":
+                "Impossible de récupérer les données PageSpeed.",
+            "details": str(e),
+            "url": url
+        }
+
+    # =====================================================
+    # SAFETY
+    # =====================================================
+
+    if not isinstance(
+        mobile_data,
+        dict
+    ):
+
+        mobile_data = {}
+
+    if not isinstance(
+        desktop_data,
+        dict
+    ):
+
+        desktop_data = {}
+
+    # =====================================================
+    # LANGUAGE + COUNTRY
+    # =====================================================
+
+    try:
+
+        language_code, country_code = (
+            language_result
+        )
+
+    except Exception:
+
+        language_code = "fr"
+        country_code = "MA"
+
+    # =====================================================
+    # SCORES
+    # =====================================================
+
+    mobile_performance = safe_score(
+        mobile_data,
+        "performance_score"
     )
+
+    desktop_performance = safe_score(
+        desktop_data,
+        "performance_score"
+    )
+
+    accessibility_score = safe_score(
+        mobile_data,
+        "accessibility_score"
+    )
+
+    best_practices_score = safe_score(
+        mobile_data,
+        "best_practices_score"
+    )
+
+    seo_score = safe_score(
+        mobile_data,
+        "seo_score"
+    )
+
+    # =====================================================
+    # GLOBAL SCORE
+    # =====================================================
+
+    global_score = int(
+        round(
+            (
+                desktop_performance
+                + mobile_performance
+                + accessibility_score
+                + best_practices_score
+                + seo_score
+            ) / 5
+        )
+    )
+
+    # =====================================================
+    # SCORE COLOR
+    # =====================================================
+
+    score_color = get_score_color(
+        global_score
+    )
+
+    # =====================================================
+    # METRICS
+    # =====================================================
+
+    metrics = (
+        mobile_data.get(
+            "metrics"
+        )
+        or {}
+    )
+
+    if not isinstance(
+        metrics,
+        dict
+    ):
+
+        metrics = {}
+
+    # =====================================================
+    # LCP
+    # =====================================================
+
+    lcp_value = metrics.get(
+        "largest_contentful_paint"
+    )
+
+    page_load_time_ms = (
+        convert_lcp_to_ms(
+            lcp_value
+        )
+    )
+
+    # =====================================================
+    # HTTPS
+    # =====================================================
+
+    is_https = (
+        url.lower().startswith(
+            "https://"
+        )
+    )
+
+    # =====================================================
+    # MOBILE FRIENDLY
+    # =====================================================
+
+    is_mobile_friendly = (
+        mobile_data.get(
+            "is_mobile_friendly"
+        )
+    )
+
+    # =====================================================
+    # ROBOTS
+    # =====================================================
+
+    has_robots_txt = (
+        mobile_data.get(
+            "has_robots_txt"
+        )
+    )
+
+    # =====================================================
+    # SITEMAP
+    # =====================================================
+
+    has_sitemap_xml = (
+        mobile_data.get(
+            "has_sitemap_xml"
+        )
+    )
+
+    # =====================================================
+    # RECOMMENDATIONS
+    # =====================================================
+
+    recommendations = (
+        mobile_data.get(
+            "recommendations"
+        )
+        or []
+    )
+
+    if not isinstance(
+        recommendations,
+        list
+    ):
+
+        recommendations = []
+
+    # =====================================================
+    # TOTAL TIME
+    # =====================================================
+
+    total_time = (
+        time.perf_counter()
+        - total_start
+    )
+
+    print(
+        f"AUDIT TOTAL TIME: "
+        f"{total_time:.2f}s"
+    )
+
+    # =====================================================
+    # RESPONSE
+    # =====================================================
+
     payload = {
+
         "status": "completed",
-        "global_score": global_score,
-        "pagespeed_desktop_score": desktop_data.get("performance_score"),
-        "pagespeed_mobile_score": full_data.get("performance_score"),
-        "has_robots_txt": full_data.get("has_robots_txt"),
-        "has_sitemap_xml": full_data.get("has_sitemap_xml"),
+
+        "url": url,
+
+        # -----------------------------------------------
+        # GLOBAL
+        # -----------------------------------------------
+
+        "global_score":
+            global_score,
+
         "score_color":
-            "green" if full_data.get("global_score", 0) >= 90
-            else "orange" if full_data.get("global_score", 0) >= 50
-            else "red",
+            score_color,
 
-        "is_https": url.startswith("https://"),
-        "is_mobile_friendly": full_data.get("is_mobile_friendly"),
-        "page_load_time_ms": page_load_time_ms,
+        # -----------------------------------------------
+        # PAGESPEED
+        # -----------------------------------------------
 
-        "accessibility_score": full_data.get("accessibility_score"),
-        "best_practices_score": full_data.get("best_practices_score"),
-        "seo_score": full_data.get("seo_score"),
+        "pagespeed_desktop_score":
+            desktop_performance,
 
-        "metrics": full_data.get("metrics"),
-        "recommendations": full_data.get("recommendations"),
-        "language_code": language_code,
-        "country_code": country_code,
-        "url": url
+        "pagespeed_mobile_score":
+            mobile_performance,
+
+        # -----------------------------------------------
+        # SEO
+        # -----------------------------------------------
+
+        "seo_score":
+            seo_score,
+
+        # -----------------------------------------------
+        # ACCESSIBILITY
+        # -----------------------------------------------
+
+        "accessibility_score":
+            accessibility_score,
+
+        # -----------------------------------------------
+        # BEST PRACTICES
+        # -----------------------------------------------
+
+        "best_practices_score":
+            best_practices_score,
+
+        # -----------------------------------------------
+        # TECHNICAL
+        # -----------------------------------------------
+
+        "has_robots_txt":
+            has_robots_txt,
+
+        "has_sitemap_xml":
+            has_sitemap_xml,
+
+        "is_https":
+            is_https,
+
+        "is_mobile_friendly":
+            is_mobile_friendly,
+
+        "page_load_time_ms":
+            page_load_time_ms,
+
+        # -----------------------------------------------
+        # LANGUAGE
+        # -----------------------------------------------
+
+        "language_code":
+            language_code,
+
+        "country_code":
+            country_code,
+
+        # -----------------------------------------------
+        # METRICS
+        # -----------------------------------------------
+
+        "metrics":
+            metrics,
+
+        # -----------------------------------------------
+        # RECOMMENDATIONS
+        # -----------------------------------------------
+
+        "recommendations":
+            recommendations,
+
+        # -----------------------------------------------
+        # DEBUG
+        # -----------------------------------------------
+
+        "audit_time_seconds":
+            round(total_time, 2)
     }
 
-  
-
     return payload
-def extract_language_and_country(url: str):
-    """
-    دالة كتجيب language_code و country_code من الموقع مباشرة
-    """
-    language_code = "fr"  # Default
-    country_code = "MA"   # Default
 
-    # 1. استخراج country_code من الامتداد ديال الدومين (TLD)
-    parsed_url = urlparse(url)
-    netloc = parsed_url.netloc.lower()
-    
-    # تحيد www إيلا كانت
-    if netloc.startswith("www."):
-        netloc = netloc[4:]
-        
-    # مطابقة الامتدادات الشهيرة بحال .ma, .fr, .com (إلا كانت شي حاجة بحال .co.uk الخ)
-    tld_match = re.search(r'\.([a-z]{2})$', netloc)
-    if tld_match:
-        country_code = tld_match.group(1).upper()
 
-    # 2. محاولة جلب اللغة الحقيقية من الصفحة (HTML lang attribute)
-    try:
-        # كنزيدو headers باش الموقع ما يبلغيش علينا كـ Bot
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-        with httpx.Client(timeout=5.0, follow_redirects=True, headers=headers) as client:
-            response = client.get(url)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                html_tag = soup.find('html')
-                if html_tag and html_tag.has_attr('lang'):
-                    lang = html_tag['lang'].strip()
-                    # غالبا كيكون مكتوب بحال "fr-FR" أو "ar-MA" حنا بغينا غير أول جوج حروف مثلاً "fr" ولا "ar"
-                    if len(lang) >= 2:
-                        language_code = lang[:2].lower()
-                        # وإلا بغيتي تاخد حتى البلد من lang إيلا كان مقسوم بـ dash بحال fr-MA
-                        if '-' in lang or '_' in lang:
-                            parts = re.split(r'[-_]', lang)
-                            if len(parts) > 1 and len(parts[1]) == 2:
-                                country_code = parts[1].upper()
-    except Exception as e:
-        # إيلا وقع شي مشكل فالكونيكسيو للموقع، كيبقى غادي بالقيم الافتراضية
-        pass
+# =========================================================
+# TEST PAGE SPEED
+#
+# GET /test?url=https://example.com
+# =========================================================
 
-    return language_code, country_code
 @router.get("/test")
 async def test(url: str):
-    full_data = await get_pagespeed_data(url)
-    print(full_data.get("recommendations"))
-    return full_data
+
+    if not is_valid_url(url):
+
+        return {
+            "status": "failed",
+            "error_message": "Invalid URL",
+            "url": url
+        }
+
+    start = time.perf_counter()
+
+    try:
+
+        data = await get_pagespeed_data(
+            url
+        )
+
+        elapsed = (
+            time.perf_counter()
+            - start
+        )
+
+        print(
+            f"TEST PAGESPEED TIME: "
+            f"{elapsed:.2f}s"
+        )
+
+        print(
+            "PAGESPEED DATA:"
+        )
+
+        print(data)
+
+        print(
+            "RECOMMENDATIONS:"
+        )
+
+        print(
+            data.get(
+                "recommendations"
+            )
+        )
+
+        return {
+            **data,
+            "test_time_seconds":
+                round(elapsed, 2)
+        }
+
+    except Exception as e:
+
+        elapsed = (
+            time.perf_counter()
+            - start
+        )
+
+        return {
+            "status": "failed",
+            "error_message":
+                "PageSpeed error",
+            "details": str(e),
+            "test_time_seconds":
+                round(elapsed, 2)
+        }

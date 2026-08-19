@@ -6,19 +6,35 @@ use App\Entity\Audit;
 use App\Entity\AuditPage;
 use App\Entity\AuditPageHeading;
 use Doctrine\ORM\EntityManagerInterface;
-use Predis\Client as RedisClient;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AuditPageHeadingImportController extends AbstractController
 {
+    private const PYTHON_CALL_TIMEOUT = 30;
+
+    private HttpClientInterface $httpClient;
+    private string $pythonAnalyzerBaseUrl;
+    private LoggerInterface $logger;
+
+    public function __construct(
+        HttpClientInterface $httpClient,
+        string $pythonAnalyzerBaseUrl,
+        LoggerInterface $logger
+    ) {
+        $this->httpClient = $httpClient;
+        $this->pythonAnalyzerBaseUrl = $pythonAnalyzerBaseUrl;
+        $this->logger = $logger;
+    }
+
     #[Route('/api/audit-page-heading/import', name: 'audit_page_heading_import', methods: ['POST'])]
     public function __invoke(
         Request $request,
-        EntityManagerInterface $em,
-        RedisClient $redis
+        EntityManagerInterface $em
     ): JsonResponse {
 
         $payload = json_decode($request->getContent(), true);
@@ -31,6 +47,10 @@ class AuditPageHeadingImportController extends AbstractController
 
         $url = $payload['url'];
         $auditId = $payload['audit_id'];
+
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return $this->json(['error' => 'Invalid URL format provided.'], 400);
+        }
 
         $audit = $em->getRepository(Audit::class)->find($auditId);
         if (!$audit) {
@@ -48,18 +68,28 @@ class AuditPageHeadingImportController extends AbstractController
             ], 404);
         }
 
-        // Lire Redis
-        $redisKey = 'audit:onpage:' . $url;
-        $cached = $redis->get($redisKey);
+        // -----------------------------
+        // Appel direct a Python
+        // -----------------------------
+        try {
+            $response = $this->httpClient->request('GET', rtrim($this->pythonAnalyzerBaseUrl, '/') . '/audit-onpage', [
+                'query' => ['url' => $url],
+                'timeout' => self::PYTHON_CALL_TIMEOUT,
+            ]);
 
-        if (!$cached) {
+            $data = $response->toArray(false);
+
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to reach Python analyzer service', [
+                'exception' => $e->getMessage(),
+                'url' => $url
+            ]);
+
             return $this->json([
-                'error' => 'On-page audit data not found in Redis.',
-                'redis_key' => $redisKey,
-            ], 404);
+                'error' => 'Failed to reach the Python analyzer service.',
+            ], 502);
         }
 
-        $data = json_decode($cached, true);
         if (($data['status'] ?? null) !== 'success') {
             return $this->json([
                 'error' => 'On-page scraping failed for this URL',
@@ -69,9 +99,7 @@ class AuditPageHeadingImportController extends AbstractController
 
         $headingsData = $data['headings'] ?? [];
 
-        // -----------------------------
-        // OPTIMIZATION 1: Delete en masse (Bulk Delete) f requête wahed unique!
-        // -----------------------------
+        // Bulk delete des anciens headings de cette page
         $em->getRepository(AuditPageHeading::class)->createQueryBuilder('h')
             ->delete()
             ->where('h.auditPage = :auditPage')
@@ -79,22 +107,21 @@ class AuditPageHeadingImportController extends AbstractController
             ->getQuery()
             ->execute();
 
-        // -----------------------------
-        // Creer les nouveaux headings
-        // -----------------------------
         $insertedCount = 0;
 
         foreach ($headingsData as $item) {
-            if (empty($item['heading_level']) || !isset($item['content'])) {
+            $level = trim($item['heading_level'] ?? '');
+            $content = trim($item['content'] ?? '');
+
+            // Verification plus stricte du contenu
+            if ($level === '' || $content === '') {
                 continue;
             }
 
             $heading = new AuditPageHeading();
             $heading->setAuditPage($auditPage);
-            
-            // Casting safe bach n-hemaw l-base de données
-            $heading->setHeadingLevel((string) $item['heading_level']);
-            $heading->setContent((string) $item['content']);
+            $heading->setHeadingLevel($level);
+            $heading->setContent($content);
             $heading->setPosition(isset($item['position']) ? (int) $item['position'] : null);
 
             $em->persist($heading);
@@ -104,9 +131,13 @@ class AuditPageHeadingImportController extends AbstractController
         try {
             $em->flush();
         } catch (\Exception $e) {
+            $this->logger->error('Database error while saving headings', [
+                'exception' => $e->getMessage(),
+                'audit_page_id' => $auditPage->getId()
+            ]);
+
             return $this->json([
                 'error' => 'Database error while saving headings.',
-                'message' => $e->getMessage(),
             ], 500);
         }
 

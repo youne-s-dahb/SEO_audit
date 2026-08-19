@@ -18,8 +18,6 @@ final class GoogleMapsAuditController extends AbstractController
         int $id,
         EntityManagerInterface $em
     ): JsonResponse {
-
-        // Chercher l'audit
         $audit = $em->getRepository(Audit::class)->find($id);
 
         if (!$audit) {
@@ -28,25 +26,44 @@ final class GoogleMapsAuditController extends AbstractController
             ], Response::HTTP_NOT_FOUND);
         }
 
-        // URL du site
-        $url = $audit->getSite()->getUrl();
+        $site = $audit->getSite();
+        $siteUrl = $site?->getUrl();
 
-        // Appel du service Python
-        $client = HttpClient::create();
+        if (!$site || !$siteUrl) {
+            return $this->json([
+                'message' => 'Audit site URL not found'
+            ], Response::HTTP_BAD_REQUEST);
+        }
 
-        $response = $client->request(
-            'GET',
-            'http://analyzer:8000/maps/presence',
-            [
-                'query' => [
-                    'url' => $url
-                ]
-            ]
-        );
+        $client = HttpClient::create([
+            'timeout' => 20,
+            'max_duration' => 30,
+        ]);
 
-        $data = $response->toArray();
+        try {
+            $response = $client->request(
+                'GET',
+                'http://analyzer:8000/maps/presence',
+                ['query' => ['url' => $siteUrl]]
+            );
 
-        // Vérifier s'il existe déjà un audit Google Maps
+            if ($response->getStatusCode() >= 400) {
+                throw new \RuntimeException('Google Maps analyzer returned ' . $response->getStatusCode());
+            }
+
+            $payload = $response->toArray();
+            if (!is_array($payload)) {
+                $payload = [];
+            }
+        } catch (\Throwable $e) {
+            return $this->json([
+                'message' => 'Google Maps audit unavailable.',
+                'status' => 'error',
+                'isPresent' => false,
+                'error' => $e->getMessage(),
+            ], Response::HTTP_BAD_GATEWAY);
+        }
+
         $googleMap = $em->getRepository(AuditGoogleMap::class)
             ->findOneBy(['audit' => $audit]);
 
@@ -55,24 +72,45 @@ final class GoogleMapsAuditController extends AbstractController
             $googleMap->setAudit($audit);
         }
 
-        // Remplir les données
-        $googleMap->setIsPresent($data['is_present']);
+        $isPresent = (bool) ($payload['is_present'] ?? $payload['isPresent'] ?? false);
+        $businessName = $payload['business_name'] ?? $payload['businessName'] ?? null;
+        $title = $payload['title'] ?? null;
+        $address = $payload['address'] ?? null;
+        $rating = $payload['rating'] ?? null;
+        $reviewsCount = $payload['reviews_count'] ?? $payload['reviewsCount'] ?? null;
+        $placeId = $payload['place_id'] ?? $payload['placeId'] ?? null;
 
-        $googleMap->setBusinessName($data['business_name'] ?? null);
-        $googleMap->setTitle($data['title'] ?? null);
-        $googleMap->setAddress($data['address'] ?? null);
+        $googleMap->setIsPresent($isPresent);
+        $googleMap->setBusinessName(is_scalar($businessName) ? (string) $businessName : null);
+        $googleMap->setTitle(is_scalar($title) ? (string) $title : null);
+        $googleMap->setAddress(is_scalar($address) ? (string) $address : null);
+        $googleMap->setRating(is_numeric($rating) ? (float) $rating : null);
+        $googleMap->setReviewsCount(is_numeric($reviewsCount) ? (int) $reviewsCount : null);
+        $googleMap->setPlaceId(is_scalar($placeId) ? (string) $placeId : null);
 
-        $googleMap->setRating($data['rating'] ?? null);
-        $googleMap->setReviewsCount($data['reviews_count'] ?? null);
-        $googleMap->setPlaceId($data['place_id'] ?? null);
-
-        // Sauvegarde
         $em->persist($googleMap);
         $em->flush();
 
-        return $this->json([
-            'message' => 'Google Maps audit completed successfully.',
-            'google_maps' => $googleMap
-        ]);
+        $responseData = [
+            'id' => $googleMap->getId(),
+            'auditId' => $audit->getId(),
+            'audit_id' => $audit->getId(),
+            'site' => $siteUrl,
+            'url' => $siteUrl,
+            'status' => $isPresent ? 'present' : 'not_found',
+            'isPresent' => $googleMap->isPresent(),
+            'is_present' => $googleMap->isPresent(),
+            'businessName' => $googleMap->getBusinessName(),
+            'business_name' => $googleMap->getBusinessName(),
+            'title' => $googleMap->getTitle(),
+            'address' => $googleMap->getAddress(),
+            'rating' => $googleMap->getRating(),
+            'reviewsCount' => $googleMap->getReviewsCount(),
+            'reviews_count' => $googleMap->getReviewsCount(),
+            'placeId' => $googleMap->getPlaceId(),
+            'place_id' => $googleMap->getPlaceId(),
+        ];
+
+        return $this->json($responseData);
     }
 }

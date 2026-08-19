@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport d'audit SEO</title>
+    <style>
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            color: #222;
+        }
+        h1 {
+            font-size: 22px;
+            color: #8C6A4E;
+            border-bottom: 2px solid #8C6A4E;
+            padding-bottom: 8px;
+        }
+        h2 {
+            font-size: 16px;
+            color: #333;
+            margin-top: 24px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            text-align: left;
+            font-size: 11px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .meta-info {
+            color: #666;
+            font-size: 11px;
+            margin-bottom: 16px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            color: #fff;
+        }
+        .badge-yes { background-color: #4CAF50; }
+        .badge-no { background-color: #E53935; }
+        .page-block {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Rapport d'audit SEO</h1>
+    <div class="meta-info">
+        Genere le {{ generated_at|date('d/m/Y a H:i') }}<br>
+        Audit ID: {{ audit.id }}
+    </div>
+
+    {% for page in pages %}
+        <div class="page-block">
+            <h2>Page analysee : {{ page.url }}</h2>
+
+            <table>
+                <tr><th>Titre</th><td>{{ page.title|default('(vide)') }} ({{ page.titleLength }} caracteres)</td></tr>
+                <tr><th>Meta description</th><td>{{ page.metaDescription|default('(vide)') }} ({{ page.metaLength }} caracteres)</td></tr>
+                <tr><th>Code de statut</th><td>{{ page.statusCode }}</td></tr>
+                <tr><th>Nombre de mots</th><td>{{ page.wordCount }}</td></tr>
+                <tr><th>H1 unique</th><td>
+                    {% if page.h1IsUnique %}
+                        <span class="badge badge-yes">Oui</span>
+                    {% else %}
+                        <span class="badge badge-no">Non ({{ page.h1Count }} H1)</span>
+                    {% endif %}
+                </td></tr>
+                <tr><th>Liens internes / externes</th><td>{{ page.internalLinksCount }} / {{ page.externalLinksCount }}</td></tr>
+                <tr><th>Images (sans ALT)</th><td>{{ page.imagesCount }} ({{ page.imagesWithoutAltCount }} sans ALT)</td></tr>
+                <tr><th>Donnees structurees</th><td>
+                    {% if page.hasStructuredData %}
+                        <span class="badge badge-yes">Oui</span>
+                    {% else %}
+                        <span class="badge badge-no">Non</span>
+                    {% endif %}
+                </td></tr>
+                <tr><th>HTTPS</th><td>
+                    {% if page.isHttps %}
+                        <span class="badge badge-yes">Oui</span>
+                    {% else %}
+                        <span class="badge badge-no">Non</span>
+                    {% endif %}
+                </td></tr>
+            </table>
+
+            {% if page.heading|length > 0 %}
+                <h2>Structure des titres (H1-H6)</h2>
+                <table>
+                    <tr><th>Niveau</th><th>Contenu</th><th>Position</th></tr>
+                    {% for heading in page.heading %}
+                        <tr>
+                            <td>{{ heading.headingLevel|upper }}</td>
+                            <td>{{ heading.content }}</td>
+                            <td>{{ heading.position }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+
+            {% if page.keywordDensities|length > 0 %}
+                <h2>Densite des mots-cles (Top {{ page.keywordDensities|length }})</h2>
+                <table>
+                    <tr><th>Mot-cle</th><th>Occurrences</th><th>Densite</th></tr>
+                    {% for kw in page.keywordDensities %}
+                        <tr>
+                            <td>{{ kw.keyword }}</td>
+                            <td>{{ kw.occurrences }}</td>
+                            <td>{{ kw.densityPercent }}%</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+
+            {% if page.image|length > 0 %}
+                <h2>Images ({{ page.image|length }})</h2>
+                <table>
+                    <tr><th>URL</th><th>ALT</th><th>Type</th></tr>
+                    {% for img in page.image %}
+                        <tr>
+                            <td>{{ img.imageUrl|slice(0, 60) }}</td>
+                            <td>
+                                {% if img.hasAlt %}
+                                    {{ img.altText|default('(vide)') }}
+                                {% else %}
+                                    <span class="badge badge-no">Absent</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ img.imageType|default('?') }}</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+</body>
+</html>
