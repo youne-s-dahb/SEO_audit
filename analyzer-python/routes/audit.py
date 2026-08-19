@@ -1,5 +1,6 @@
 import asyncio
 import re
+import time
 
 import httpx
 
@@ -26,8 +27,11 @@ USER_AGENT = (
 )
 
 HTTP_TIMEOUT = httpx.Timeout(
-    5.0,
-    connect=3.0
+    4.0,
+    connect=2.0,
+    read=4.0,
+    write=4.0,
+    pool=2.0
 )
 
 
@@ -93,7 +97,8 @@ async def extract_language_and_country(url: str):
         # -------------------------------------------------
 
         headers = {
-            "User-Agent": USER_AGENT
+            "User-Agent": USER_AGENT,
+            "Accept": "text/html,application/xhtml+xml",
         }
 
         async with httpx.AsyncClient(
@@ -144,6 +149,10 @@ async def extract_language_and_country(url: str):
 
         lang = lang.strip()
 
+        # -------------------------------------------------
+        # LANGUAGE
+        # -------------------------------------------------
+
         if len(lang) >= 2:
 
             language_code = (
@@ -180,10 +189,12 @@ async def extract_language_and_country(url: str):
                     parts[1].upper()
                 )
 
-    except Exception:
+    except Exception as e:
 
-        # Keep defaults
-        pass
+        print(
+            "LANGUAGE DETECTION ERROR:",
+            str(e)
+        )
 
     return (
         language_code,
@@ -264,10 +275,7 @@ def convert_lcp_to_ms(value):
             .lower()
         )
 
-        # ---------------------------------------------
         # Example: 2500ms
-        # ---------------------------------------------
-
         if lcp_string.endswith("ms"):
 
             lcp_string = (
@@ -279,10 +287,7 @@ def convert_lcp_to_ms(value):
                 float(lcp_string)
             )
 
-        # ---------------------------------------------
         # Example: 2.5s
-        # ---------------------------------------------
-
         if lcp_string.endswith("s"):
 
             lcp_string = (
@@ -294,10 +299,7 @@ def convert_lcp_to_ms(value):
                 float(lcp_string) * 1000
             )
 
-        # ---------------------------------------------
         # Unknown numeric format
-        # ---------------------------------------------
-
         return int(
             float(lcp_string) * 1000
         )
@@ -320,6 +322,12 @@ def convert_lcp_to_ms(value):
 async def audit_url(url: str):
 
     # =====================================================
+    # START TIMER
+    # =====================================================
+
+    total_start = time.perf_counter()
+
+    # =====================================================
     # VALIDATE URL
     # =====================================================
 
@@ -334,23 +342,20 @@ async def audit_url(url: str):
     try:
 
         # =================================================
-        # PAGE SPEED
+        # START PARALLEL TASKS
+        # =================================================
         #
         # IMPORTANT:
         #
-        # Mobile + Desktop are executed IN PARALLEL.
+        # PageSpeed Mobile
+        # PageSpeed Desktop
+        # Language detection
         #
-        # Before:
+        # run at the same time.
         #
-        # Mobile -> wait -> Desktop
-        #
-        # Now:
-        #
-        # Mobile ────────>
-        # Desktop ───────>
-        #
-        # This reduces total waiting time.
         # =================================================
+
+        page_start = time.perf_counter()
 
         mobile_task = get_pagespeed_data(
             url
@@ -361,14 +366,38 @@ async def audit_url(url: str):
             "desktop"
         )
 
-        mobile_data, desktop_data = (
-            await asyncio.gather(
-                mobile_task,
-                desktop_task
+        language_task = (
+            extract_language_and_country(
+                url
             )
         )
 
+        (
+            mobile_data,
+            desktop_data,
+            language_result
+        ) = await asyncio.gather(
+            mobile_task,
+            desktop_task,
+            language_task
+        )
+
+        page_time = (
+            time.perf_counter()
+            - page_start
+        )
+
+        print(
+            f"PAGE SPEED + LANGUAGE TIME: "
+            f"{page_time:.2f}s"
+        )
+
     except Exception as e:
+
+        print(
+            "AUDIT ERROR:",
+            str(e)
+        )
 
         return {
             "status": "failed",
@@ -395,6 +424,21 @@ async def audit_url(url: str):
     ):
 
         desktop_data = {}
+
+    # =====================================================
+    # LANGUAGE + COUNTRY
+    # =====================================================
+
+    try:
+
+        language_code, country_code = (
+            language_result
+        )
+
+    except Exception:
+
+        language_code = "fr"
+        country_code = "MA"
 
     # =====================================================
     # SCORES
@@ -427,14 +471,6 @@ async def audit_url(url: str):
 
     # =====================================================
     # GLOBAL SCORE
-    #
-    # 5 criteria:
-    #
-    # Desktop Performance
-    # Mobile Performance
-    # Accessibility
-    # Best Practices
-    # SEO
     # =====================================================
 
     global_score = int(
@@ -462,7 +498,9 @@ async def audit_url(url: str):
     # =====================================================
 
     metrics = (
-        mobile_data.get("metrics")
+        mobile_data.get(
+            "metrics"
+        )
         or {}
     )
 
@@ -485,20 +523,6 @@ async def audit_url(url: str):
         convert_lcp_to_ms(
             lcp_value
         )
-    )
-
-    # =====================================================
-    # LANGUAGE + COUNTRY
-    # =====================================================
-
-    language_task = (
-        extract_language_and_country(
-            url
-        )
-    )
-
-    language_code, country_code = (
-        await language_task
     )
 
     # =====================================================
@@ -558,6 +582,20 @@ async def audit_url(url: str):
     ):
 
         recommendations = []
+
+    # =====================================================
+    # TOTAL TIME
+    # =====================================================
+
+    total_time = (
+        time.perf_counter()
+        - total_start
+    )
+
+    print(
+        f"AUDIT TOTAL TIME: "
+        f"{total_time:.2f}s"
+    )
 
     # =====================================================
     # RESPONSE
@@ -651,7 +689,14 @@ async def audit_url(url: str):
         # -----------------------------------------------
 
         "recommendations":
-            recommendations
+            recommendations,
+
+        # -----------------------------------------------
+        # DEBUG
+        # -----------------------------------------------
+
+        "audit_time_seconds":
+            round(total_time, 2)
     }
 
     return payload
@@ -674,10 +719,22 @@ async def test(url: str):
             "url": url
         }
 
+    start = time.perf_counter()
+
     try:
 
         data = await get_pagespeed_data(
             url
+        )
+
+        elapsed = (
+            time.perf_counter()
+            - start
+        )
+
+        print(
+            f"TEST PAGESPEED TIME: "
+            f"{elapsed:.2f}s"
         )
 
         print(
@@ -696,13 +753,24 @@ async def test(url: str):
             )
         )
 
-        return data
+        return {
+            **data,
+            "test_time_seconds":
+                round(elapsed, 2)
+        }
 
     except Exception as e:
+
+        elapsed = (
+            time.perf_counter()
+            - start
+        )
 
         return {
             "status": "failed",
             "error_message":
                 "PageSpeed error",
-            "details": str(e)
+            "details": str(e),
+            "test_time_seconds":
+                round(elapsed, 2)
         }

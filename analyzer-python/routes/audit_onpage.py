@@ -91,19 +91,16 @@ def flatten_headings(headings: dict) -> list:
     """
 
     try:
-
         if not headings or not isinstance(headings, dict):
             return []
 
         rows = []
 
         for level, texts in headings.items():
-
             if not isinstance(texts, list):
                 continue
 
             for index, text in enumerate(texts, start=1):
-
                 rows.append({
                     "heading_level": level,
                     "content": text,
@@ -113,7 +110,6 @@ def flatten_headings(headings: dict) -> list:
         return rows
 
     except Exception:
-
         return []
 
 
