@@ -1,4 +1,6 @@
+import asyncio
 import re
+
 import httpx
 
 from urllib.parse import urlparse
@@ -13,11 +15,30 @@ router = APIRouter()
 
 
 # =========================================================
+# HTTP SETTINGS
+# =========================================================
+
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 "
+    "(KHTML, like Gecko) "
+    "Chrome/151.0 Safari/537.36"
+)
+
+HTTP_TIMEOUT = httpx.Timeout(
+    5.0,
+    connect=3.0
+)
+
+
+# =========================================================
 # VALIDATE URL
 # =========================================================
 
-def is_valid_url(url: str):
+def is_valid_url(url: str) -> bool:
+
     try:
+
         parsed = urlparse(url)
 
         return (
@@ -26,6 +47,7 @@ def is_valid_url(url: str):
         )
 
     except Exception:
+
         return False
 
 
@@ -33,7 +55,7 @@ def is_valid_url(url: str):
 # EXTRACT LANGUAGE + COUNTRY
 # =========================================================
 
-def extract_language_and_country(url: str):
+async def extract_language_and_country(url: str):
 
     language_code = "fr"
     country_code = "MA"
@@ -63,85 +85,100 @@ def extract_language_and_country(url: str):
         if tld_match:
 
             country_code = (
-                tld_match.group(1)
-                .upper()
+                tld_match.group(1).upper()
             )
 
         # -------------------------------------------------
-        # LANGUAGE FROM HTML
+        # REQUEST HTML
         # -------------------------------------------------
 
         headers = {
-            "User-Agent":
-                "Mozilla/5.0 "
-                "(Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 "
-                "(KHTML, like Gecko) "
-                "Chrome/151.0 Safari/537.36"
+            "User-Agent": USER_AGENT
         }
 
-        with httpx.Client(
-            timeout=10.0,
+        async with httpx.AsyncClient(
+            timeout=HTTP_TIMEOUT,
             follow_redirects=True,
             headers=headers
         ) as client:
 
-            response = client.get(url)
+            response = await client.get(url)
 
-            if response.status_code == 200:
+        # -------------------------------------------------
+        # STATUS
+        # -------------------------------------------------
 
-                soup = BeautifulSoup(
-                    response.text,
-                    "html.parser"
+        if response.status_code != 200:
+
+            return (
+                language_code,
+                country_code
+            )
+
+        # -------------------------------------------------
+        # PARSE HTML
+        # -------------------------------------------------
+
+        soup = BeautifulSoup(
+            response.text,
+            "html.parser"
+        )
+
+        html_tag = soup.find("html")
+
+        if not html_tag:
+
+            return (
+                language_code,
+                country_code
+            )
+
+        lang = html_tag.get("lang")
+
+        if not lang:
+
+            return (
+                language_code,
+                country_code
+            )
+
+        lang = lang.strip()
+
+        if len(lang) >= 2:
+
+            language_code = (
+                lang[:2].lower()
+            )
+
+        # -------------------------------------------------
+        # COUNTRY FROM LANG
+        # -------------------------------------------------
+
+        if "-" in lang:
+
+            parts = lang.split("-")
+
+            if (
+                len(parts) > 1
+                and len(parts[1]) == 2
+            ):
+
+                country_code = (
+                    parts[1].upper()
                 )
 
-                html_tag = soup.find("html")
+        elif "_" in lang:
 
-                if html_tag:
+            parts = lang.split("_")
 
-                    lang = html_tag.get("lang")
+            if (
+                len(parts) > 1
+                and len(parts[1]) == 2
+            ):
 
-                    if lang:
-
-                        lang = lang.strip()
-
-                        # Example:
-                        # fr
-                        # fr-FR
-                        # fr_FR
-                        # ar-MA
-
-                        if len(lang) >= 2:
-
-                            language_code = (
-                                lang[:2].lower()
-                            )
-
-                        if "-" in lang:
-
-                            parts = lang.split("-")
-
-                            if (
-                                len(parts) > 1
-                                and len(parts[1]) == 2
-                            ):
-
-                                country_code = (
-                                    parts[1].upper()
-                                )
-
-                        elif "_" in lang:
-
-                            parts = lang.split("_")
-
-                            if (
-                                len(parts) > 1
-                                and len(parts[1]) == 2
-                            ):
-
-                                country_code = (
-                                    parts[1].upper()
-                                )
+                country_code = (
+                    parts[1].upper()
+                )
 
     except Exception:
 
@@ -162,12 +199,24 @@ def safe_score(data, key):
 
     try:
 
-        value = data.get(key, 0)
+        if not isinstance(data, dict):
 
-        if value is None:
             return 0
 
-        return int(round(float(value)))
+        value = data.get(
+            key,
+            0
+        )
+
+        if value is None:
+
+            return 0
+
+        return int(
+            round(
+                float(value)
+            )
+        )
 
     except (
         ValueError,
@@ -184,12 +233,81 @@ def safe_score(data, key):
 def get_score_color(score: int):
 
     if score >= 90:
+
         return "green"
 
     if score >= 50:
+
         return "orange"
 
     return "red"
+
+
+# =========================================================
+# LCP CONVERSION
+# =========================================================
+
+def convert_lcp_to_ms(value):
+
+    if value is None:
+
+        return 0
+
+    try:
+
+        lcp_string = str(value)
+
+        lcp_string = (
+            lcp_string
+            .replace("\xa0", "")
+            .strip()
+            .lower()
+        )
+
+        # ---------------------------------------------
+        # Example: 2500ms
+        # ---------------------------------------------
+
+        if lcp_string.endswith("ms"):
+
+            lcp_string = (
+                lcp_string[:-2]
+                .strip()
+            )
+
+            return int(
+                float(lcp_string)
+            )
+
+        # ---------------------------------------------
+        # Example: 2.5s
+        # ---------------------------------------------
+
+        if lcp_string.endswith("s"):
+
+            lcp_string = (
+                lcp_string[:-1]
+                .strip()
+            )
+
+            return int(
+                float(lcp_string) * 1000
+            )
+
+        # ---------------------------------------------
+        # Unknown numeric format
+        # ---------------------------------------------
+
+        return int(
+            float(lcp_string) * 1000
+        )
+
+    except (
+        ValueError,
+        TypeError
+    ):
+
+        return 0
 
 
 # =========================================================
@@ -216,20 +334,38 @@ async def audit_url(url: str):
     try:
 
         # =================================================
-        # MOBILE
+        # PAGE SPEED
+        #
+        # IMPORTANT:
+        #
+        # Mobile + Desktop are executed IN PARALLEL.
+        #
+        # Before:
+        #
+        # Mobile -> wait -> Desktop
+        #
+        # Now:
+        #
+        # Mobile ────────>
+        # Desktop ───────>
+        #
+        # This reduces total waiting time.
         # =================================================
 
-        mobile_data = await get_pagespeed_data(
+        mobile_task = get_pagespeed_data(
             url
         )
 
-        # =================================================
-        # DESKTOP
-        # =================================================
-
-        desktop_data = await get_pagespeed_data(
+        desktop_task = get_pagespeed_data(
             url,
             "desktop"
+        )
+
+        mobile_data, desktop_data = (
+            await asyncio.gather(
+                mobile_task,
+                desktop_task
+            )
         )
 
     except Exception as e:
@@ -241,6 +377,24 @@ async def audit_url(url: str):
             "details": str(e),
             "url": url
         }
+
+    # =====================================================
+    # SAFETY
+    # =====================================================
+
+    if not isinstance(
+        mobile_data,
+        dict
+    ):
+
+        mobile_data = {}
+
+    if not isinstance(
+        desktop_data,
+        dict
+    ):
+
+        desktop_data = {}
 
     # =====================================================
     # SCORES
@@ -274,7 +428,7 @@ async def audit_url(url: str):
     # =====================================================
     # GLOBAL SCORE
     #
-    # 5 critères:
+    # 5 criteria:
     #
     # Desktop Performance
     # Mobile Performance
@@ -304,7 +458,7 @@ async def audit_url(url: str):
     )
 
     # =====================================================
-    # LCP
+    # METRICS
     # =====================================================
 
     metrics = (
@@ -312,48 +466,39 @@ async def audit_url(url: str):
         or {}
     )
 
-    lcp_value = (
-        metrics.get(
-            "largest_contentful_paint"
+    if not isinstance(
+        metrics,
+        dict
+    ):
+
+        metrics = {}
+
+    # =====================================================
+    # LCP
+    # =====================================================
+
+    lcp_value = metrics.get(
+        "largest_contentful_paint"
+    )
+
+    page_load_time_ms = (
+        convert_lcp_to_ms(
+            lcp_value
         )
     )
 
-    page_load_time_ms = 0
-
-    if lcp_value is not None:
-
-        try:
-
-            # Convert to string
-            lcp_string = str(
-                lcp_value
-            )
-
-            lcp_string = (
-                lcp_string
-                .replace("\xa0", "")
-                .replace("ms", "")
-                .replace("s", "")
-                .strip()
-            )
-
-            page_load_time_ms = int(
-                float(lcp_string) * 1000
-            )
-
-        except (
-            ValueError,
-            TypeError
-        ):
-
-            page_load_time_ms = 0
-
     # =====================================================
-    # LANGUAGE / COUNTRY
+    # LANGUAGE + COUNTRY
     # =====================================================
+
+    language_task = (
+        extract_language_and_country(
+            url
+        )
+    )
 
     language_code, country_code = (
-        extract_language_and_country(url)
+        await language_task
     )
 
     # =====================================================
@@ -377,7 +522,7 @@ async def audit_url(url: str):
     )
 
     # =====================================================
-    # ROBOTS / SITEMAP
+    # ROBOTS
     # =====================================================
 
     has_robots_txt = (
@@ -385,6 +530,10 @@ async def audit_url(url: str):
             "has_robots_txt"
         )
     )
+
+    # =====================================================
+    # SITEMAP
+    # =====================================================
 
     has_sitemap_xml = (
         mobile_data.get(
@@ -402,6 +551,13 @@ async def audit_url(url: str):
         )
         or []
     )
+
+    if not isinstance(
+        recommendations,
+        list
+    ):
+
+        recommendations = []
 
     # =====================================================
     # RESPONSE
