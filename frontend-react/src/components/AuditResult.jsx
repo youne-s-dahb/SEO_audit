@@ -151,24 +151,7 @@ export default function AuditResult({ audit }) {
             </div>
 
 
-            {/* MA PARTIE — ANALYSE DÉTAILLÉE DES PAGES
-                (pages / headings / images / keyword density / reports)
-                Positionnée juste après Performance, comme dans Report.jsx */}
-
-            <div className="result-card">
-
-                <div className="result-card-header">
-                    <h3>
-                        Analyse des pages
-                    </h3>
-                </div>
-
-                <AuditPagesReport
-                    auditId={audit.audit_id ?? audit.id}
-                    variant="home"
-                />
-
-            </div>
+            
 
 
             {/* TECHNICAL SEO */}

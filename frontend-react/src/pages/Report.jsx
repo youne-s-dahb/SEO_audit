@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 import { useAuth } from "../components/AuthContext";
-import AuditPagesReport from "../components/AuditPagesReport";
-import "../style/report.css"
+import "../style/report.css";
 
 function normalizeAuditData(rawAudit) {
     if (!rawAudit) return null;
@@ -998,7 +997,7 @@ export default function Report() {
                                     score
                                 )}
                             </strong>
-                                        
+
                             <span>
                                 avis
                             </span>
@@ -1096,45 +1095,6 @@ export default function Report() {
                 </section>
 
                 {/* =====================================================
-                    02 - ANALYSE DÉTAILLÉE DES PAGES
-                    (pages / headings / images / keyword density / reports)
-                   ===================================================== */}
-
-                <section className="report-section">
-
-                    <div className="report-section-heading">
-
-                        <div>
-
-                            <span>
-                                02
-                            </span>
-
-                            <div>
-
-                                <h2>
-                                    Analyse des pages
-                                </h2>
-
-                                <p>
-                                    Contenu, structure et
-                                    mots-clés par page crawlée
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <AuditPagesReport
-                        auditId={audit.audit_id ?? audit.id}
-                        variant="report"
-                    />
-
-                </section>
-
-                {/* =====================================================
                     02 - PERFORMANCE
                    ===================================================== */}
 
@@ -1145,7 +1105,7 @@ export default function Report() {
                         <div>
 
                             <span>
-                                03
+                                02
                             </span>
 
                             <div>
@@ -1246,8 +1206,6 @@ export default function Report() {
 
                 </section>
 
-                
-
                 {/* =====================================================
                     03 - TECHNICAL SEO
                    ===================================================== */}
@@ -1259,7 +1217,7 @@ export default function Report() {
                         <div>
 
                             <span>
-                                04
+                                03
                             </span>
 
                             <div>
@@ -1327,7 +1285,7 @@ export default function Report() {
                         <div>
 
                             <span>
-                                05
+                                04
                             </span>
 
                             <div>
@@ -1579,7 +1537,7 @@ export default function Report() {
                         <div>
 
                             <span>
-                                06
+                                05
                             </span>
 
                             <div>
@@ -1650,7 +1608,7 @@ export default function Report() {
                         <div>
 
                             <span>
-                                07
+                                06
                             </span>
 
                             <div>
@@ -1721,7 +1679,7 @@ export default function Report() {
                         <div>
 
                             <span>
-                                08
+                                07
                             </span>
 
                             <div>
@@ -1742,8 +1700,7 @@ export default function Report() {
 
                     </div>
 
-                    {sortedRecommendations.length >
-                    0 ? (
+                    {sortedRecommendations.length > 0 ? (
 
                         <div className="report-recommendations">
 
