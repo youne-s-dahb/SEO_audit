@@ -2,19 +2,16 @@
 # contient la logique principale de l’audit SEO et calcule les résultats globaux.
 #----------------------------------------------------------------------------
 
-
 import time
 import socket
 import ipaddress
 import requests
 import threading
 
-
 from contextlib import contextmanager
 from urllib.parse import urlparse
 from urllib3.util import connection as urllib3_connection
 from datetime import datetime, UTC
-
 
 from analyzer.utils import (
     validate_url,
@@ -47,160 +44,264 @@ from analyzer.html_parser import (
 
 from analyzer.keyword_density import calculate_keyword_density
 
-# NOUVEAU: fallback Playwright pour les sites JS (React/Vue/Next.js)
-from analyzer.js_renderer import render_page_with_js, looks_like_empty_shell
+# Fallback Playwright pour les sites JS
+from analyzer.js_renderer import (
+    render_page_with_js,
+    looks_like_empty_shell
+)
 
-# Constantes
 
-# User-Agent bach ba3d sites ma y7bsouch request
+# =========================================================
+# CONSTANTES
+# =========================================================
+
 USER_AGENT = {
     "User-Agent": "SEO Audit Bot/1.0"
 }
 
-# Timeout maximum
-REQUEST_TIMEOUT = 10
+# Timeout connexion
+REQUEST_CONNECT_TIMEOUT = 5
 
-# Taille maximale (10 MB)
+# Timeout lecture
+REQUEST_READ_TIMEOUT = 10
+
+# Timeout requests :
+# 5 secondes pour la connexion
+# 10 secondes pour recevoir les données
+REQUEST_TIMEOUT = (
+    REQUEST_CONNECT_TIMEOUT,
+    REQUEST_READ_TIMEOUT
+)
+
+# Taille maximale : 10 MB
 MAX_CONTENT_SIZE = 10 * 1024 * 1024
 
-# Nombre max de redirections suivies manuellement
+# Nombre max de redirections
 MAX_REDIRECTS = 5
 
-# Lock bach n-sécuriser l-patch f 7alat l-multithreading
+# Lock pour sécuriser le patch DNS
 _dns_patch_lock = threading.Lock()
 
 
-# --------------------------------------------------
-# Vérifier si IP privée (Protection SSRF)
-# --------------------------------------------------
+# =========================================================
+# VÉRIFIER IP PRIVÉE - PROTECTION SSRF
+# =========================================================
 
 def is_private_ip(hostname: str) -> bool:
     """
-    Had fonction kat7mi men SSRF.
+    Vérifie si le hostname pointe vers une IP privée/interne.
 
-    Kat7awl hostname l IP (IPv4 w IPv6)
-    puis katchecki wach private.
+    Protection SSRF :
+    - IPv4
+    - IPv6
+    - localhost
+    - loopback
     """
+
     try:
-        # getaddrinfo kat-gérer l-IPv4 w l-IPv6 b-jouj mzyan
-        infos = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
-        for family, socktype, proto, canonname, sockaddr in infos:
+
+        infos = socket.getaddrinfo(
+            hostname,
+            None,
+            socket.AF_UNSPEC,
+            socket.SOCK_STREAM
+        )
+
+        for (
+            family,
+            socktype,
+            proto,
+            canonname,
+            sockaddr
+        ) in infos:
+
             ip = sockaddr[0]
+
             ip_obj = ipaddress.ip_address(ip)
-            if ip_obj.is_private or ip_obj.is_loopback:
+
+            if (
+                ip_obj.is_private
+                or ip_obj.is_loopback
+            ):
                 return True
+
         return False
+
     except Exception:
-        # Ila ma9drnach njibo IP, n-blokiwh d'office (Fail-safe)
+
+        # Fail-safe
         return True
 
 
-# --------------------------------------------------
-# Protection SSRF réelle : pin de la résolution DNS
-# --------------------------------------------------
+# =========================================================
+# PROTECTION SSRF - DNS PINNING
+# =========================================================
 
 @contextmanager
 def _ssrf_safe_connection():
     """
-    Kat-intercepti la résolution DNS dyal urllib3 w kat-force chaque connexion TCP 
-    - y compris celles déclenchées par des redirections HTTP - tmchi mn check li IP privée.
-    
-    Correction: support dyal IPv4/IPv6 dual-stack w thread safety.
+    Intercepte la résolution DNS de urllib3.
+
+    Vérifie les IPs avant chaque connexion TCP
+    et empêche les connexions vers des IPs privées.
     """
+
     global _dns_patch_lock
 
-    original_create_connection = urllib3_connection.create_connection
+    original_create_connection = (
+        urllib3_connection.create_connection
+    )
 
-    def patched_create_connection(address, *args, **kwargs):
+    def patched_create_connection(
+        address,
+        *args,
+        **kwargs
+    ):
+
         host, port = address
 
         try:
-            # getaddrinfo kat-rj3 ga3 les IPs (v4 w v6) li mlinked m3a l-host
-            infos = socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket.SOCK_STREAM)
+
+            infos = socket.getaddrinfo(
+                host,
+                port,
+                socket.AF_UNSPEC,
+                socket.SOCK_STREAM
+            )
+
         except socket.gaierror as exc:
+
             raise requests.exceptions.ConnectionError(
                 f"DNS resolution failed for host: {host}"
             ) from exc
 
-        # Checki ga3 les adresses resolution-at lihom l-domain
-        for family, socktype, proto, canonname, sockaddr in infos:
+        # Vérifier toutes les IP retournées
+        for (
+            family,
+            socktype,
+            proto,
+            canonname,
+            sockaddr
+        ) in infos:
+
             ip = sockaddr[0]
-            
+
             try:
+
                 ip_obj = ipaddress.ip_address(ip)
+
             except ValueError:
+
                 continue
-                
-            if ip_obj.is_private or ip_obj.is_loopback:
+
+            if (
+                ip_obj.is_private
+                or ip_obj.is_loopback
+            ):
+
                 raise requests.exceptions.ConnectionError(
-                    f"Blocked connection to private/internal IP address: {ip}"
+                    "Blocked connection to private/internal IP address"
                 )
 
-        # Pinning: n-stbto direct l-IP l-ola li t-validat (IPv4 wla IPv6) 
-        # bach n-mna3 l-DNS Rebinding tamamen.
+        # DNS pinning
         target_ip = infos[0][4][0]
-        return original_create_connection((target_ip, port), *args, **kwargs)
 
-    # Nest3mlo lock bach l-patch global may-rabjch les threads khrin
+        return original_create_connection(
+            (target_ip, port),
+            *args,
+            **kwargs
+        )
+
     with _dns_patch_lock:
-        urllib3_connection.create_connection = patched_create_connection
+
+        urllib3_connection.create_connection = (
+            patched_create_connection
+        )
+
         try:
+
             yield
+
         finally:
-            # Rej3o l-comportement normal dima mlli nsaliw l-block context
-            urllib3_connection.create_connection = original_create_connection
+
+            urllib3_connection.create_connection = (
+                original_create_connection
+            )
 
 
-# --------------------------------------------------
-# Télécharger page HTML
-# --------------------------------------------------
+# =========================================================
+# DOWNLOAD PAGE HTML
+# =========================================================
 
 def fetch_page(url: str):
     """
-    Kattelechargi page HTML.
+    Télécharge la page HTML.
 
-    Katdir plusieurs vérifications :
-    ✔ URL valide
-    ✔ Protection SSRF (check bkri + pin dyal DNS 7ta l connexion, m3a chaque redirection)
-    ✔ Timeout w User-Agent
-    ✔ Taille maximale (Streamed dghya 7ta m3a chunked encoding)
-    ✔ Content-Type
+    Vérifications :
+    - URL valide
+    - Protection SSRF
+    - Timeout connexion
+    - Timeout lecture
+    - User-Agent
+    - Taille maximale
+    - Content-Type
     """
+
     try:
-        # -----------------------------
-        # Vérifier URL
-        # -----------------------------
+
+        # =================================================
+        # URL VALIDATION
+        # =================================================
+
         if not validate_url(url):
+
             return {
                 "success": False,
                 "error": "Invalid URL."
             }
 
-        # -----------------------------
-        # Normaliser URL
-        # -----------------------------
+        # =================================================
+        # NORMALIZE URL
+        # =================================================
+
         url = normalize_url(url)
+
         parsed = urlparse(url)
 
-        # -----------------------------
-        # Protection SSRF (check rapide, fail-fast)
-        # -----------------------------
+        # =================================================
+        # SSRF CHECK
+        # =================================================
+
+        if not parsed.hostname:
+
+            return {
+                "success": False,
+                "error": "Invalid hostname."
+            }
+
         if is_private_ip(parsed.hostname):
+
             return {
                 "success": False,
                 "error": "Private IPs are not allowed."
             }
 
-        # -----------------------------
-        # Début chronomètre
-        # -----------------------------
+        # =================================================
+        # TIMER
+        # =================================================
+
         start = time.perf_counter()
 
+        # =================================================
+        # REQUEST
+        # =================================================
+
         with _ssrf_safe_connection():
+
             session = requests.Session()
+
             session.max_redirects = MAX_REDIRECTS
 
-            # Stream=True m7taja bach n-sécurisow d-download dyal les chunked encoding
             response = session.get(
                 url,
                 headers=USER_AGENT,
@@ -209,103 +310,178 @@ def fetch_page(url: str):
                 stream=True
             )
 
-            # 1. Checki l-header Content-Length l-awwal (ila 3ndna)
-            content_length = response.headers.get("Content-Length")
-            if content_length and int(content_length) > MAX_CONTENT_SIZE:
-                return {
-                    "success": False,
-                    "error": "Page too large."
-                }
+            # =================================================
+            # CONTENT LENGTH
+            # =================================================
 
-            # 2. Telechargi l-content b chunks (haka n-mna3o DoS m3a chunked transfer)
+            content_length = response.headers.get(
+                "Content-Length"
+            )
+
+            if content_length:
+
+                try:
+
+                    if int(content_length) > MAX_CONTENT_SIZE:
+
+                        return {
+                            "success": False,
+                            "error": "Page too large."
+                        }
+
+                except ValueError:
+
+                    pass
+
+            # =================================================
+            # DOWNLOAD CHUNKS
+            # =================================================
+
             content = bytearray()
-            for chunk in response.iter_content(chunk_size=8192):
+
+            for chunk in response.iter_content(
+                chunk_size=8192
+            ):
+
+                if not chunk:
+                    continue
+
                 content.extend(chunk)
+
                 if len(content) > MAX_CONTENT_SIZE:
+
                     return {
                         "success": False,
-                        "error": "Page too large (Stream limit exceeded)."
+                        "error":
+                            "Page too large (Stream limit exceeded)."
                     }
 
-        end = time.perf_counter()
-        response_time = round((end - start) * 1000, 2)
+        # =================================================
+        # RESPONSE TIME
+        # =================================================
 
-        # -----------------------------
-        # Vérifier Content-Type
-        # -----------------------------
-        content_type = response.headers.get("Content-Type", "")
-        if "text/html" not in content_type:
+        end = time.perf_counter()
+
+        response_time = round(
+            (end - start) * 1000,
+            2
+        )
+
+        # =================================================
+        # CONTENT TYPE
+        # =================================================
+
+        content_type = response.headers.get(
+            "Content-Type",
+            ""
+        )
+
+        if "text/html" not in content_type.lower():
+
             return {
                 "success": False,
                 "error": "URL is not an HTML page."
             }
 
-        # Convertir l-code nqi safe
-        html_text = content.decode('utf-8', errors='ignore')
+        # =================================================
+        # DECODE HTML
+        # =================================================
 
-        # -----------------------------
-        # Tout est OK
-        # -----------------------------
+        html_text = content.decode(
+            "utf-8",
+            errors="ignore"
+        )
+
+        # =================================================
+        # SUCCESS
+        # =================================================
+
         return {
+
             "success": True,
-            "html": html_text,
-            "status_code": response.status_code,
-            "response_time_ms": response_time,
-            "content_type": content_type,
-            "final_url": response.url
+
+            "html":
+                html_text,
+
+            "status_code":
+                response.status_code,
+
+            "response_time_ms":
+                response_time,
+
+            "content_type":
+                content_type,
+
+            "final_url":
+                response.url
+
         }
 
-    # -----------------------------
-    # Blocage SSRF déclenché pendant la connexion
-    # -----------------------------
+    # =====================================================
+    # CONNECTION ERROR
+    # =====================================================
+
     except requests.exceptions.ConnectionError as e:
+
         return {
             "success": False,
             "error": str(e)
         }
 
-    # -----------------------------
-    # Timeout
-    # -----------------------------
-    except requests.Timeout:
+    # =====================================================
+    # TIMEOUT
+    # =====================================================
+
+    except requests.exceptions.Timeout:
+
         return {
             "success": False,
-            "error": "Request timeout."
+            "error":
+                "Le site web a mis trop de temps à répondre (Timeout)."
         }
 
-    # -----------------------------
-    # Erreurs HTTP
-    # -----------------------------
-    except requests.RequestException as e:
+    # =====================================================
+    # REQUEST ERROR
+    # =====================================================
+
+    except requests.RequestException:
+
         return {
             "success": False,
-            "error": "Le site web a mis trop de temps à répondre (Timeout). Veuillez réessayer plus tard."
+            "error":
+                "Erreur lors de la connexion au site web."
         }
 
-    # -----------------------------
-    # Autres erreurs
-    # -----------------------------
-    except Exception as e:
+    # =====================================================
+    # OTHER ERROR
+    # =====================================================
+
+    except Exception:
+
         return {
             "success": False,
-            "error": "Unexpected error during SEO analysis."
+            "error":
+                "Unexpected error during SEO analysis."
         }
 
-# --------------------------------------------------
-# Analyse SEO complète
-# --------------------------------------------------
+
+# =========================================================
+# SEO ANALYSIS
+# =========================================================
 
 def analyze(url: str) -> dict:
     """
-    Had fonction hiya li ghadi y3ayet liha FastAPI.
+    Fonction principale appelée par FastAPI.
 
     URL
         ↓
-    fetch_page() [requests, rapide]
-        ↓
-    Si page semble vide (site JS) -> render_page_with_js() [Playwright]
+    fetch_page()
         ↓
     BeautifulSoup
+        ↓
+    Détection JS
+        ↓
+    Playwright si nécessaire
         ↓
     HTML Parser
         ↓
@@ -313,176 +489,436 @@ def analyze(url: str) -> dict:
     """
 
     try:
-        # --------------------------------------
-        # Télécharger la page (methode rapide, requests)
-        # --------------------------------------
+
+        # =================================================
+        # DOWNLOAD PAGE
+        # =================================================
+
         page = fetch_page(url)
 
-        # Ila kayn chi erreur f t-telechargement, n7bes hna direct
         if not page["success"]:
+
             return page
 
-        # --------------------------------------
-        # Parser HTML
-        # --------------------------------------
-        soup = parse_html(page["html"])
-        
+        # =================================================
+        # PARSE HTML
+        # =================================================
+
+        soup = parse_html(
+            page["html"]
+        )
+
         if not soup:
+
             return {
                 "success": False,
-                "error": "Failed to parse HTML document."
+                "error":
+                    "Failed to parse HTML document."
             }
 
-        clean_soup = get_clean_soup(soup)
+        clean_soup = get_clean_soup(
+            soup
+        )
 
-        # --------------------------------------
-        # NOUVEAU: Detection rapide "coquille vide" (site JS non rendu)
-        # Si detecte, on retente avec Playwright (navigateur headless)
-        # et on ne bascule dessus que si le resultat est meilleur.
-        # --------------------------------------
-        quick_headings = _safe_call(get_headings, soup, default={})
+        # =================================================
+        # QUICK JS SHELL DETECTION
+        # =================================================
+
+        quick_headings = _safe_call(
+            get_headings,
+            soup,
+            default={}
+        )
+
+        quick_links = _safe_call(
+            get_links,
+            soup,
+            default=[]
+        )
+
         quick_check = {
-            "word_count": _safe_call(count_words, clean_soup, default=0),
-            "headings_count": sum(len(v) for v in quick_headings.values()),
-            "images_count": _safe_call(count_images, soup, default=0),
-            "links_count": len(_safe_call(get_links, soup, default=[])),
+
+            "word_count":
+                _safe_call(
+                    count_words,
+                    clean_soup,
+                    default=0
+                ),
+
+            "headings_count":
+                sum(
+                    len(v)
+                    for v in quick_headings.values()
+                ),
+
+            "images_count":
+                _safe_call(
+                    count_images,
+                    soup,
+                    default=0
+                ),
+
+            "links_count":
+                len(quick_links)
+
         }
 
-        if looks_like_empty_shell(quick_check):
-            js_page = render_page_with_js(url)
+        # =================================================
+        # PLAYWRIGHT FALLBACK
+        # =================================================
+
+        if looks_like_empty_shell(
+            quick_check
+        ):
+
+            js_page = render_page_with_js(
+                url
+            )
 
             if js_page.get("success"):
-                js_soup = parse_html(js_page["html"])
+
+                js_soup = parse_html(
+                    js_page["html"]
+                )
 
                 if js_soup:
-                    js_word_count = _safe_call(count_words, js_soup, default=0)
 
-                    # On bascule uniquement si le rendu JS donne PLUS
-                    # de contenu que la version requests d'origine
-                    if js_word_count > quick_check["word_count"]:
+                    js_word_count = _safe_call(
+                        count_words,
+                        js_soup,
+                        default=0
+                    )
+
+                    # Utiliser JS uniquement
+                    # s'il apporte plus de contenu
+                    if (
+                        js_word_count
+                        > quick_check["word_count"]
+                    ):
+
                         page = js_page
+
                         soup = js_soup
 
-        # --------------------------------------
-        # Récupération sécurisée des éléments SEO de base
-        # (Bach d-mna3 AttributeError f l-global dict)
-        # --------------------------------------
-        try:
-            title = get_title(soup) or ""
-            title_length = len(title) if title else 0
-        except Exception:
-            title, title_length = "", 0
+                        clean_soup = get_clean_soup(
+                            soup
+                        )
+
+        # =================================================
+        # TITLE
+        # =================================================
 
         try:
-            meta_desc = get_meta_description(soup) or ""
-            meta_length = len(meta_desc) if meta_desc else 0
-        except Exception:
-            meta_desc, meta_length = "", 0
 
-        # --------------------------------------
-        # Links Parsing
-        # --------------------------------------
+            title = get_title(
+                soup
+            ) or ""
+
+            title_length = len(
+                title
+            ) if title else 0
+
+        except Exception:
+
+            title = ""
+
+            title_length = 0
+
+        # =================================================
+        # META DESCRIPTION
+        # =================================================
+
         try:
-            links = get_links(soup) or []
+
+            meta_desc = get_meta_description(
+                soup
+            ) or ""
+
+            meta_length = len(
+                meta_desc
+            ) if meta_desc else 0
+
         except Exception:
-            links = []
 
-        # Final URL m-sécurisya l l-comparaison
-        final_url = page.get("final_url") or url
+            meta_desc = ""
 
-        # --------------------------------------
-        # Headings (FIX: 3ayetna l get_headings() ghi mrra wa7da,
-        # m7mya b _safe_call, bach ma-ntkarrarouch call w ma-tsqtch
-        # analyze() kaml ila rmat exception)
-        # --------------------------------------
-        headings = _safe_call(get_headings, soup, default={})
+            meta_length = 0
 
-        # --------------------------------------
-        # Construire résultat
-        # --------------------------------------
+        # =================================================
+        # LINKS
+        # =================================================
+
+        links = _safe_call(
+            get_links,
+            soup,
+            default=[]
+        )
+
+        # =================================================
+        # FINAL URL
+        # =================================================
+
+        final_url = (
+            page.get("final_url")
+            or url
+        )
+
+        # =================================================
+        # HEADINGS
+        # =================================================
+
+        headings = _safe_call(
+            get_headings,
+            soup,
+            default={}
+        )
+
+        # =================================================
+        # RESULT
+        # =================================================
+
         result = {
-            # -----------------------------
-            # Informations générales
-            # -----------------------------
-            "success": True,
-            "url": final_url,
-            "status_code": page.get("status_code"),
-            "response_time_ms": page.get("response_time_ms"),
-            "content_type": page.get("content_type"),
-            "rendered_with_js": page.get("rendered_with_js", False),
 
-            # -----------------------------
-            # SEO (Optimisé: parsing unique d'éléments)
-            # -----------------------------
-            "title": title,
-            "title_length": title_length,
-            "meta_description": meta_desc,
-            "meta_length": meta_length,
-            
-            "canonical_url": _safe_call(get_canonical_url, soup, default=""),
-            "meta_robots": _safe_call(get_meta_robots, soup, default=""),
-            "language": _safe_call(get_lang, soup, default=""),
-            "viewport": _safe_call(get_viewport, soup, default=""),
+            # =================================================
+            # GENERAL
+            # =================================================
 
-            # -----------------------------
-            # Headings
-            # -----------------------------
-            "headings": headings,
-            "headings_count": sum(len(v) for v in headings.values()),
-            "h1_count": _safe_call(get_h1_count, soup, default=0),
-            "h1_is_unique": _safe_call(is_h1_unique, soup, default=False),
+            "success":
+                True,
 
-            # -----------------------------
-            # Contenu
-            # -----------------------------
-            "word_count": _safe_call(count_words, soup, default=0),
+            "url":
+                final_url,
 
-            # -----------------------------
-            # Liens
-            # -----------------------------
-            "links": links,
-            "links_count": len(links),
-            "internal_links": _safe_call(count_internal_links, links, final_url, default=0),
-            "external_links": _safe_call(count_external_links, links, final_url, default=0),
+            "status_code":
+                page.get(
+                    "status_code"
+                ),
 
-            # -----------------------------
-            # Images
-            # -----------------------------
-            "images_count": _safe_call(count_images, soup, default=0),
-            "images_with_alt": _safe_call(get_images_with_alt, soup, default=[]),
-            "images_without_alt": _safe_call(get_images_without_alt, soup, default=[]),
+            "response_time_ms":
+                page.get(
+                    "response_time_ms"
+                ),
 
-            # -----------------------------
-            # Structured Data
-            # -----------------------------
-            "structured_data": _safe_call(has_structured_data, soup, default=False),
+            "content_type":
+                page.get(
+                    "content_type"
+                ),
 
-            #---------------
-            #date
-            #---------------
-            "analysis_date": datetime.now(UTC).isoformat(),
+            "rendered_with_js":
+                page.get(
+                    "rendered_with_js",
+                    False
+                ),
 
-            # -----------------------------
-            # Keyword Density
-            # -----------------------------
-            "keyword_density": _safe_call(calculate_keyword_density, clean_soup, default=[])
+            # =================================================
+            # TITLE
+            # =================================================
+
+            "title":
+                title,
+
+            "title_length":
+                title_length,
+
+            # =================================================
+            # META
+            # =================================================
+
+            "meta_description":
+                meta_desc,
+
+            "meta_length":
+                meta_length,
+
+            # =================================================
+            # TECHNICAL SEO
+            # =================================================
+
+            "canonical_url":
+                _safe_call(
+                    get_canonical_url,
+                    soup,
+                    default=""
+                ),
+
+            "meta_robots":
+                _safe_call(
+                    get_meta_robots,
+                    soup,
+                    default=""
+                ),
+
+            "language":
+                _safe_call(
+                    get_lang,
+                    soup,
+                    default=""
+                ),
+
+            "viewport":
+                _safe_call(
+                    get_viewport,
+                    soup,
+                    default=""
+                ),
+
+            # =================================================
+            # HEADINGS
+            # =================================================
+
+            "headings":
+                headings,
+
+            "headings_count":
+                sum(
+                    len(v)
+                    for v in headings.values()
+                ),
+
+            "h1_count":
+                _safe_call(
+                    get_h1_count,
+                    soup,
+                    default=0
+                ),
+
+            "h1_is_unique":
+                _safe_call(
+                    is_h1_unique,
+                    soup,
+                    default=False
+                ),
+
+            # =================================================
+            # CONTENT
+            # =================================================
+
+            "word_count":
+                _safe_call(
+                    count_words,
+                    soup,
+                    default=0
+                ),
+
+            # =================================================
+            # LINKS
+            # =================================================
+
+            "links":
+                links,
+
+            "links_count":
+                len(links),
+
+            "internal_links":
+                _safe_call(
+                    count_internal_links,
+                    links,
+                    final_url,
+                    default=0
+                ),
+
+            "external_links":
+                _safe_call(
+                    count_external_links,
+                    links,
+                    final_url,
+                    default=0
+                ),
+
+            # =================================================
+            # IMAGES
+            # =================================================
+
+            "images_count":
+                _safe_call(
+                    count_images,
+                    soup,
+                    default=0
+                ),
+
+            "images_with_alt":
+                _safe_call(
+                    get_images_with_alt,
+                    soup,
+                    default=[]
+                ),
+
+            "images_without_alt":
+                _safe_call(
+                    get_images_without_alt,
+                    soup,
+                    default=[]
+                ),
+
+            # =================================================
+            # STRUCTURED DATA
+            # =================================================
+
+            "structured_data":
+                _safe_call(
+                    has_structured_data,
+                    soup,
+                    default=False
+                ),
+
+            # =================================================
+            # DATE
+            # =================================================
+
+            "analysis_date":
+                datetime.now(
+                    UTC
+                ).isoformat(),
+
+            # =================================================
+            # KEYWORD DENSITY
+            # =================================================
+
+            "keyword_density":
+                _safe_call(
+                    calculate_keyword_density,
+                    clean_soup,
+                    default=[]
+                )
+
         }
 
         return result
 
+    # =====================================================
+    # GLOBAL ERROR
+    # =====================================================
+
     except Exception as e:
+
         return {
             "success": False,
-            "error": f"Analysis failed: {str(e)}"
+            "error":
+                f"Analysis failed: {str(e)}"
         }
 
 
-def _safe_call(func, *args, default=None):
+# =========================================================
+# SAFE CALL
+# =========================================================
+
+def _safe_call(
+    func,
+    *args,
+    default=None
+):
     """
-    Helper function sghira bach ila ay helper function rmat exception
-    may-ti7ch l-audit kamel, n-rj3o gha default value (b7al empty list/string).
+    Helper function bach ila chi helper function
+    rmat exception, l-audit kamel ma yti7ch.
     """
+
     try:
-        return func(*args)
+
+        return func(
+            *args
+        )
+
     except Exception:
+
         return default
