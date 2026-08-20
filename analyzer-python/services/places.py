@@ -29,10 +29,7 @@ def normalize_text(text: str) -> str:
 
     text = str(text).lower().strip()
 
-    text = unicodedata.normalize(
-        "NFD",
-        text
-    )
+    text = unicodedata.normalize("NFD", text)
 
     text = "".join(
         char
@@ -69,10 +66,12 @@ def extract_domain(url: str):
         if not hostname:
             return None
 
-        return hostname.lower().replace(
-            "www.",
-            ""
-        )
+        hostname = hostname.lower()
+
+        if hostname.startswith("www."):
+            hostname = hostname[4:]
+
+        return hostname
 
     except Exception:
 
@@ -91,7 +90,6 @@ def detect_country(domain: str):
     domain = domain.lower()
 
     country_map = {
-
         ".ma": "ma",
         ".fr": "fr",
         ".jp": "jp",
@@ -108,36 +106,45 @@ def detect_country(domain: str):
         ".at": "at",
         ".ae": "ae",
         ".sa": "sa",
-
     }
 
     for suffix, country in country_map.items():
 
         if domain.endswith(suffix):
-
             return country
 
     return "us"
 
 
 # =========================================================
-# SEARCH JSON-LD
+# SEARCH JSON-LD BUSINESS NAME
 # =========================================================
 
 def search_jsonld_name(data):
 
+    valid_types = {
+        "organization",
+        "localbusiness",
+        "restaurant",
+        "store",
+        "hotel",
+        "medicalbusiness",
+        "professionalservice",
+        "automotivebusiness",
+        "financialservice",
+        "realestateagent",
+        "shoppingcenter",
+    }
+
     if isinstance(data, dict):
 
-        data_type = data.get(
-            "@type",
-            ""
-        )
+        data_type = data.get("@type", "")
 
         if isinstance(data_type, list):
 
             types = [
-                normalize_text(x)
-                for x in data_type
+                normalize_text(item)
+                for item in data_type
             ]
 
         else:
@@ -145,24 +152,6 @@ def search_jsonld_name(data):
             types = [
                 normalize_text(data_type)
             ]
-
-
-        valid_types = [
-
-            "organization",
-            "localbusiness",
-            "restaurant",
-            "store",
-            "hotel",
-            "medicalbusiness",
-            "professionalservice",
-            "automotivebusiness",
-            "financialservice",
-            "realestateagent",
-            "shoppingcenter"
-
-        ]
-
 
         if any(
             item in valid_types
@@ -172,35 +161,23 @@ def search_jsonld_name(data):
             name = data.get("name")
 
             if name:
-
-                return str(
-                    name
-                ).strip()
-
+                return str(name).strip()
 
         for value in data.values():
 
-            result = search_jsonld_name(
-                value
-            )
+            result = search_jsonld_name(value)
 
             if result:
-
                 return result
-
 
     elif isinstance(data, list):
 
         for item in data:
 
-            result = search_jsonld_name(
-                item
-            )
+            result = search_jsonld_name(item)
 
             if result:
-
                 return result
-
 
     return None
 
@@ -219,7 +196,7 @@ async def extract_business_name(
         response = await client.get(
             url,
             timeout=12,
-            follow_redirects=True
+            follow_redirects=True,
         )
 
         response.raise_for_status()
@@ -229,50 +206,49 @@ async def extract_business_name(
             "html.parser"
         )
 
-
-        # =================================================
+        # =====================================================
         # JSON-LD
-        # =================================================
+        # =====================================================
 
         scripts = soup.find_all(
             "script",
             type="application/ld+json"
         )
 
-
         for script in scripts:
 
             try:
 
-                content = script.string
+                content = script.get_text(
+                    strip=True
+                )
 
                 if not content:
                     continue
 
-                data = json.loads(
-                    content
-                )
+                data = json.loads(content)
 
-                name = search_jsonld_name(
-                    data
-                )
+                name = search_jsonld_name(data)
 
                 if name:
 
                     logger.info(
-                        f"JSON-LD name: {name}"
+                        f"JSON-LD business name: {name}"
                     )
 
                     return name
 
-            except Exception:
+            except Exception as e:
+
+                logger.debug(
+                    f"Invalid JSON-LD: {e}"
+                )
 
                 continue
 
-
-        # =================================================
+        # =====================================================
         # OG SITE NAME
-        # =================================================
+        # =====================================================
 
         meta = soup.find(
             "meta",
@@ -281,18 +257,15 @@ async def extract_business_name(
 
         if meta:
 
-            content = meta.get(
-                "content"
-            )
+            content = meta.get("content")
 
             if content:
 
                 return content.strip()
 
-
-        # =================================================
+        # =====================================================
         # APPLICATION NAME
-        # =================================================
+        # =====================================================
 
         meta = soup.find(
             "meta",
@@ -303,18 +276,15 @@ async def extract_business_name(
 
         if meta:
 
-            content = meta.get(
-                "content"
-            )
+            content = meta.get("content")
 
             if content:
 
                 return content.strip()
 
-
-        # =================================================
+        # =====================================================
         # TITLE
-        # =================================================
+        # =====================================================
 
         if soup.title:
 
@@ -325,44 +295,29 @@ async def extract_business_name(
             if title:
 
                 separators = [
-
                     " | ",
                     " - ",
                     " – ",
                     " — ",
                     " :: ",
-                    " : "
-
+                    " : ",
                 ]
-
-
-                parts = [title]
-
 
                 for separator in separators:
 
                     if separator in title:
 
                         parts = [
-                            p.strip()
-                            for p in title.split(
-                                separator
-                            )
-                            if p.strip()
+                            part.strip()
+                            for part in title.split(separator)
+                            if part.strip()
                         ]
 
-                        break
+                        if parts:
 
-
-                if len(parts) > 1:
-
-                    # Try first AND last.
-                    # We will search both later.
-
-                    return parts[0]
+                            return parts[0]
 
                 return title
-
 
     except Exception as e:
 
@@ -370,8 +325,42 @@ async def extract_business_name(
             f"Business extraction failed: {e}"
         )
 
-
     return None
+
+
+# =========================================================
+# CLEAN DOMAIN NAME
+# =========================================================
+
+def get_domain_words(domain: str):
+
+    if not domain:
+        return []
+
+    domain_clean = domain.lower()
+
+    # Remove www
+    if domain_clean.startswith("www."):
+        domain_clean = domain_clean[4:]
+
+    # Remove TLD
+    domain_clean = re.sub(
+        r"\.(co\.)?(com|net|org|ma|fr|jp|uk|de|es|it|be|ch|ca|au|nl|pt|at|ae|sa)$",
+        "",
+        domain_clean,
+        flags=re.IGNORECASE
+    )
+
+    words = re.split(
+        r"[.\-_]",
+        domain_clean
+    )
+
+    return [
+        normalize_text(word)
+        for word in words
+        if len(normalize_text(word)) >= 3
+    ]
 
 
 # =========================================================
@@ -385,61 +374,36 @@ def build_name_variations(
 
     variations = []
 
-
     if business_name:
 
         variations.append(
             business_name
         )
 
+    domain_words = get_domain_words(
+        domain
+    )
 
-    if domain:
+    if domain_words:
 
-        domain_name = re.sub(
-            r"\.(com|net|org|ma|fr|jp|co\.jp|uk)$",
-            "",
-            domain,
-            flags=re.IGNORECASE
+        variations.append(
+            " ".join(domain_words)
         )
 
-        domain_name = domain_name.replace(
-            "-",
-            " "
-        ).replace(
-            "_",
-            " "
-        )
-
-
-        if domain_name:
-
-            variations.append(
-                domain_name
-            )
-
-
-    # Remove duplicates
     result = []
-
     seen = set()
-
 
     for item in variations:
 
-        normalized = normalize_text(
-            item
-        )
+        normalized = normalize_text(item)
 
         if normalized and normalized not in seen:
 
-            seen.add(
-                normalized
-            )
+            seen.add(normalized)
 
             result.append(
                 item.strip()
             )
-
 
     return result
 
@@ -462,127 +426,117 @@ def calculate_match_score(
         place_title
     )
 
-    domain_name = normalize_text(
-        domain or ""
-    )
-
-
     if not place:
-
         return 0
 
-
     # =====================================================
-    # EXACT
+    # EXACT MATCH
     # =====================================================
 
     if business and business == place:
-
         return 100
-
 
     # =====================================================
     # CONTAINS
     # =====================================================
 
     if business and business in place:
-
         return 95
 
-
     if business and place in business:
-
         return 90
 
-
     score = 0
-
 
     # =====================================================
     # BUSINESS WORDS
     # =====================================================
 
     business_words = [
-
         word
-
         for word in business.split()
-
         if len(word) >= 3
-
     ]
-
 
     if business_words:
 
         matches = sum(
-
             1
-
             for word in business_words
-
             if word in place
-
         )
-
 
         ratio = (
             matches /
             len(business_words)
         )
 
-
         score = max(
             score,
-            int(ratio * 85)
+            int(ratio * 80)
         )
-
 
     # =====================================================
     # DOMAIN WORDS
     # =====================================================
 
-    domain_words = re.split(
-        r"[.\-_]",
-        domain_name
+    domain_words = get_domain_words(
+        domain
     )
-
-
-    domain_words = [
-
-        word
-
-        for word in domain_words
-
-        if len(word) >= 3
-
-    ]
-
 
     if domain_words:
 
         domain_matches = sum(
-
             1
-
             for word in domain_words
-
             if word in place
-
         )
-
 
         if domain_matches:
 
-            score += min(
-                domain_matches * 8,
-                15
+            domain_ratio = (
+                domain_matches /
+                len(domain_words)
             )
 
+            score = max(
+                score,
+                int(domain_ratio * 70)
+            )
 
     return min(
         score,
         100
+    )
+
+
+# =========================================================
+# CHECK WEBSITE MATCH
+# =========================================================
+
+def website_matches_domain(
+    place,
+    domain
+):
+
+    website = place.get(
+        "website"
+    )
+
+    if not website or not domain:
+        return False
+
+    place_domain = extract_domain(
+        website
+    )
+
+    if not place_domain:
+        return False
+
+    return (
+        place_domain == domain
+        or place_domain.endswith("." + domain)
+        or domain.endswith("." + place_domain)
     )
 
 
@@ -603,47 +557,31 @@ async def check_google_maps_presence(
         "SERPER_API_KEY"
     )
 
-
     if not api_key:
 
         return {
-
             "is_present": False,
-
             "business_name": None,
-
             "status": "not_analyzed",
-
-            "error":
+            "error": (
                 "SERPER_API_KEY is not configured"
-
+            ),
         }
-
 
     # =====================================================
     # DOMAIN
     # =====================================================
 
-    domain = extract_domain(
-        url
-    )
-
+    domain = extract_domain(url)
 
     if not domain:
 
         return {
-
             "is_present": False,
-
             "business_name": None,
-
             "status": "not_found",
-
-            "error":
-                "Invalid URL"
-
+            "error": "Invalid URL",
         }
-
 
     # =====================================================
     # COUNTRY
@@ -654,7 +592,6 @@ async def check_google_maps_presence(
         or detect_country(domain)
     )
 
-
     logger.info(
         f"Domain: {domain}"
     )
@@ -663,36 +600,33 @@ async def check_google_maps_presence(
         f"Country: {country}"
     )
 
-
     # =====================================================
     # HTTP CLIENT
     # =====================================================
 
     async with httpx.AsyncClient(
         follow_redirects=True,
-        timeout=20
+        timeout=20,
     ) as client:
-
 
         # =================================================
         # BUSINESS NAME
         # =================================================
 
-        business_name = await extract_business_name(
-            url,
-            client
+        business_name = (
+            await extract_business_name(
+                url,
+                client
+            )
         )
-
 
         if not business_name:
 
             business_name = domain
 
-
         logger.info(
             f"Business name: {business_name}"
         )
-
 
         # =================================================
         # SEARCH VARIATIONS
@@ -703,36 +637,30 @@ async def check_google_maps_presence(
             domain
         )
 
+        # =================================================
+        # ONLY 3 MAIN QUERIES
+        # =================================================
 
         queries = []
 
-
-        for name in names:
+        if business_name:
 
             queries.append(
-                f'"{name}"'
+                f'"{business_name}"'
             )
 
             queries.append(
-                f'{name} {domain}'
+                f'{business_name} {domain}'
             )
 
-            queries.append(
-                name
-            )
-
-
-        # Domain search
         queries.append(
             domain
         )
-
 
         # Remove duplicates
         unique_queries = []
 
         seen_queries = set()
-
 
         for query in queries:
 
@@ -740,34 +668,31 @@ async def check_google_maps_presence(
                 query
             )
 
-            if key not in seen_queries:
+            if (
+                key
+                and key not in seen_queries
+            ):
 
-                seen_queries.add(
-                    key
-                )
+                seen_queries.add(key)
 
                 unique_queries.append(
                     query
                 )
 
-
         # =================================================
-        # SERPER
+        # SERPER HEADERS
         # =================================================
 
         headers = {
-
-            "X-API-KEY":
-                api_key,
-
-            "Content-Type":
-                "application/json"
-
+            "X-API-KEY": api_key,
+            "Content-Type": "application/json",
         }
-
 
         all_places = []
 
+        # =================================================
+        # SEARCH MAPS
+        # =================================================
 
         for query in unique_queries:
 
@@ -777,45 +702,27 @@ async def check_google_maps_presence(
                     f"Maps query: {query}"
                 )
 
-
                 payload = {
-
-                    "q":
-                        query,
-
-                    "hl":
-                        "fr",
-
-                    "gl":
-                        country
-
+                    "q": query,
+                    "hl": "fr",
+                    "gl": country,
                 }
 
-
                 response = await client.post(
-
                     "https://google.serper.dev/maps",
-
                     headers=headers,
-
                     json=payload,
-
-                    timeout=20
-
+                    timeout=12,
                 )
-
 
                 response.raise_for_status()
 
-
                 data = response.json()
-
 
                 places = data.get(
                     "places",
                     []
                 )
-
 
                 if places:
 
@@ -823,14 +730,26 @@ async def check_google_maps_presence(
                         places
                     )
 
-
                 # Enough results
-                if len(
-                    all_places
-                ) >= 15:
-
+                if len(all_places) >= 15:
                     break
 
+            except httpx.TimeoutException:
+
+                logger.warning(
+                    f"Serper timeout for '{query}'"
+                )
+
+                continue
+
+            except httpx.HTTPStatusError as e:
+
+                logger.warning(
+                    f"Serper HTTP error for '{query}': "
+                    f"{e.response.status_code}"
+                )
+
+                continue
 
             except Exception as e:
 
@@ -840,7 +759,6 @@ async def check_google_maps_presence(
 
                 continue
 
-
         # =================================================
         # NO RESULTS
         # =================================================
@@ -848,24 +766,16 @@ async def check_google_maps_presence(
         if not all_places:
 
             return {
-
                 "is_present": False,
-
-                "business_name":
-                    business_name,
-
-                "status":
-                    "not_found"
-
+                "business_name": business_name,
+                "status": "not_found",
             }
-
 
         # =================================================
         # UNIQUE PLACES
         # =================================================
 
         unique_places = {}
-
 
         for place in all_places:
 
@@ -878,27 +788,18 @@ async def check_google_maps_presence(
                 ""
             )
 
-
             key = (
-
                 place_id
-
-                or normalize_text(
-                    title
-                )
-
+                or normalize_text(title)
             )
-
 
             if key:
 
                 unique_places[key] = place
 
-
         places = list(
             unique_places.values()
         )
-
 
         # =================================================
         # FIND BEST RESULT
@@ -907,7 +808,6 @@ async def check_google_maps_presence(
         best_place = None
         best_score = 0
 
-
         for place in places:
 
             title = place.get(
@@ -915,34 +815,47 @@ async def check_google_maps_presence(
                 ""
             )
 
+            # ---------------------------------------------
+            # NAME MATCH
+            # ---------------------------------------------
 
-            # Test against every possible name
             place_score = 0
-
 
             for name in names:
 
                 score = calculate_match_score(
-
                     name,
-
                     title,
-
                     domain
-
                 )
-
 
                 place_score = max(
                     place_score,
                     score
                 )
 
+            # ---------------------------------------------
+            # WEBSITE MATCH BONUS
+            # ---------------------------------------------
+
+            if website_matches_domain(
+                place,
+                domain
+            ):
+
+                place_score = min(
+                    place_score + 20,
+                    100
+                )
+
+                logger.info(
+                    f"Website domain matched: {title}"
+                )
 
             logger.info(
-                f"Result: {title} | score={place_score}"
+                f"Result: {title} | "
+                f"score={place_score}"
             )
-
 
             if place_score > best_score:
 
@@ -950,34 +863,28 @@ async def check_google_maps_presence(
 
                 best_place = place
 
-
         # =================================================
-        # MATCH NOT GOOD ENOUGH
+        # NOT GOOD ENOUGH
         # =================================================
 
-        if not best_place or best_score < 45:
+        if (
+            not best_place
+            or best_score < 60
+        ):
 
             return {
-
                 "is_present": False,
-
-                "business_name":
-                    business_name,
-
-                "status":
-                    "not_found"
-
+                "business_name": business_name,
+                "status": "not_found",
+                "match_score": best_score,
             }
-
 
         # =================================================
         # FOUND
         # =================================================
 
         return {
-
-            "is_present":
-                True,
+            "is_present": True,
 
             "business_name":
                 business_name,
@@ -1007,10 +914,14 @@ async def check_google_maps_presence(
                     "placeId"
                 ),
 
+            "website":
+                best_place.get(
+                    "website"
+                ),
+
             "status":
                 "present",
 
             "match_score":
-                best_score
-
+                best_score,
         }
