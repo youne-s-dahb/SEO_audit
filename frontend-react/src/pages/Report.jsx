@@ -855,8 +855,8 @@ export default function Report() {
                     </h3>
 
                     <p>
-                        Kaytchargé les détails
-                        dyal l'audit.
+                        charger les détails
+                        de l'audit.
                     </p>
 
                 </div>
