@@ -3,6 +3,7 @@ import json
 import re
 import unicodedata
 import logging
+import asyncio
 
 from urllib.parse import urlparse
 
@@ -688,13 +689,18 @@ async def check_google_maps_presence(
             "Content-Type": "application/json",
         }
 
-        all_places = []
-
         # =================================================
-        # SEARCH MAPS
+        # SEARCH MAPS (EN PARALLÈLE)
         # =================================================
+        #
+        # AVANT : les requêtes étaient envoyées une par une
+        # (for query in unique_queries), jusqu'à 3 x 12s = 36s.
+        #
+        # MAINTENANT : toutes les requêtes partent en même
+        # temps avec asyncio.gather -> ~8s max au total.
+        #
 
-        for query in unique_queries:
+        async def _search_one_query(query: str):
 
             try:
 
@@ -712,27 +718,14 @@ async def check_google_maps_presence(
                     "https://google.serper.dev/maps",
                     headers=headers,
                     json=payload,
-                    timeout=12,
+                    timeout=8,
                 )
 
                 response.raise_for_status()
 
                 data = response.json()
 
-                places = data.get(
-                    "places",
-                    []
-                )
-
-                if places:
-
-                    all_places.extend(
-                        places
-                    )
-
-                # Enough results
-                if len(all_places) >= 15:
-                    break
+                return data.get("places", [])
 
             except httpx.TimeoutException:
 
@@ -740,7 +733,7 @@ async def check_google_maps_presence(
                     f"Serper timeout for '{query}'"
                 )
 
-                continue
+                return []
 
             except httpx.HTTPStatusError as e:
 
@@ -749,7 +742,7 @@ async def check_google_maps_presence(
                     f"{e.response.status_code}"
                 )
 
-                continue
+                return []
 
             except Exception as e:
 
@@ -757,7 +750,19 @@ async def check_google_maps_presence(
                     f"Serper error for '{query}': {e}"
                 )
 
-                continue
+                return []
+
+        results = await asyncio.gather(
+            *[
+                _search_one_query(query)
+                for query in unique_queries
+            ]
+        )
+
+        all_places = []
+
+        for places in results:
+            all_places.extend(places)
 
         # =================================================
         # NO RESULTS
