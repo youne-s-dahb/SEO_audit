@@ -353,7 +353,7 @@ function statusToLabel(value) {
         value === 0 ||
         value === "false"
     ) {
-        return "✕ Problème";
+        return "✕ NON";
     }
 
     return "! À vérifier";
@@ -855,8 +855,8 @@ export default function Report() {
                     </h3>
 
                     <p>
-                        Kaytchargé les détails
-                        dyal l'audit.
+                        charger les détails
+                        de l'audit.
                     </p>
 
                 </div>
@@ -999,7 +999,7 @@ export default function Report() {
                             </strong>
 
                             <span>
-                                avis
+                                /100
                             </span>
 
                         </div>
