@@ -417,3 +417,258 @@
 .apr-report-empty button:hover {
     background: rgba(66, 133, 244, 0.22);
 }
+
+
+/* ---------------------------------------------------- */
+/* ============================================================
+   PDF PROFESSIONNEL — BLANC + BLEU MARINE
+   ============================================================ */
+
+/* Wrapper hors écran */
+.pdf-export-wrapper {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 794px;
+    background: #ffffff;
+}
+
+/* Document PDF */
+.pdf-report {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: #0f2747;
+    background: #ffffff;
+    width: 794px;
+}
+
+/* ============================================================
+   COUVERTURE
+   ============================================================ */
+
+.pdf-cover {
+    page-break-after: always;
+    height: 1000px;
+    box-sizing: border-box;
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #ffffff;
+}
+
+.pdf-cover-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: #0f2747;
+    font-weight: 700;
+}
+
+.pdf-cover-title {
+    font-size: 34px;
+    font-weight: 700;
+    color: #0f2747;
+    margin: 0;
+}
+
+.pdf-cover-url {
+    font-size: 13px;
+    color: #1e3a5f;
+    margin: 0;
+}
+
+.pdf-cover-tagline {
+    font-size: 13px;
+    color: #1e3a5f;
+    max-width: 420px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.pdf-cover-score {
+    margin-top: 40px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border-left: 4px solid #0f2747;
+    padding-left: 16px;
+}
+
+.pdf-cover-score strong {
+    font-size: 40px;
+    color: #0f2747;
+}
+
+.pdf-cover-score span {
+    font-size: 13px;
+    color: #1e3a5f;
+    font-weight: 600;
+}
+
+.pdf-cover-date {
+    margin-top: 60px;
+    font-size: 11px;
+    color: #1e3a5f;
+}
+
+
+/* ============================================================
+   SECTIONS
+   ============================================================ */
+
+.pdf-block {
+    padding: 0 40px 28px;
+    page-break-inside: avoid;
+    background: #ffffff;
+}
+
+.pdf-section-title {
+    display: flex;
+    gap: 14px;
+    align-items: baseline;
+
+    border-bottom: 2px solid #0f2747;
+
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+}
+
+.pdf-section-number {
+    font-size: 11px;
+    color: #0f2747;
+    font-weight: 700;
+}
+
+.pdf-section-title h2 {
+    font-size: 16px;
+    margin: 0;
+    font-weight: 700;
+    color: #0f2747;
+}
+
+.pdf-section-subtitle {
+    font-size: 11px;
+    color: #1e3a5f;
+    margin: 2px 0 0;
+}
+
+.pdf-paragraph {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #0f2747;
+    margin: 0 0 8px;
+}
+
+
+/* ============================================================
+   TABLEAUX
+   ============================================================ */
+
+.pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    color: #0f2747;
+}
+
+.pdf-table td {
+    padding: 8px 4px;
+    border-bottom: 1px solid #c7d3e0;
+}
+
+.pdf-table-label {
+    color: #1e3a5f;
+    font-weight: 500;
+}
+
+.pdf-table-value {
+    text-align: right;
+    font-weight: 700;
+    color: #0f2747;
+}
+
+.pdf-status {
+    text-align: right;
+    font-size: 11px;
+    font-weight: 700;
+    width: 90px;
+    color: #ffffff;
+    background: #0f2747;
+    border-radius: 999px;
+    padding: 3px 10px;
+}
+
+/* Statuts — toujours texte blanc sur fond marine, intensité variable */
+
+.pdf-status-good {
+    background: #0f2747;
+    color: #ffffff;
+}
+
+.pdf-status-mid {
+    background: #1e3a5f;
+    color: #ffffff;
+}
+
+.pdf-status-bad {
+    background: #0a1c33;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.pdf-status-ok {
+    background: #0f2747;
+    color: #ffffff;
+}
+
+.pdf-status-warn {
+    background: #1e3a5f;
+    color: #ffffff;
+}
+
+.pdf-status-na {
+    background: #4a6a8a;
+    color: #ffffff;
+}
+
+
+/* ============================================================
+   LISTES
+   ============================================================ */
+
+.pdf-list {
+    font-size: 12px;
+    line-height: 1.7;
+    margin: 0;
+    padding-left: 18px;
+    color: #0f2747;
+}
+
+.pdf-list li {
+    margin-bottom: 4px;
+    color: #0f2747;
+}
+
+.pdf-group-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f2747;
+    margin: 14px 0 4px;
+}
+
+.pdf-link-text {
+    font-size: 11px;
+    color: #0f2747;
+    word-break: break-all;
+}
+
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.pdf-footer-note {
+    padding: 20px 40px 0;
+    font-size: 10px;
+    color: #1e3a5f;
+    border-top: 2px solid #0f2747;
+}
