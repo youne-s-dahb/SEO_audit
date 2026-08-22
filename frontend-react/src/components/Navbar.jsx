@@ -21,16 +21,16 @@ export default function Navbar() {
       {user && (
         <nav className="navbar-nav">
           <Link to="/" className="nav-link">
-            Dashboard
+            Tableau de bord
           </Link>
           <Link to="/history" className="nav-link">
             Historique
           </Link>
           <Link to="/Keyword" className="nav-link">
-            Keyword
+            Mots Clés
           </Link>
            <Link to="/Keyword-Historique" className="nav-link">
-            Keyword Historique
+            Historique des mots clés
           </Link>
            <Link to="/Analyse" className="nav-link">
             Analyse Page
@@ -47,16 +47,16 @@ export default function Navbar() {
               <span className="navbar-user">{user.name || user.email}</span>
             </div>
             <button className="btn btn-ghost" onClick={handleLogout}>
-              Deconnexion
+              Déconnexion
             </button>
           </>
         ) : (
           <>
             <Link to="/login" className="btn btn-ghost">
-              Login
+              Se connecter
             </Link>
             <Link to="/register" className="btn btn-primary">
-              Créer compte
+              Créer un compte
             </Link>
           </>
         )}

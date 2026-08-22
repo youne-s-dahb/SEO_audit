@@ -715,7 +715,7 @@ export default function Home() {
         if (!cleanUrl) {
 
             setError(
-                "3afak dkhel URL dyal site."
+                "Veuillez entrer une URL valide."
             );
 
             return;
@@ -749,7 +749,7 @@ export default function Home() {
 
                 setError(
                     result.error ||
-                    "Ma9dertch ndir l'audit."
+                    "Impossible de lancer l'audit."
                 );
 
 
@@ -828,7 +828,7 @@ export default function Home() {
 
 
             setError(
-                "Chi mochkil wa9e3 f l'audit."
+                "Une erreur est survenue lors de l’audit. Veuillez réessayer."
             );
 
 
@@ -896,7 +896,7 @@ export default function Home() {
             <div className="dashboard-header">
 
                 <span className="eyebrow">
-                    Dashboard
+                    Tableau de bord
                 </span>
 
 

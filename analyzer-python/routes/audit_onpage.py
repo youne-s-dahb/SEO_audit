@@ -441,7 +441,7 @@ async def audit_onpage(url: str):
 
         return {
             "status": "failed",
-            "error_message": "Invalid or restricted URL",
+            "error_message": "Invalid URL",
             "url": url,
         }
 

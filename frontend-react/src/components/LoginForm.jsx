@@ -19,7 +19,7 @@ export default function LoginForm() {
     setError("");
 
     if (!form.email || !form.password) {
-      setError("3afak 3mmer les deux champs.");
+      setError("Veuillez remplir tous les champs.");
       return;
     }
 
@@ -53,7 +53,7 @@ export default function LoginForm() {
       </div>
 
       <div className="field">
-        <label htmlFor="password">Password</label>
+        <label htmlFor="password">Mot de passe</label>
         <input
           id="password"
           name="password"
@@ -77,15 +77,15 @@ export default function LoginForm() {
         {isLoading ? (
           <>
             <span className="spinner" aria-hidden="true" />
-            loading...
+            Connexion...
           </>
         ) : (
-          "Login"
+          "Se connecter"
         )}
       </button>
 
       <p className="form-hint">
-        Mazal 3andek compte? <Link to="/register">Créer wahed</Link>
+        Vous n'avez pas encore de compte? <Link to="/register">Créer un compte</Link>
       </p>
     </form>
   );
