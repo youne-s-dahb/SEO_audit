@@ -1,3 +1,5 @@
+import AuditPagesReport from "./AuditPagesReport";
+
 export default function AuditResult({ audit }) {
 
     if (!audit) {
@@ -147,6 +149,9 @@ export default function AuditResult({ audit }) {
                 </div>
 
             </div>
+
+
+            
 
 
             {/* TECHNICAL SEO */}

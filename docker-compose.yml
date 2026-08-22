@@ -15,15 +15,6 @@ services:
     networks:
       - seo_network
 
-  redis:
-    image: redis:7-alpine
-    container_name: seo_redis
-    restart: always
-    ports:
-      - "6379:6379"
-    networks:
-      - seo_network
-
   api:
     build:
       context: ./api-symfony
@@ -36,10 +27,8 @@ services:
       - ./api-symfony:/var/www/html
     environment:
       DATABASE_URL: "postgresql://younes:secret_password123@db:5432/seo_audit?serverVersion=16&charset=utf8"
-      MESSENGER_TRANSPORT_DSN: "redis://redis:6379/messages"
     depends_on:
       - db
-      - redis
     networks:
       - seo_network
 
@@ -55,12 +44,10 @@ services:
       - ./analyzer-python:/app
     environment:
       DATABASE_URL: "postgresql://younes:secret_password123@db:5432/seo_audit"
-      REDIS_URL: "redis://redis:6379/0"
     env_file:
       - ./analyzer-python/.env
     depends_on:
       - db
-      - redis
     networks:
       - seo_network
 

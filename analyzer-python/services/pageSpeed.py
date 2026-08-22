@@ -52,22 +52,34 @@ async def check_mobile_friendly(url: str):
         return {"mobile_score": 0, "is_mobile_friendly": False}
 
 
-async def _fetch_pagespeed(url: str, strategy: str, api_key: str):
+async def _fetch_pagespeed(url: str, strategy: str, api_key: str, categories=None):
+    """
+    categories:
+        - None -> catégories complètes (performance, accessibility,
+          best-practices, seo). Utilisé pour l'appel "complet" (mobile).
+        - liste réduite (ex: ["performance"]) -> Lighthouse ne calcule
+          QUE ces catégories, ce qui accélère beaucoup l'appel.
+          Utilisé pour l'appel "léger" (desktop), vu qu'on n'a besoin
+          que du performance_score de ce côté.
+    """
     api_url = (
         "https://www.googleapis.com/"
         "pagespeedonline/v5/runPagespeed"
     )
 
-    params = {
-        "url": url,
-        "key": api_key,
-        "strategy": strategy,
-        "category": [
+    if categories is None:
+        categories = [
             "performance",
             "accessibility",
             "best-practices",
             "seo",
-        ],
+        ]
+
+    params = {
+        "url": url,
+        "key": api_key,
+        "strategy": strategy,
+        "category": categories,
     }
 
     async with httpx.AsyncClient(timeout=90) as client:
@@ -90,6 +102,11 @@ async def get_pagespeed_data(url: str, strategy: str = "mobile"):
     - get_pagespeed_data(url, "desktop")   -> appel LGER: ghi performance_score dyal
                                                desktop, bla robots/sitemap/mobile-friendly
                                                (bach ma nkerrrouch nafss les checks jouj mrat).
+
+                                               IMPORTANT: hna kantalbou GHIR category
+                                               "performance" 3end Google (3wed les 4
+                                               categories), hadchi kaysare3 bezzaf
+                                               l'appel Lighthouse dyal desktop.
     """
     api_key = os.getenv("PAGESPEED_API_KEY")
 
@@ -105,9 +122,18 @@ async def get_pagespeed_data(url: str, strategy: str = "mobile"):
         # ==========================================
         # Appel léger: ghi performance_score
         # (khddam mn audit.py bach yjib desktop_score)
+        #
+        # -> category="performance" ghir, bach Lighthouse
+        #    ma yqissich accessibility/seo/best-practices
+        #    li ma khddamin mennhoum walou hna.
         # ==========================================
         if strategy == "desktop":
-            desktop_data = await _fetch_pagespeed(url, "desktop", api_key)
+            desktop_data = await _fetch_pagespeed(
+                url,
+                "desktop",
+                api_key,
+                categories=["performance"],
+            )
             return {
                 "performance_score": _extract_performance_score(desktop_data)
             }

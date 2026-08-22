@@ -34,11 +34,11 @@ export default function RegisterForm() {
     setError("");
 
     if (!form.email) {
-      setError("3afak dkhel email dyalek.");
+      setError("Veuillez saisir votre email.");
       return;
     }
     if (!EMAIL_REGEX.test(form.email)) {
-      setError("Email machi valide.");
+      setError("Email non valide.");
       return;
     }
 
@@ -60,7 +60,7 @@ export default function RegisterForm() {
     setError("");
 
     if (form.code.length !== 6) {
-      setError("Code khass ykon 6 ar9am.");
+      setError("Le code doit contenir au moins 6 caractères.");
       return;
     }
 
@@ -101,15 +101,15 @@ export default function RegisterForm() {
   setError("");
 
   if (!form.name || !form.password || !form.confirm) {
-    setError("3afak 3mmer ga3 les champs.");
+    setError("Veuillez remplir tous les champs.");
     return;
   }
   if (form.password.length < 6) {
-    setError("Password khass ykon 6 caractères o ktar.");
+    setError("Le mot de passe doit contenir au moins 6 caractères.");
     return;
   }
   if (form.password !== form.confirm) {
-    setError("Password machi mtabek m3a confirmation.");
+    setError("Les mots de passe ne correspondent pas.");
     return;
   }
 
@@ -132,7 +132,7 @@ export default function RegisterForm() {
       <div className="form-success">
         <p>{successMessage}</p>
         <p className="form-hint">
-          <Link to="/login">Dkhol daba</Link>
+          <Link to="/login">Se connecter</Link>
         </p>
       </div>
     );
@@ -176,15 +176,15 @@ export default function RegisterForm() {
             {isLoading ? (
               <>
                 <span className="spinner" aria-hidden="true" />
-                Kayb3ath code...
+                Envoi du code en cours…
               </>
             ) : (
-              "B3ath code"
+              "Envoyer le code"
             )}
           </button>
 
           <p className="form-hint">
-            3andek deja compte? <Link to="/login">Dkhol</Link>
+            Vous avez déjà un compte? <Link to="/login">Se connecter</Link>
           </p>
         </form>
       )}
@@ -192,11 +192,11 @@ export default function RegisterForm() {
       {step === 2 && (
         <form className="auth-form" onSubmit={handleVerifyCode} noValidate>
           <p className="otp-hint">
-            Sifetna code l <strong>{form.email}</strong>. Dkhelo hna:
+            Un code de vérification a été envoyé à <strong>{form.email}</strong>. Veuillez le saisir ci-dessous:
           </p>
 
           <div className="field">
-            <label htmlFor="code">Code (6 ar9am)</label>
+            <label htmlFor="code">Code (6 chiffres)</label>
             <input
               id="code"
               name="code"
@@ -222,7 +222,7 @@ export default function RegisterForm() {
               onClick={handleBackToEmail}
               disabled={isLoading}
             >
-              Rje3
+              Retour
             </button>
             <button
               type="submit"
@@ -233,23 +233,23 @@ export default function RegisterForm() {
               {isLoading ? (
                 <>
                   <span className="spinner" aria-hidden="true" />
-                  Kaytverifi...
+                  Vérification en cours…
                 </>
               ) : (
-                "Confirmi"
+                "Confirmer code"
               )}
             </button>
           </div>
 
           <p className="form-hint">
-            Ma jak walo?{" "}
+            Vous n'avez pas reçu de code?{" "}
             <button
               type="button"
               className="link-button"
               onClick={handleResendCode}
               disabled={isLoading}
             >
-              Sift code mn jdid
+              Renvoyer le code
             </button>
           </p>
         </form>
@@ -261,12 +261,12 @@ export default function RegisterForm() {
             <label>Email</label>
             <div className="field-static">
               {form.email}
-              <span className="field-verified">✓ Mconfirmé</span>
+              <span className="field-verified">✓ Confirmé</span>
             </div>
           </div>
 
           <div className="field">
-            <label htmlFor="name">Smiya</label>
+            <label htmlFor="name">Nom</label>
             <input
               id="name"
               name="name"
@@ -281,7 +281,7 @@ export default function RegisterForm() {
           </div>
 
           <div className="field">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">Mot de passe</label>
             <input
               id="password"
               name="password"
@@ -295,7 +295,7 @@ export default function RegisterForm() {
           </div>
 
           <div className="field">
-            <label htmlFor="confirm">Confirmer Password</label>
+            <label htmlFor="confirm">Confirmer le mot de passe</label>
             <input
               id="confirm"
               name="confirm"
@@ -319,10 +319,10 @@ export default function RegisterForm() {
             {isLoading ? (
               <>
                 <span className="spinner" aria-hidden="true" />
-                Kaydir compte...
+                Création du compte en cours…
               </>
             ) : (
-              "Créer compte"
+              "Créer un compte"
             )}
           </button>
         </form>

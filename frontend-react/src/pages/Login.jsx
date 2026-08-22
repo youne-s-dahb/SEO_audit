@@ -4,10 +4,11 @@ import { useAuth } from "../components/AuthContext";
 
 export default function Login() {
   const { user, loading } = useAuth();
-   if (loading) {
+
+  if (loading) {
     return (
       <div className="page-loading">
-        Kaytloaded...
+        Chargement...
       </div>
     );
   }
@@ -16,19 +17,20 @@ export default function Login() {
   if (user) {
     return <Navigate to="/" replace />;
   }
+
   return (
     <div className="auth-page">
       <div className="auth-shell">
         <div className="auth-panel">
           <span className="auth-panel-eyebrow">01 — Bienvenue</span>
           <h2 className="auth-panel-title">
-            Kolla chi bda
+            Commencez votre
             <br />
-            b login wahed.
+            connexion en toute simplicité.
           </h2>
           <p className="auth-panel-text">
-            Dkhol l compte dyalek o kml mnin wqft. Session dyalek mahfouda o
-            aman.
+            Connectez-vous à votre compte et reprenez là où vous vous êtes
+            arrêté. Votre session est conservée de manière sécurisée.
           </p>
           <div className="auth-panel-stats">
             <div>
@@ -37,14 +39,16 @@ export default function Login() {
             </div>
             <div>
               <strong>0s</strong>
-              <span>Setup zayd</span>
+              <span>Aucune configuration supplémentaire</span>
             </div>
           </div>
         </div>
 
         <div className="auth-card">
-          <h1 className="auth-title">Ahlan bik</h1>
-          <p className="auth-subtitle">Dkhol l compte dyalek bach tkml.</p>
+          <h1 className="auth-title">Bienvenue</h1>
+          <p className="auth-subtitle">
+            Connectez-vous à votre compte pour continuer.
+          </p>
           <LoginForm />
         </div>
       </div>

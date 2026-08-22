@@ -4,11 +4,19 @@ namespace App\Entity;
 
 use App\Repository\AuditKeywordDensityRepository;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: AuditKeywordDensityRepository::class)]
-#[ORM\Table(name: 'audit_keyword_density')] // Smiya dial l-table f DB dyalk
-#[ApiResource]              // 2. Zid had l-khatem s-s7ri hna 🔥
+#[ORM\Table(name: 'audit_keyword_density')]
+#[ApiResource]
+// Permet ?auditPage.audit=30 (toute la densite de mots-cles d'un audit)
+// ou ?auditPage=5 (d'une page precise).
+#[ApiFilter(SearchFilter::class, properties: [
+    'auditPage' => 'exact',
+    'auditPage.audit' => 'exact',
+])]
 class AuditKeywordDensity
 {
     #[ORM\Id]

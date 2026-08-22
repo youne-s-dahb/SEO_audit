@@ -12,6 +12,7 @@ import {
 import { useAuth } from "../components/AuthContext";
 
 import AuditResult from "../components/AuditResult";
+import LoadingCircle from "../components/LoadingCircle";
 import "../style/Home.css";
 
 /*
@@ -619,6 +620,16 @@ export default function Home() {
     |--------------------------------------------------------------------------
     | CHANGE ANALYSIS STEP
     |--------------------------------------------------------------------------
+    |
+    | NOTE: hadou l mo9adarat khassahom yet3addlou
+    | selon l'wa9t l ha9i9i dyal l'audit (b3d
+    | les optimisations dyal Serper parallel +
+    | PageSpeed desktop mkhaffef).
+    |
+    | Avant: majmou3 ~47s.
+    | Daba: majmou3 ~17s (a9rab l wa9t li kay
+    | khdam fih l backend b3d ta7sinat).
+    |
     */
 
     useEffect(() => {
@@ -641,16 +652,16 @@ export default function Home() {
 
         const duration =
             analysisStep === 0
-                ? 2000
+                ? 1000
                 : analysisStep === 1
-                ? 5000
+                ? 2500
                 : analysisStep === 2
-                ? 7000
+                ? 3500
                 : analysisStep === 3
-                ? 9000
+                ? 3000
                 : analysisStep === 4
-                ? 10050
-                : 14000;
+                ? 3000
+                : 4000;
 
 
         const timer =
@@ -704,7 +715,7 @@ export default function Home() {
         if (!cleanUrl) {
 
             setError(
-                "3afak dkhel URL dyal site."
+                "Veuillez entrer une URL valide."
             );
 
             return;
@@ -738,7 +749,7 @@ export default function Home() {
 
                 setError(
                     result.error ||
-                    "Ma9dertch ndir l'audit."
+                    "Impossible de lancer l'audit."
                 );
 
 
@@ -817,7 +828,7 @@ export default function Home() {
 
 
             setError(
-                "Chi mochkil wa9e3 f l'audit."
+                "Une erreur est survenue lors de l’audit. Veuillez réessayer."
             );
 
 
@@ -885,7 +896,7 @@ export default function Home() {
             <div className="dashboard-header">
 
                 <span className="eyebrow">
-                    Dashboard
+                    Tableau de bord
                 </span>
 
 
@@ -1256,83 +1267,16 @@ export default function Home() {
 
                 {/* =================================================
                     RECENT LOADING
+                    (kaystakhdem l kompennent
+                    mochtarak LoadingCircle)
                 ================================================== */}
 
                 {isLoadingRecent ? (
 
-                    <div className="home-recent-loading-card">
-
-                        <div className="home-recent-loading-content">
-
-
-                            {/* CIRCLE */}
-
-                            <div
-                                className="home-recent-progress-circle"
-                                style={{
-                                    "--progress":
-                                        `${recentLoadingProgress * 3.6}deg`,
-                                }}
-                            >
-
-                                <div className="home-recent-progress-inner">
-
-                                    <strong>
-                                        {
-                                            recentLoadingProgress
-                                        }%
-                                    </strong>
-
-                                    <span>
-                                        Chargement
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-
-                            {/* TEXT */}
-
-                            <div className="home-recent-loading-text">
-
-                                <h3>
-
-                                    {
-                                        recentLoadingProgress < 30
-                                            ? "Connexion au serveur..."
-                                            : recentLoadingProgress < 60
-                                            ? "Récupération des audits..."
-                                            : recentLoadingProgress < 90
-                                            ? "Préparation des derniers rapports..."
-                                            : recentLoadingProgress < 100
-                                            ? "Presque terminé..."
-                                            : "Audits chargés !"
-                                    }
-
-                                </h3>
-
-
-                                <p>
-                                    Nous récupérons
-                                    vos derniers
-                                    audits SEO.
-                                </p>
-
-
-                                <div className="home-recent-loading-dots">
-
-                                    <span />
-                                    <span />
-                                    <span />
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
+                    <LoadingCircle
+                        progress={recentLoadingProgress}
+                        subtitle="Nous récupérons vos derniers audits SEO."
+                    />
 
                 ) : recentReports.length === 0 ? (
 
@@ -1553,4 +1497,3 @@ export default function Home() {
         </div>
     );
 }
-
