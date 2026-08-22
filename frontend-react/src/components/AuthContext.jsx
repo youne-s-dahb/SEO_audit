@@ -83,7 +83,7 @@ export function AuthProvider({ children }) {
                     ok: false,
                     error:
                         data.message ||
-                        "Email wla password machi sahih.",
+                        "Email ou mot de passe incorrect.",
                 };
             }
 
@@ -91,7 +91,7 @@ export function AuthProvider({ children }) {
                 return {
                     ok: false,
                     error:
-                        "Backend ma rje3ch JWT token.",
+                        "Une erreur est survenue lors de l’authentification. Veuillez réessayer.",
                 };
             }
 
@@ -167,7 +167,7 @@ export function AuthProvider({ children }) {
             return {
                 ok: false,
                 error:
-                    "Ma9drnach nettaslo b backend.",
+                    "Impossible de se connecter au serveur. Veuillez réessayer dans quelques instants.",
             };
         }
     }
@@ -203,7 +203,7 @@ export function AuthProvider({ children }) {
                     ok: false,
                     error:
                         data.message ||
-                        "Ma9dertch nsift code.",
+                        "Impossible d'envoyer le code de vérification. Veuillez réessayer dans quelques instants.",
                 };
             }
 
@@ -220,7 +220,7 @@ export function AuthProvider({ children }) {
             return {
                 ok: false,
                 error:
-                    "Ma9drnach nettaslo b backend.",
+                    "Impossible de se connecter au serveur. Veuillez réessayer dans quelques instants.",
             };
         }
     }
@@ -258,7 +258,7 @@ export function AuthProvider({ children }) {
                     ok: false,
                     error:
                         data.message ||
-                        "Code machi sahih.",
+                        "Code incorrect.",
                 };
             }
 
@@ -275,7 +275,7 @@ export function AuthProvider({ children }) {
             return {
                 ok: false,
                 error:
-                    "Ma9drnach nettaslo b backend.",
+                    "Impossible de se connecter au serveur. Veuillez réessayer dans quelques instants.",
             };
         }
     }
@@ -315,7 +315,7 @@ export function AuthProvider({ children }) {
                     ok: false,
                     error:
                         data.message ||
-                        "Chi mochkil sar mnin dert register.",
+                        "Impossible de créer le compte. Veuillez réessayer.",
                 };
             }
 
@@ -323,7 +323,7 @@ export function AuthProvider({ children }) {
                 return {
                     ok: false,
                     error:
-                        "Backend ma rje3ch JWT token.",
+                        "Impossible de se connecter au serveur. Veuillez réessayer dans quelques instants.",
                 };
             }
 
@@ -357,7 +357,7 @@ export function AuthProvider({ children }) {
             return {
                 ok: false,
                 error:
-                    "Ma9drnach nettaslo b backend.",
+                    "Impossible de se connecter au serveur. Veuillez réessayer dans quelques instants.",
             };
         }
     }
@@ -434,7 +434,7 @@ export function AuthProvider({ children }) {
                     error:
                         data.error ||
                         data.message ||
-                        "Ma9dertch ndir l'audit.",
+                        "Impossible de réaliser l’audit. Veuillez réessayer dans quelques instants.",
                 };
             }
 
@@ -451,7 +451,7 @@ export function AuthProvider({ children }) {
             return {
                 ok: false,
                 error:
-                    "Ma9drnach nettaslo b backend.",
+                    "Impossible de réaliser l’audit. Veuillez réessayer dans quelques instants.",
             };
         }
     }
@@ -484,7 +484,7 @@ export function AuthProvider({ children }) {
                     error:
                         data.message ||
                         data.error ||
-                        "Ma9dertch njib l'historique.",
+                        "Impossible de récupérer l'historique.",
                 };
             }
 
@@ -619,7 +619,7 @@ export function AuthProvider({ children }) {
             return {
                 ok: false,
                 error:
-                    "Ma9drnach nettaslo b backend.",
+                    "Impossible de récupérer l'historique. Veuillez réessayer dans quelques instants.",
             };
         }
     }
@@ -653,7 +653,7 @@ export function AuthProvider({ children }) {
                     error:
                         data.message ||
                         data.error ||
-                        "Ma9dertch njib had l'audit.",
+                        "Impossible de récupérer les détails de l'audit.",
                 };
             }
 
@@ -670,7 +670,7 @@ export function AuthProvider({ children }) {
             return {
                 ok: false,
                 error:
-                    "Ma9drnach nettaslo b backend.",
+                    "Impossible de récupérer les détails de l'audit. Veuillez réessayer dans quelques instants.",
             };
         }
     }
@@ -712,7 +712,7 @@ export function useAuth() {
 
     if (!context) {
         throw new Error(
-            "useAuth khass ykon dakhel AuthProvider"
+            "useAuth doit être utilisé à l’intérieur de AuthProvider."
         );
     }
 

@@ -581,7 +581,7 @@ export default function Report() {
             );
 
             alert(
-                "Ma9drnach nsaybo PDF."
+                "Impossible de générer le PDF."
             );
 
         } finally {

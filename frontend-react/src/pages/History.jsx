@@ -98,7 +98,7 @@ export default function History() {
 
                 setError(
                     result.error ||
-                        "Ma9drnach njibo l'historique."
+                        "Impossible de charger l'historique."
                 );
 
                 setReports([]);
@@ -161,7 +161,7 @@ export default function History() {
             clearInterval(progressInterval);
 
             setError(
-                "Ma9drnach njibo l'historique."
+                "Impossible de charger l'historique."
             );
 
             setReports([]);
@@ -218,8 +218,7 @@ export default function History() {
                 </h1>
 
                 <p className="dashboard-subtitle">
-                    Ga3 les audits SEO li complets
-                    dyalek.
+                    Tous vos audits SEO complets
                 </p>
             </div>
 
@@ -361,15 +360,14 @@ export default function History() {
                         </h3>
 
                         <p>
-                            Mazal ma kaynach chi
-                            audit completed.
+                            Aucun audit terminé pour le moment.
                         </p>
 
                         <Link
                             to="/"
                             className="history-report-button"
                         >
-                            + Bda audit jdid
+                            + Comencer un audit
                         </Link>
 
                     </div>
