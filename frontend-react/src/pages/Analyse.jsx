@@ -187,6 +187,244 @@ const calculateScore = (
 
 /*
 |--------------------------------------------------------------------------
+| PDF PROFESSIONNEL — BLANC + BLEU MARINE
+| DOM séparé, dédié uniquement à l'export.
+| N'affecte JAMAIS le rendu web (#analyse-report reste inchangé).
+|--------------------------------------------------------------------------
+*/
+
+function el(tag, attrs = {}, children = []) {
+    const node = document.createElement(tag);
+    if (attrs.className) node.className = attrs.className;
+    if (attrs.text !== undefined) node.textContent = attrs.text;
+    [].concat(children).forEach((child) => child && node.appendChild(child));
+    return node;
+}
+
+function pdfSectionTitle(number, title, subtitle) {
+    return el("div", { className: "pdf-section-title" }, [
+        el("span", { className: "pdf-section-number", text: number }),
+        el("div", {}, [
+            el("h2", { text: title }),
+            subtitle ? el("p", { className: "pdf-section-subtitle", text: subtitle }) : null,
+        ]),
+    ]);
+}
+
+function buildPdfTable(rows) {
+    const table = el("table", { className: "pdf-table" });
+    const tbody = el("tbody");
+
+    rows.forEach(([label, value, tone, statusLabel]) => {
+        const tr = el("tr", {}, [
+            el("td", { className: "pdf-table-label", text: label }),
+            el("td", { className: "pdf-table-value", text: value ?? "—" }),
+        ]);
+
+        if (statusLabel) {
+            tr.appendChild(
+                el("td", { className: `pdf-status pdf-status-${tone}`, text: statusLabel })
+            );
+        }
+
+        tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    return table;
+}
+
+function buildPdfCover({ siteUrl, score, scoreLabel, createdAt }) {
+    return el("section", { className: "pdf-cover" }, [
+        el("span", { className: "pdf-cover-label", text: "SEO AUDIT REPORT — ON-PAGE" }),
+        el("h1", { className: "pdf-cover-title", text: siteUrl || "Site analysé" }),
+        el("p", {
+            className: "pdf-cover-tagline",
+            text: "Analyse technique et éditoriale de la page.",
+        }),
+        el("div", { className: "pdf-cover-score" }, [
+            el("strong", { text: `${score}/100` }),
+            el("span", { text: scoreLabel }),
+        ]),
+        el("p", {
+            className: "pdf-cover-date",
+            text: `Analyse effectuée le ${formatDate(createdAt)}`,
+        }),
+    ]);
+}
+
+function buildExecutiveSummary({ score, scoreLabel, checks, stats }) {
+    const passed = checks.filter((c) => c.value).length;
+    const failedLabels = checks.filter((c) => !c.value).map((c) => c.label);
+
+    const sentences = [
+        `La page obtient un score on-page de ${score}/100 (${scoreLabel.toLowerCase()}).`,
+        `${passed} vérification(s) sur ${checks.length} sont validées.`,
+    ];
+
+    if (failedLabels.length > 0) {
+        sentences.push(
+            `Les points à corriger en priorité concernent : ${failedLabels
+                .slice(0, 4)
+                .join(", ")
+                .toLowerCase()}.`
+        );
+    } else {
+        sentences.push("Aucun point bloquant n'a été détecté sur les critères analysés.");
+    }
+
+    sentences.push(
+        `La page contient ${stats.words.toLocaleString("fr-FR")} mots, ${stats.headingsCount} titres et ${stats.imagesCount} image(s).`
+    );
+
+    const section = el("section", { className: "pdf-block" }, [
+        pdfSectionTitle("01", "Résumé exécutif"),
+    ]);
+
+    sentences.forEach((s) => section.appendChild(el("p", { className: "pdf-paragraph", text: s })));
+
+    return section;
+}
+
+function buildPdfMetricsSection(report, stats) {
+    const page = report.page || {};
+
+    const rows = [
+        ["Longueur du Title", page.title_length ? `${page.title_length} caractères` : "—"],
+        ["H1", `${stats.h1Count}`],
+        ["Contenu", `${stats.words.toLocaleString("fr-FR")} mots`],
+        ["Images", `${stats.imagesCount} (${stats.imagesWithoutAlt} sans ALT)`],
+        ["Liens internes", `${stats.internalLinks}`],
+        ["Liens externes", `${stats.externalLinks}`],
+        ["Temps de réponse", page.response_time_ms ? `${page.response_time_ms} ms` : "—"],
+    ];
+
+    return el("section", { className: "pdf-block" }, [
+        pdfSectionTitle("02", "Métriques clés"),
+        buildPdfTable(rows),
+    ]);
+}
+
+function buildPdfChecksSection(checks) {
+    const rows = checks.map((check) => [
+        check.label,
+        check.detail || "—",
+        check.value ? "good" : "bad",
+        check.value ? "OK" : "À corriger",
+    ]);
+
+    return el("section", { className: "pdf-block" }, [
+        pdfSectionTitle("03", "Vérifications techniques SEO"),
+        buildPdfTable(rows),
+    ]);
+}
+
+function buildPdfHeadingsSection(headings) {
+    const section = el("section", { className: "pdf-block" }, [
+        pdfSectionTitle("04", "Structure des headings"),
+    ]);
+
+    if (!headings || headings.length === 0) {
+        section.appendChild(
+            el("p", { className: "pdf-paragraph", text: "Aucun heading détecté sur cette page." })
+        );
+        return section;
+    }
+
+    const list = el("ul", { className: "pdf-list" });
+
+    headings.slice(0, 30).forEach((heading) => {
+        const level = String(heading.heading_level || "").toUpperCase();
+        const content = heading.content || "Sans contenu";
+        list.appendChild(el("li", { text: `${level} — ${content}` }));
+    });
+
+    section.appendChild(list);
+    return section;
+}
+
+function buildPdfImagesSection(images, stats) {
+    const section = el("section", { className: "pdf-block" }, [
+        pdfSectionTitle("05", "Images"),
+    ]);
+
+    section.appendChild(
+        buildPdfTable([
+            ["Total images", `${stats.imagesCount}`],
+            ["Avec attribut ALT", `${Math.max(0, stats.imagesCount - stats.imagesWithoutAlt)}`],
+            ["Sans attribut ALT", `${stats.imagesWithoutAlt}`],
+        ])
+    );
+
+    if (images && images.length > 0) {
+        const rows = images.slice(0, 25).map((image) => {
+            const hasAlt =
+                image.has_alt === true || image.has_alt === 1 || image.has_alt === "true";
+
+            return [
+                image.image_url || "URL inconnue",
+                image.image_type ? String(image.image_type).toUpperCase() : "—",
+                hasAlt ? "good" : "bad",
+                hasAlt ? "Présent" : "Manquant",
+            ];
+        });
+
+        section.appendChild(buildPdfTable(rows));
+    }
+
+    return section;
+}
+
+function buildPdfKeywordsSection(keywords) {
+    const section = el("section", { className: "pdf-block" }, [
+        pdfSectionTitle("06", "Keyword density"),
+    ]);
+
+    if (!keywords || keywords.length === 0) {
+        section.appendChild(
+            el("p", {
+                className: "pdf-paragraph",
+                text: "Aucun mot-clé exploitable n'a été détecté.",
+            })
+        );
+        return section;
+    }
+
+    const rows = keywords.slice(0, 30).map((keyword) => [
+        keyword.keyword || "—",
+        `${keyword.occurrences ?? "—"} occurrence(s)`,
+        typeof keyword.density_percent === "number"
+            ? `${keyword.density_percent}%`
+            : `${keyword.density_percent ?? "—"}`,
+    ]);
+
+    section.appendChild(buildPdfTable(rows));
+    return section;
+}
+
+function buildPdfFooterInfo(siteUrl) {
+    return el("footer", { className: "pdf-footer-note" }, [
+        el("span", { text: `SEO Audit Platform — ${siteUrl || ""}` }),
+    ]);
+}
+
+function buildPdfReportDocument(ctx) {
+    const { siteUrl, score, scoreLabel, createdAt, report, checks, stats } = ctx;
+
+    return el("div", { className: "pdf-report" }, [
+        buildPdfCover({ siteUrl, score, scoreLabel, createdAt }),
+        buildExecutiveSummary({ score, scoreLabel, checks, stats }),
+        buildPdfMetricsSection(report, stats),
+        buildPdfChecksSection(checks),
+        buildPdfHeadingsSection(report.headings),
+        buildPdfImagesSection(report.images, stats),
+        buildPdfKeywordsSection(report.keywords),
+        buildPdfFooterInfo(siteUrl),
+    ]);
+}
+
+/*
+|--------------------------------------------------------------------------
 | COMPONENT
 |--------------------------------------------------------------------------
 */
@@ -386,1132 +624,107 @@ export default function Analyse() {
 
     /*
     |--------------------------------------------------------------------------
-    | DOWNLOAD PDF — REACT ONLY
+    | DOWNLOAD PDF — DOM SÉPARÉ, DESIGN PROFESSIONNEL BLANC / BLEU MARINE
     |--------------------------------------------------------------------------
     */
 
-   const handleDownloadPdf = async () => {
-    const element = document.getElementById("analyse-report");
-
-    if (!element) {
-        setDownloadError("Le rapport est introuvable.");
-        return;
-    }
-
-    setDownloadError("");
-    setDownloadingPdf(true);
-
-    try {
-        /*
-        |--------------------------------------------------------------------------
-        | CLONER LE RAPPORT
-        |--------------------------------------------------------------------------
-        */
-
-        const pdfContainer = document.createElement("div");
-
-        pdfContainer.style.position = "fixed";
-        pdfContainer.style.left = "-100000px";
-        pdfContainer.style.top = "0";
-        pdfContainer.style.width = "794px";
-        pdfContainer.style.background = "#ffffff";
-        pdfContainer.style.zIndex = "-9999";
-        pdfContainer.style.padding = "0";
-        pdfContainer.style.margin = "0";
-
-        const clonedReport = element.cloneNode(true);
-
-        clonedReport.id = "pdf-report";
-
-        pdfContainer.appendChild(clonedReport);
-        document.body.appendChild(pdfContainer);
-
-        /*
-        |--------------------------------------------------------------------------
-        | STYLE PDF
-        |--------------------------------------------------------------------------
-        */
-
-        const style = document.createElement("style");
-
-        style.id = "pdf-report-style";
-
-        style.innerHTML = `
-            #pdf-report {
-                width: 794px !important;
-                max-width: 794px !important;
-                min-width: 794px !important;
-
-                margin: 0 !important;
-                padding: 42px 46px !important;
-
-                background: #ffffff !important;
-                color: #111111 !important;
-
-                font-family:
-                    Inter,
-                    Arial,
-                    Helvetica,
-                    sans-serif !important;
-
-                box-sizing: border-box !important;
-
-                box-shadow: none !important;
-                border: none !important;
-
-                line-height: 1.5 !important;
-            }
-
-            #pdf-report *,
-            #pdf-report *::before,
-            #pdf-report *::after {
-                box-sizing: border-box !important;
-            }
-
-            /* ---------------------------------------------------------
-               HIDE WEB ACTIONS
-            --------------------------------------------------------- */
-
-            #pdf-report .report-actions,
-            #pdf-report .analyse-error {
-                display: none !important;
-            }
-
-            /* ---------------------------------------------------------
-               HEADER
-            --------------------------------------------------------- */
-
-            #pdf-report .report-header {
-                display: flex !important;
-                justify-content: space-between !important;
-                align-items: flex-start !important;
-
-                width: 100% !important;
-
-                padding: 0 0 28px 0 !important;
-                margin: 0 0 30px 0 !important;
-
-                background: #ffffff !important;
-
-                border-bottom: 2px solid #111111 !important;
-
-                box-shadow: none !important;
-            }
-
-            #pdf-report .report-eyebrow {
-                font-size: 11px !important;
-                font-weight: 700 !important;
-                letter-spacing: 2px !important;
-                color: #555555 !important;
-
-                margin-bottom: 8px !important;
-            }
-
-            #pdf-report .report-header h2 {
-                margin: 0 0 12px 0 !important;
-
-                font-size: 30px !important;
-                line-height: 1.15 !important;
-
-                color: #111111 !important;
-                font-weight: 800 !important;
-            }
-
-            #pdf-report .report-url {
-                max-width: 600px !important;
-
-                font-size: 12px !important;
-                color: #333333 !important;
-
-                word-break: break-all !important;
-                overflow-wrap: anywhere !important;
-
-                margin-bottom: 6px !important;
-            }
-
-            #pdf-report .report-date {
-                font-size: 11px !important;
-                color: #777777 !important;
-            }
-
-            /* ---------------------------------------------------------
-               SCORE
-            --------------------------------------------------------- */
-
-            #pdf-report .score-section {
-                width: 100% !important;
-
-                margin: 0 0 28px 0 !important;
-                padding: 0 !important;
-
-                background: #ffffff !important;
-
-                box-shadow: none !important;
-            }
-
-            #pdf-report .score-card {
-                display: flex !important;
-                align-items: center !important;
-
-                width: 100% !important;
-
-                min-height: 170px !important;
-
-                padding: 26px !important;
-
-                background: #f8f8f8 !important;
-
-                border: 1px solid #dddddd !important;
-                border-radius: 14px !important;
-
-                box-shadow: none !important;
-
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            #pdf-report .score-circle-wrapper {
-                flex: 0 0 135px !important;
-
-                width: 135px !important;
-                height: 135px !important;
-
-                margin-right: 30px !important;
-            }
-
-            #pdf-report .score-circle {
-                width: 135px !important;
-                height: 135px !important;
-
-                border-radius: 50% !important;
-
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-
-                background: #eeeeee !important;
-
-                position: relative !important;
-            }
-
-            #pdf-report .score-circle::before {
-                content: "" !important;
-
-                position: absolute !important;
-
-                inset: 8px !important;
-
-                border-radius: 50% !important;
-
-                background: #ffffff !important;
-            }
-
-            #pdf-report .score-circle-inner {
-                position: relative !important;
-                z-index: 2 !important;
-
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                justify-content: center !important;
-
-                width: 100% !important;
-                height: 100% !important;
-            }
-
-            #pdf-report .score-circle-inner strong {
-                font-size: 34px !important;
-                line-height: 1 !important;
-
-                color: #111111 !important;
-                font-weight: 800 !important;
-            }
-
-            #pdf-report .score-circle-inner span {
-                margin-top: 5px !important;
-
-                font-size: 11px !important;
-
-                color: #777777 !important;
-            }
-
-            #pdf-report .score-information {
-                flex: 1 !important;
-            }
-
-            #pdf-report .score-label {
-                font-size: 10px !important;
-                font-weight: 700 !important;
-                letter-spacing: 1.5px !important;
-
-                color: #777777 !important;
-
-                margin-bottom: 5px !important;
-            }
-
-            #pdf-report .score-information h3 {
-                margin: 0 0 8px 0 !important;
-
-                font-size: 22px !important;
-
-                color: #111111 !important;
-                font-weight: 800 !important;
-            }
-
-            #pdf-report .score-information p {
-                margin: 0 !important;
-
-                font-size: 12px !important;
-
-                color: #555555 !important;
-            }
-
-            /* ---------------------------------------------------------
-               METRICS
-            --------------------------------------------------------- */
-
-            #pdf-report .report-metrics {
-                display: grid !important;
-
-                grid-template-columns:
-                    repeat(3, 1fr) !important;
-
-                gap: 12px !important;
-
-                margin: 0 0 34px 0 !important;
-
-                width: 100% !important;
-            }
-
-            #pdf-report .metric-card {
-                min-height: 92px !important;
-
-                padding: 15px !important;
-
-                background: #ffffff !important;
-
-                border: 1px solid #dddddd !important;
-                border-radius: 10px !important;
-
-                box-shadow: none !important;
-
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            #pdf-report .metric-label {
-                display: block !important;
-
-                font-size: 9px !important;
-                font-weight: 700 !important;
-                letter-spacing: 1px !important;
-
-                color: #777777 !important;
-
-                margin-bottom: 8px !important;
-            }
-
-            #pdf-report .metric-card strong {
-                display: inline-block !important;
-
-                font-size: 23px !important;
-
-                color: #111111 !important;
-                font-weight: 800 !important;
-            }
-
-            #pdf-report .metric-card small {
-                display: block !important;
-
-                font-size: 10px !important;
-
-                color: #777777 !important;
-            }
-
-            /* ---------------------------------------------------------
-               SECTIONS
-            --------------------------------------------------------- */
-
-            #pdf-report .report-section {
-                width: 100% !important;
-
-                margin: 0 0 34px 0 !important;
-                padding: 0 !important;
-
-                background: #ffffff !important;
-
-                box-shadow: none !important;
-
-                break-inside: auto !important;
-                page-break-inside: auto !important;
-            }
-
-            #pdf-report .report-section-header {
-                display: flex !important;
-                justify-content: space-between !important;
-                align-items: flex-end !important;
-
-                gap: 20px !important;
-
-                padding: 0 0 12px 0 !important;
-                margin: 0 0 16px 0 !important;
-
-                border-bottom: 1px solid #cccccc !important;
-            }
-
-            #pdf-report .report-section-header > div {
-                display: flex !important;
-                align-items: center !important;
-                gap: 10px !important;
-            }
-
-            #pdf-report .report-section-header > div > span {
-                font-size: 10px !important;
-
-                color: #777777 !important;
-
-                font-weight: 700 !important;
-            }
-
-            #pdf-report .report-section-header h3 {
-                margin: 0 !important;
-
-                font-size: 18px !important;
-
-                color: #111111 !important;
-
-                font-weight: 800 !important;
-            }
-
-            #pdf-report .report-section-header p {
-                margin: 0 !important;
-
-                max-width: 300px !important;
-
-                text-align: right !important;
-
-                font-size: 10px !important;
-
-                color: #777777 !important;
-            }
-
-            /* ---------------------------------------------------------
-               CHECKS
-            --------------------------------------------------------- */
-
-            #pdf-report .checks-grid {
-                display: grid !important;
-
-                grid-template-columns:
-                    repeat(2, 1fr) !important;
-
-                gap: 10px !important;
-
-                width: 100% !important;
-            }
-
-            #pdf-report .check-card {
-                display: flex !important;
-                align-items: flex-start !important;
-
-                min-height: 70px !important;
-
-                padding: 13px !important;
-
-                background: #ffffff !important;
-
-                border: 1px solid #dddddd !important;
-
-                border-radius: 9px !important;
-
-                box-shadow: none !important;
-
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            #pdf-report .check-status {
-                flex: 0 0 25px !important;
-
-                width: 25px !important;
-                height: 25px !important;
-
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-
-                border-radius: 50% !important;
-
-                font-size: 12px !important;
-                font-weight: 800 !important;
-
-                background: #eeeeee !important;
-                color: #111111 !important;
-
-                margin-right: 10px !important;
-            }
-
-            #pdf-report .check-content {
-                min-width: 0 !important;
-            }
-
-            #pdf-report .check-content strong {
-                display: block !important;
-
-                margin-bottom: 3px !important;
-
-                font-size: 11px !important;
-
-                color: #111111 !important;
-            }
-
-            #pdf-report .check-content span {
-                display: block !important;
-
-                font-size: 9px !important;
-
-                color: #666666 !important;
-
-                overflow-wrap: anywhere !important;
-            }
-
-            /* ---------------------------------------------------------
-               OVERVIEW
-            --------------------------------------------------------- */
-
-            #pdf-report .content-overview {
-                display: grid !important;
-
-                grid-template-columns:
-                    repeat(4, 1fr) !important;
-
-                gap: 10px !important;
-
-                margin-bottom: 16px !important;
-            }
-
-            #pdf-report .overview-card {
-                padding: 15px !important;
-
-                background: #f8f8f8 !important;
-
-                border: 1px solid #dddddd !important;
-                border-radius: 9px !important;
-
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            #pdf-report .overview-card span {
-                display: block !important;
-
-                font-size: 9px !important;
-
-                font-weight: 700 !important;
-
-                color: #777777 !important;
-
-                margin-bottom: 6px !important;
-            }
-
-            #pdf-report .overview-card strong {
-                display: block !important;
-
-                font-size: 22px !important;
-
-                color: #111111 !important;
-
-                font-weight: 800 !important;
-            }
-
-            #pdf-report .overview-card small {
-                display: block !important;
-
-                font-size: 9px !important;
-
-                color: #777777 !important;
-            }
-
-            /* ---------------------------------------------------------
-               DETAIL BOX
-            --------------------------------------------------------- */
-
-            #pdf-report .detail-box {
-                width: 100% !important;
-
-                padding: 16px !important;
-
-                border: 1px solid #dddddd !important;
-
-                border-radius: 10px !important;
-
-                background: #ffffff !important;
-
-                box-shadow: none !important;
-
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            #pdf-report .detail-box-header {
-                display: flex !important;
-                justify-content: space-between !important;
-                align-items: center !important;
-
-                padding-bottom: 10px !important;
-                margin-bottom: 8px !important;
-
-                border-bottom: 1px solid #eeeeee !important;
-            }
-
-            #pdf-report .detail-box-header h4 {
-                margin: 0 !important;
-
-                font-size: 12px !important;
-
-                color: #111111 !important;
-            }
-
-            #pdf-report .detail-box-header span {
-                font-size: 10px !important;
-
-                color: #777777 !important;
-            }
-
-            #pdf-report .heading-row {
-                display: flex !important;
-                align-items: center !important;
-
-                gap: 10px !important;
-
-                min-height: 34px !important;
-
-                padding: 6px 0 !important;
-
-                border-bottom: 1px solid #eeeeee !important;
-
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            #pdf-report .heading-tag {
-                flex: 0 0 35px !important;
-
-                font-size: 9px !important;
-
-                font-weight: 800 !important;
-
-                color: #555555 !important;
-            }
-
-            #pdf-report .heading-text {
-                flex: 1 !important;
-
-                min-width: 0 !important;
-
-                font-size: 10px !important;
-
-                color: #222222 !important;
-
-                overflow-wrap: anywhere !important;
-            }
-
-            #pdf-report .heading-position {
-                flex: 0 0 30px !important;
-
-                text-align: right !important;
-
-                font-size: 9px !important;
-
-                color: #999999 !important;
-            }
-
-            /* ---------------------------------------------------------
-               IMAGES
-            --------------------------------------------------------- */
-
-            #pdf-report .image-summary {
-                display: grid !important;
-
-                grid-template-columns:
-                    repeat(3, 1fr) !important;
-
-                gap: 10px !important;
-
-                margin-bottom: 16px !important;
-            }
-
-            #pdf-report .image-stat {
-                padding: 16px !important;
-
-                background: #f8f8f8 !important;
-
-                border: 1px solid #dddddd !important;
-                border-radius: 9px !important;
-
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            #pdf-report .image-stat strong {
-                display: block !important;
-
-                font-size: 23px !important;
-
-                color: #111111 !important;
-            }
-
-            #pdf-report .image-stat span {
-                font-size: 9px !important;
-
-                color: #777777 !important;
-            }
-
-            #pdf-report .images-table,
-            #pdf-report .keywords-table {
-                width: 100% !important;
-
-                border: 1px solid #dddddd !important;
-
-                border-radius: 10px !important;
-
-                overflow: hidden !important;
-
-                background: #ffffff !important;
-
-                box-shadow: none !important;
-            }
-
-            #pdf-report .images-table-head,
-            #pdf-report .keywords-table-head {
-                display: grid !important;
-
-                background: #f3f3f3 !important;
-
-                color: #444444 !important;
-
-                font-size: 9px !important;
-
-                font-weight: 800 !important;
-
-                letter-spacing: .5px !important;
-
-                padding: 10px 12px !important;
-            }
-
-            #pdf-report .images-table-head {
-                grid-template-columns:
-                    2fr 1fr 1fr !important;
-            }
-
-            #pdf-report .image-row {
-                display: grid !important;
-
-                grid-template-columns:
-                    2fr 1fr 1fr !important;
-
-                gap: 10px !important;
-
-                align-items: center !important;
-
-                padding: 9px 12px !important;
-
-                border-top: 1px solid #eeeeee !important;
-
-                font-size: 9px !important;
-
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            #pdf-report .image-url {
-                display: flex !important;
-                align-items: center !important;
-
-                gap: 7px !important;
-
-                min-width: 0 !important;
-            }
-
-            #pdf-report .image-url > span:last-child {
-                overflow-wrap: anywhere !important;
-
-                word-break: break-all !important;
-
-                color: #333333 !important;
-            }
-
-            #pdf-report .image-placeholder {
-                flex: 0 0 25px !important;
-
-                font-size: 7px !important;
-                font-weight: 800 !important;
-
-                color: #777777 !important;
-            }
-
-            /* ---------------------------------------------------------
-               KEYWORDS
-            --------------------------------------------------------- */
-
-            #pdf-report .keywords-table-head {
-                grid-template-columns:
-                    2fr 1fr 1fr !important;
-            }
-
-            #pdf-report .keyword-row {
-                display: grid !important;
-
-                grid-template-columns:
-                    2fr 1fr 1fr !important;
-
-                gap: 10px !important;
-
-                align-items: center !important;
-
-                min-height: 36px !important;
-
-                padding: 8px 12px !important;
-
-                border-top: 1px solid #eeeeee !important;
-
-                font-size: 10px !important;
-
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            #pdf-report .keyword-row strong {
-                color: #111111 !important;
-
-                overflow-wrap: anywhere !important;
-            }
-
-            #pdf-report .keyword-row span {
-                color: #555555 !important;
-            }
-
-            #pdf-report .density-value {
-                font-weight: 700 !important;
-
-                color: #111111 !important;
-            }
-
-            /* ---------------------------------------------------------
-               EMPTY
-            --------------------------------------------------------- */
-
-            #pdf-report .empty-report {
-                padding: 30px !important;
-
-                text-align: center !important;
-
-                border: 1px solid #dddddd !important;
-                border-radius: 10px !important;
-
-                background: #fafafa !important;
-            }
-
-            #pdf-report .empty-report span {
-                display: block !important;
-
-                font-size: 25px !important;
-
-                color: #999999 !important;
-
-                margin-bottom: 8px !important;
-            }
-
-            #pdf-report .empty-report p {
-                margin: 0 !important;
-
-                font-size: 11px !important;
-
-                color: #777777 !important;
-            }
-
-            /* ---------------------------------------------------------
-               FOOTER
-            --------------------------------------------------------- */
-
-            #pdf-report .report-footer {
-                display: flex !important;
-
-                justify-content: space-between !important;
-                align-items: center !important;
-
-                margin-top: 35px !important;
-                padding-top: 15px !important;
-
-                border-top: 1px solid #dddddd !important;
-
-                font-size: 9px !important;
-
-                color: #777777 !important;
-
-                background: #ffffff !important;
-
-                box-shadow: none !important;
-            }
-
-            #pdf-report .footer-dot {
-                display: inline-block !important;
-
-                width: 7px !important;
-                height: 7px !important;
-
-                margin-right: 6px !important;
-
-                border-radius: 50% !important;
-
-                background: #111111 !important;
-            }
-
-            /* ---------------------------------------------------------
-               PRINT BREAKS
-            --------------------------------------------------------- */
-
-            #pdf-report h1,
-            #pdf-report h2,
-            #pdf-report h3,
-            #pdf-report h4 {
-                break-after: avoid !important;
-                page-break-after: avoid !important;
-            }
-
-            #pdf-report .report-section-header {
-                break-after: avoid !important;
-                page-break-after: avoid !important;
-            }
-
-            #pdf-report .metric-card,
-            #pdf-report .check-card,
-            #pdf-report .overview-card,
-            #pdf-report .detail-box,
-            #pdf-report .image-stat,
-            #pdf-report .image-row,
-            #pdf-report .keyword-row,
-            #pdf-report .score-card {
-                break-inside: avoid !important;
-                page-break-inside: avoid !important;
-            }
-
-            /* ---------------------------------------------------------
-               REMOVE WEB ANIMATIONS
-            --------------------------------------------------------- */
-
-            #pdf-report *,
-            #pdf-report *::before,
-            #pdf-report *::after {
-                animation: none !important;
-                transition: none !important;
-            }
-        `;
-
-        pdfContainer.appendChild(style);
-
-        /*
-        |--------------------------------------------------------------------------
-        | ATTENDRE LE RENDU
-        |--------------------------------------------------------------------------
-        */
-
-        await new Promise((resolve) => {
-            requestAnimationFrame(() => {
-                requestAnimationFrame(resolve);
-            });
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | PDF OPTIONS
-        |--------------------------------------------------------------------------
-        */
-
-        const options = {
-            margin: [8, 8, 10, 8],
-
-            filename:
-                `rapport-audit-${report?.auditId || "seo"}.pdf`,
-
-            image: {
-                type: "jpeg",
-                quality: 0.98,
-            },
-
-            html2canvas: {
-                scale: 2,
-
-                useCORS: true,
-
-                allowTaint: false,
-
-                backgroundColor: "#ffffff",
-
-                logging: false,
-
-                imageTimeout: 15000,
-
-                windowWidth: 794,
-
-                scrollX: 0,
-
-                scrollY: 0,
-            },
-
-            jsPDF: {
-                unit: "mm",
-
-                format: "a4",
-
-                orientation: "portrait",
-
-                compress: true,
-            },
-
-            pagebreak: {
-                mode: [
-                    "css",
-                    "legacy",
-                ],
-
-                avoid: [
-                    ".score-card",
-                    ".metric-card",
-                    ".check-card",
-                    ".overview-card",
-                    ".detail-box",
-                    ".image-stat",
-                    ".image-row",
-                    ".keyword-row",
-                    ".report-section-header",
-                ],
-            },
-        };
-
-        /*
-        |--------------------------------------------------------------------------
-        | GENERATE PDF
-        |--------------------------------------------------------------------------
-        */
-
-        await html2pdf()
-            .set(options)
-            .from(clonedReport)
-            .toPdf()
-            .get("pdf")
-            .then((pdf) => {
-                const totalPages =
-                    pdf.internal.getNumberOfPages();
-
-                /*
-                |--------------------------------------------------------------
-                | NUMÉRO DE PAGE
-                |--------------------------------------------------------------
-                */
-
-                for (
-                    let pageNumber = 1;
-                    pageNumber <= totalPages;
-                    pageNumber++
-                ) {
-                    pdf.setPage(pageNumber);
-
-                    const pageWidth =
-                        pdf.internal.pageSize.getWidth();
-
-                    const pageHeight =
-                        pdf.internal.pageSize.getHeight();
-
-                    /*
-                    | Footer line
-                    */
-
-                    pdf.setDrawColor(
-                        220,
-                        220,
-                        220
-                    );
-
-                    pdf.setLineWidth(0.2);
-
-                    pdf.line(
-                        10,
-                        pageHeight - 12,
-                        pageWidth - 10,
-                        pageHeight - 12
-                    );
-
-                    /*
-                    | Footer text
-                    */
-
-                    pdf.setFontSize(7);
-
-                    pdf.setTextColor(
-                        120,
-                        120,
-                        120
-                    );
-
-                    pdf.text(
-                        "SEO Audit Platform",
-                        10,
-                        pageHeight - 7
-                    );
-
-                    pdf.text(
-                        `Page ${pageNumber} / ${totalPages}`,
-                        pageWidth - 10,
-                        pageHeight - 7,
-                        {
-                            align: "right",
-                        }
-                    );
-                }
-            })
-            .save();
-
-        /*
-        |--------------------------------------------------------------------------
-        | NETTOYAGE
-        |--------------------------------------------------------------------------
-        */
-
-        document.body.removeChild(
-            pdfContainer
-        );
-
-    } catch (err) {
-        console.error(
-            "PDF ERROR:",
-            err
-        );
-
-        /*
-        |--------------------------------------------------------------------------
-        | NETTOYAGE EN CAS D'ERREUR
-        |--------------------------------------------------------------------------
-        */
-
-        const existing =
-            document.getElementById(
-                "pdf-report-container"
-            );
-
-        if (existing) {
-            existing.remove();
+    const handleDownloadPdf = async () => {
+        if (!report) {
+            setDownloadError("Le rapport est introuvable.");
+            return;
         }
 
-        setDownloadError(
-            err?.message ||
-            "Impossible de générer le PDF."
-        );
+        setDownloadError("");
+        setDownloadingPdf(true);
 
-    } finally {
-        setDownloadingPdf(false);
-    }
-};
+        const pdfDocument = buildPdfReportDocument({
+            siteUrl: report.url,
+            score: report.score,
+            scoreLabel: getScoreLabel(report.score),
+            createdAt: report.createdAt,
+            report,
+            checks,
+            stats,
+        });
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "pdf-export-wrapper";
+        wrapper.appendChild(pdfDocument);
+        document.body.appendChild(wrapper);
+
+        try {
+            const options = {
+                margin: [12, 12, 16, 12],
+
+                filename: `rapport-audit-${report?.auditId || "seo"}.pdf`,
+
+                image: {
+                    type: "jpeg",
+                    quality: 0.98,
+                },
+
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: "#ffffff",
+                    logging: false,
+                    width: 794,
+                    windowWidth: 794,
+                    scrollX: 0,
+                    scrollY: 0,
+                },
+
+                jsPDF: {
+                    unit: "mm",
+                    format: "a4",
+                    orientation: "portrait",
+                    compress: true,
+                },
+
+                pagebreak: {
+                    mode: ["css", "legacy"],
+                    avoid: [".pdf-cover", ".pdf-block", ".pdf-section-title", "tr", "li"],
+                },
+            };
+
+            const pdf = await html2pdf()
+                .set(options)
+                .from(pdfDocument)
+                .toPdf()
+                .get("pdf");
+
+            const totalPages = pdf.internal.getNumberOfPages();
+
+            for (let i = 1; i <= totalPages; i++) {
+                pdf.setPage(i);
+                pdf.setFontSize(8);
+                pdf.setTextColor(30, 58, 95);
+                pdf.text(
+                    `Page ${i} / ${totalPages}`,
+                    pdf.internal.pageSize.getWidth() - 12,
+                    pdf.internal.pageSize.getHeight() - 8,
+                    { align: "right" }
+                );
+            }
+
+            await pdf.save();
+        } catch (err) {
+            console.error("PDF ERROR:", err);
+
+            setDownloadError(
+                err?.message ||
+                "Impossible de générer le PDF."
+            );
+        } finally {
+            if (wrapper && wrapper.parentNode) {
+                wrapper.parentNode.removeChild(wrapper);
+            }
+
+            setDownloadingPdf(false);
+        }
+    };
+
     /*
     |--------------------------------------------------------------------------
     | RESET
@@ -1793,7 +1006,7 @@ export default function Analyse() {
                         0
                     ) === 0
                         ? "Toutes les images ont un ALT"
-                        : `${page.images_without_alt} image(s) sans ALT`,
+                        : `${page.images_without_alt_count} image(s) sans ALT`,
             },
 
             {
