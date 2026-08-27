@@ -60,6 +60,7 @@ export default function History() {
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
+    const [deletingId, setDeletingId] = useState(null);
 
     useEffect(() => {
         load();
@@ -168,6 +169,43 @@ export default function History() {
         } finally {
             clearInterval(progressInterval);
             setIsLoading(false);
+        }
+    }
+
+    async function deleteAudit(id) {
+        if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet audit ?")) {
+            return;
+        }
+
+        setDeletingId(id);
+
+        try {
+            const response = await fetch(
+                `http://localhost:8000/api/audits/${id}/delete`,
+                {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Erreur lors de la suppression");
+            }
+
+            // نخليو الفادينغ يبان شوية قبل ما نحيدو الكارد
+            await new Promise((resolve) => setTimeout(resolve, 350));
+
+            // نحيدوه مباشرة من الواجهة
+            setReports((prev) =>
+                prev.filter((report) => Number(report.id) !== Number(id))
+            );
+        } catch (error) {
+            console.error("DELETE AUDIT ERROR:", error);
+            alert("Impossible de supprimer cet audit.");
+        } finally {
+            setDeletingId(null);
         }
     }
 
@@ -436,9 +474,14 @@ export default function History() {
                                     ? "completed"
                                     : "failed";
 
+                            const isDeleting =
+                                deletingId === report.id;
+
                             return (
                                 <div
-                                    className="history-report-card"
+                                    className={`history-report-card ${
+                                        isDeleting ? "is-deleting" : ""
+                                    }`}
                                     key={
                                         report.id ??
                                         report.url ??
@@ -528,12 +571,32 @@ export default function History() {
 
                                     {/* REPORT BUTTON */}
 
-                                    <Link
-                                        to={`/audits/${report.id}`}
-                                        className="history-report-button"
-                                    >
-                                        Voir le rapport →
-                                    </Link>
+                                   <div className="history-actions">
+
+                                        <Link
+                                            to={`/audits/${report.id}`}
+                                            className="history-report-button"
+                                        >
+                                        Rapport→
+                                        </Link>
+
+                                        <button
+                                            type="button"
+                                            className="history-delete-button"
+                                            onClick={() => deleteAudit(report.id)}
+                                            disabled={isDeleting}
+                                        >
+                                            {isDeleting ? (
+                                                <>
+                                                    <span className="delete-spinner" />
+                                                    Suppression...
+                                                </>
+                                            ) : (
+                                                "Supprimer"
+                                            )}
+                                        </button>
+
+                                    </div>
 
                                 </div>
                             );

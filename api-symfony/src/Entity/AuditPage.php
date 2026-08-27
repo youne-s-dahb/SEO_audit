@@ -40,7 +40,7 @@ class AuditPage
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $canonicalUrl = null;
 
-    #[ORM\Column(length: 50, nullable: true)]
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $metaRobots = null;
 
     #[ORM\Column(length: 10, nullable: true)]
