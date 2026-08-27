@@ -140,13 +140,6 @@ export default function RegisterForm() {
 
   return (
     <>
-      <div className="step-indicator">
-        <span className={`step-dot ${step >= 1 ? "active" : ""}`}>1</span>
-        <span className="step-line" />
-        <span className={`step-dot ${step >= 2 ? "active" : ""}`}>2</span>
-        <span className="step-line" />
-        <span className={`step-dot ${step >= 3 ? "active" : ""}`}>3</span>
-      </div>
 
       {step === 1 && (
         <form className="auth-form" onSubmit={handleSendCode} noValidate>
